@@ -3,6 +3,9 @@ library(shiny)
 shinyUI(
   navbarPage("SMART Sample Size Calculator",
 
+             
+             
+             
              ##### HOME TAB#####
              
              tabPanel("Home",
@@ -18,9 +21,9 @@ shinyUI(
                                       sodales ligula in libero.")),
                       mainPanel(h1("Introduction"),br(),
                                 p("Choose a design by clicking the cooresponding tab at the top of the window."), br(),
-                                fluidRow(column(6,img(src="SMARTdesignA.gif")), column(6,img(src="SMARTdesignB_0_0.gif"))),
+                                fluidRow(column(6,img(src="images/SMARTdesignA.gif")), column(6,img(src="images/SMARTdesignB_0_0.gif"))),
                                 fluidRow(column(6,helpText("Design A")),column(6,helpText("Design B"))),
-                                fluidRow(column(6,img(src="SMARTdesignC.gif")), column(6,img(src="SMARTdesignD.gif"))),
+                                fluidRow(column(6,img(src="images/SMARTdesignC.gif")), column(6,img(src="images/SMARTdesignD.gif"))),
                                 fluidRow(column(6,helpText("Design C")),column(6,helpText("Design D"))),
                                 h2("More Information"),
                                 p("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer nec odio. Praesent libero. Sed 
@@ -43,7 +46,7 @@ shinyUI(
                                    p("Include information about the design, its requirements, and describe the input.")
                       ),
                       mainPanel(h1("Design A"),
-                                img(src="SMARTdesignA.gif"),
+                                img(src="images/SMARTdesignA.gif"),
                                 fluidRow(
                                   column(6,
                                          radioButtons("selectOutcomeA", label="Select a Type of Outcome:",
@@ -106,31 +109,13 @@ shinyUI(
                         ##### B PAGE HEADER #####
                         
                         h1("Design B"),
-                        imageOutput("designBimg",height=450),
                         tags$hr(),
-                        
-                                               
-                        ##### B OUTCOME OPTIONS #####
-                        
-                          h3("Outcome Options"),
-                          fluidRow(
-                                  column(6,
-                                         selectInput("selectOutcomeB", label="Select a Type of Outcome:",
-                                                      choices=list("Binary"=1,"Continuous"=2))
-                                         ),
-                                  column(6,
-                                         conditionalPanel(condition="input.selectOutcomeB==1",
-                                                          selectInput("selectBinarySuccessB",label="Select a method of providing Success Probabilities:",
-                                                                       choices=list("Overall DTR Success"=1, "Marginal Treatment Success"=2, 
-                                                                                    "Target Difference"=3, "Target Odds Ratio"=4))
-                                         )
-                                  )
-                          ),
-                          tags$hr(),
                         
                         ##### B DTR SELECTION #####
                         
-                        h3("DTR Selection"),
+                        p("Which two dynamic treatment regimes would you like to compare? Choose two from the menus below.",
+                          "The image below will change to highlight the DTRs you select."),
+                        
                         fluidRow(
                           column(6,
                                  selectInput("firstDTRcompareB",label="Compare DTR",
@@ -146,10 +131,69 @@ shinyUI(
                         fluidRow(
                           conditionalPanel(condition="input.firstDTRcompareB==input.secondDTRcompareB & input.firstDTRcompareB != 0",
                                            p("ERROR: Please select two different DTRs to compare.",style="color:red")),
-                          conditionalPanel(condition="input.firstDTRcompareB.substr(1,1)==input.secondDTRcompareB.substr(1,1) && input.firstDTRcompareB != 0 && input.selectBinarySuccessB<=2",
+                          conditionalPanel(condition="input.firstDTRcompareB.substr(0,1)==input.secondDTRcompareB.substr(0,1) && input.firstDTRcompareB != 0 && input.selectBinarySuccessB<=2",
                                            helpText("NOTE: For DTRs with the same initial treatment, Overall DTR Success is not a valid input method."))
                         ),
                         tags$hr(),
+                        fluidRow(
+                          column(4,radioButtons("selectOutcomeB", label="Is the outcome of interest binary or continuous?",
+                                                  choices=list("Binary"=1,"Continuous"=2),selected=1)),
+                          column(4,radioButtons("selectResultsB",label="Are you interested in finding sample size or power?",
+                                                choices=list("Sample Size" = "sample", "Power" = "power"),
+                                                selected="sample")),
+                          column(4,
+                                 numericInput("alphaB",label="Type I Error (Alpha):",value=0.05,min=0,max=1,step=0.0001),
+                                 conditionalPanel(condition="input.selectResultsB=='sample'",
+                                                  numericInput("inputPowerB",label="Power of Trial:",value=0.8, min=0, max=1,step=0.0001)
+                                 ),
+                                 conditionalPanel(condition="input.selectResultsB=='power'",
+                                                  numericInput("inputSampleSizeB",label="Total Sample Size of Trial:",value=0, min=0)
+                                 )
+                        )
+                        ),
+                        tags$hr(),
+                        
+                        fluidRow(
+                          column(7, imageOutput("designBimg")),
+                          column(5, uiOutput("binaryDTR1probB"),
+                                 conditionalPanel(condition="input.cellOrConditionalB",
+                                                  fluidRow(column(1),
+                                                           column(4,uiOutput("cellProbsDTR1B"))
+                                                           )
+                                                  ),
+                                 uiOutput("binaryDTR2probB"),
+                                 conditionalPanel(condition="input.cellOrConditionalB",
+                                                  fluidRow(column(1),
+                                                           column(4,uiOutput("cellProbsDTR2B"))
+                                                  )
+                                 )
+                          )
+                        ),
+                        tags$hr(),
+                        
+                        fluidRow(
+                          checkboxInput("cellOrConditionalB",label="Check this box to input cell-specific estimates.",value=FALSE)
+                        ),
+                        tags$hr(),
+                        
+                        ##### B OUTCOME OPTIONS #####
+                        
+                          h3("Outcome Options"),
+                          fluidRow(
+                                  column(6
+                                         
+                                         ),
+                                  column(6,
+                                         conditionalPanel(condition="input.selectOutcomeB==1",
+                                                          selectInput("selectBinarySuccessB",label="Select a method of providing Success Probabilities:",
+                                                                       choices=list("Overall DTR Success"=1, "Marginal Treatment Success"=2, 
+                                                                                    "Target Difference"=3, "Target Odds Ratio"=4))
+                                         )
+                                  )
+                          ),
+                          tags$hr(),
+                        
+                        
                         
                           ##### B PROBABILITY INPUT #####
                         
@@ -167,24 +211,15 @@ shinyUI(
                         
                         ##### B ERROR SPECIFICATION #####
                         
-                          h3("Error Specification"),
-                          fluidRow(
-                                  column(6,
-                                         radioButtons("selectResultsB",label="Select the desired result.",
-                                                      choices=list("Sample Size" = "sample", "Power" = "power"),
-                                                      selected="sample")
-                                         ),
-                                  column(6,
-                                         numericInput("alphaB",label="Type I Error (Alpha):",value=0.05,min=0,max=1,step=0.0001),
-                                         conditionalPanel(condition="input.selectResultsB=='sample'",
-                                                          numericInput("inputPowerB",label="Power of Trial:",value=0.8, min=0, max=1,step=0.0001)
-                                          ),
-                                         conditionalPanel(condition="input.selectResultsB=='power'",
-                                                          numericInput("inputSampleSizeB",label="Total Sample Size of Trial:",value=0, min=0)
-                                  )
-                                )
-                                ),
-                          tags$hr(),
+#                           h3("Error Specification"),
+#                           fluidRow(
+#                                   column(6
+#                                          
+#                                          )
+#                                   
+#                                 )
+#                                 ),
+#                           tags$hr(),
 
                         ##### B RESULTS #####
                 
@@ -204,7 +239,10 @@ shinyUI(
                                    p("Include information about the design, its requirements, and describe the input.")
                       ),
                       mainPanel(h1("Design C"),
-                                img(src="SMARTdesignC.gif")
+                                div(class='row-fluid',
+                                    div(class='span4',img(src="images/SMARTdesignC.gif")),
+                                    div(class='span3',numericInput("test",label="test",value=0)),
+                                    div(class='span3',numericInput("othertest",label="othertest",value=0)))
                       )
              ),
              tabPanel("Design D",
@@ -212,8 +250,9 @@ shinyUI(
                                    p("Include information about the design, its requirements, and describe the input.")
                       ),
                       mainPanel(h1("Design D"),
-                                img(src="SMARTdesignD.gif")
+                                img(src="images/SMARTdesignD.gif")
                       )
              )
+
   )
 )

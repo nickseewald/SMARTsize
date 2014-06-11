@@ -5,11 +5,17 @@ library(pwr)
 
 shinyServer(function(input,output,session){
    
+  output$dialog <- renderPrint({
+    code <- input$console
+    output <- eval(parse(text=code))
+    return(output)
+  })
+  
   ##### DESIGN B IMAGE HEADER #####
   
   output$designBimg <- renderImage({
-       filename<-filename<-normalizePath(file.path('./www',paste('SMARTdesignB_',input$firstDTRcompareB,'_',input$secondDTRcompareB,'.gif',sep='')))
-       list(src=filename)
+       filename<-filename<-normalizePath(file.path('./www/images',paste('SMARTdesignB_',input$firstDTRcompareB,'_',input$secondDTRcompareB,'.gif',sep='')))
+       list(src=filename,height=450)
    },deleteFile=FALSE)
   
   ##### DESIGN B PROBABILITY INPUT #####
@@ -44,32 +50,86 @@ shinyServer(function(input,output,session){
     
   })
   
-  output$binaryDTRinputsB <- renderUI({
-
-    if(input$selectBinarySuccessB==1 && substringDTR1B()[1] != substringDTR2B()[1]){
-      controlInputs<-c(numericInput("DTRsuccB1",label="Probability of Success for First DTR",value=0,min=0,max=1,step=0.0001),
-                       numericInput("DTRsuccB2",label="Probability of Success for Second DTR",value=0,min=0,max=1,step=0.0001)
-      )
+  output$binaryDTR1probB <- renderUI({
+    if(substringDTR1B()[1] != substringDTR2B()[1]){
+      numericInput("DTRsuccB1",label="Probability of Success for First DTR",value=0,min=0,max=1,step=0.0001)
     }
-    
-    if(input$selectBinarySuccessB==2 && substringDTR1B()[1] != substringDTR2B()[1]){
+  })
+  
+  output$binaryDTR2probB <- renderUI({
+    if(substringDTR1B()[1] != substringDTR2B()[1]){
+      numericInput("DTRsuccB2",label="Probability of Success for Second DTR",value=0,min=0,max=1,step=0.0001)
+    }
+  })
+  
+  output$cellProbsDTR1B <- renderUI({
+    if(substringDTR1B()[1] != substringDTR2B()[1]){
       if(substringDTR1B()[2]==substringDTR2B()[2]){
         controlInputs<-c(numericInput("marginalSecondStageNRB1",label=paste("P(S|",substringDTR1B()[2],",nr,",substringDTR1B()[3],")",sep=""),
-                                      value=0,min=0,max=1,step=0.0001),
-                         numericInput("marginalSecondStageNRB2",label=paste("P(S|",substringDTR2B()[2],",nr,",substringDTR2B()[3],")",sep=""),
                                       value=0,min=0,max=1,step=0.0001)
-                         )
+        )
+        
       }
       else{
         controlInputs<-c(numericInput("marginalFirstStageB1",label=paste("P(S|",substringDTR1B()[2],",r)",sep=""),value=0,min=0,max=1,step=0.0001),
                          numericInput("marginalSecondStageNRB1",label=paste("P(S|",substringDTR1B()[2],",nr,",substringDTR1B()[3],")",sep=""),
-                                      value=0,min=0,max=1,step=0.0001),
+                                      value=0,min=0,max=1,step=0.0001)
+        )
+      }
+    }
+    
+  })
+
+  output$cellProbsDTR2B <- renderUI({
+    if(substringDTR1B()[1] != substringDTR2B()[1]){
+      if(substringDTR1B()[2]==substringDTR2B()[2]){
+        controlInputs<-c(numericInput("marginalSecondStageNRB2",label=paste("P(S|",substringDTR2B()[2],",nr,",substringDTR2B()[3],")",sep=""),
+                         value=0,min=0,max=1,step=0.0001)
+        )
+        
+      }
+      else{
+        controlInputs<-c(
                          numericInput("marginalFirstStageB2",label=paste("P(S|",substringDTR2B()[2],",r)",sep=""),value=0,min=0,max=1,step=0.0001),
                          numericInput("marginalSecondStageNRB2",label=paste("P(S|",substringDTR2B()[2],",nr,",substringDTR2B()[3],")",sep=""),
                                       value=0,min=0,max=1,step=0.0001)
         )
       }
     }
+    
+    suppressWarnings(controlInputs)
+    
+  })
+      
+
+#       if(input$cellOrConditionalB==TRUE && substringDTR1B()[1] != substringDTR2B()[1]){
+#         controlInputs<-c(numericInput("DTRsuccB1",label="Probability of Success for First DTR",value=0,min=0,max=1,step=0.0001),
+#                          textOutput("blankspace"),
+#                          numericInput("marginalSecondStageNRB1",label=paste("P(S|",substringDTR1B()[2],",nr,",substringDTR1B()[3],")",sep=""),
+#                                                  value=0,min=0,max=1,step=0.0001),
+#                          textOutput("blankspace"),
+#                          numericInput("marginalSecondStageNRB2",label=paste("P(S|",substringDTR2B()[2],",nr,",substringDTR2B()[3],")",sep=""),
+#                                                 value=0,min=0,max=1,step=0.0001),
+#                          numericInput("DTRsuccB2",label="Probability of Success for Second DTR",value=0,min=0,max=1,step=0.0001))
+#       }
+# 
+#     if(substringDTR1B()[1]==substringDTR2B()[1] && input$selectBinarySuccessB <= 2){
+#       controlInputs<-(helpText("Select two non-identical DTRs to continue."))
+#     }
+#     
+#     return(controlInputs)
+#     
+#   })
+  
+  output$binaryDTRinputsB <- renderUI({
+    
+    if(input$selectBinarySuccessB==2 && substringDTR1B()[1] != substringDTR2B()[1]){
+      controlInputs<-c(numericInput("DTRsuccB1",label="Probability of Success for First DTR",value=0,min=0,max=1,step=0.0001),
+                       numericInput("DTRsuccB2",label="Probability of Success for Second DTR",value=0,min=0,max=1,step=0.0001)
+      )
+    }
+    
+    
     
     if(input$selectBinarySuccessB==1 && substringDTR1B()[2]==substringDTR2B()[2]){
       updateSelectInput(session,inputId="selectBinarySuccessB",selected=2)      
@@ -86,8 +146,7 @@ shinyServer(function(input,output,session){
     if(substringDTR1B()[1]==substringDTR2B()[1] && input$selectBinarySuccessB <= 2){
       controlInputs<-(helpText("Select two non-identical DTRs to continue."))
     }
-    
-    controlInputs
+        
   })
 
   ##### DESIGN B RESULT #####
