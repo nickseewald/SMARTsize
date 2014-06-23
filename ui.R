@@ -20,7 +20,8 @@ shinyUI(
                                       per conubia nostra, per inceptos himenaeos. Curabitur 
                                       sodales ligula in libero.")),
                       mainPanel(h1("Introduction"),br(),
-                                p("Choose a design by clicking the cooresponding tab at the top of the window."), br(),
+                                p("Choose a design by clicking the cooresponding tab at the top of the window. If you are using a smartphone, 
+                                  options are available via the menu button (three horizontal lines) at the top of the window."), br(),
                                 fluidRow(column(6,img(src="images/SMARTdesignA.gif")), column(6,img(src="images/SMARTdesignB_0_0.gif"))),
                                 fluidRow(column(6,helpText("Design A")),column(6,helpText("Design B"))),
                                 fluidRow(column(6,img(src="images/SMARTdesignC.gif")), column(6,img(src="images/SMARTdesignD.gif"))),
@@ -100,7 +101,7 @@ shinyUI(
                       ##### B SIDEBAR #####
                       
                       sidebarPanel(h3("About this design:"),
-                                   p("Include information about the design, its requirements, and describe the input."),
+                                   p("Design B is a SMART in which randomization to second-stage treatment options depends on response to the first-stage treatment."),
                                    p(strong("Note:"), em("All inputs must be given in decimal form (with leading zero), and can be precise to four decimal places.
                                      Fractional input is disallowed."))
                         ),
@@ -129,19 +130,79 @@ shinyUI(
                           )
                         ),
                         fluidRow(
-                          conditionalPanel(condition="input.firstDTRcompareB==input.secondDTRcompareB & input.firstDTRcompareB != 0",
-                                           p("ERROR: Please select two different DTRs to compare.",style="color:red")),
-                          conditionalPanel(condition="input.firstDTRcompareB.substr(0,1)==input.secondDTRcompareB.substr(0,1) && input.firstDTRcompareB != 0 && input.selectBinarySuccessB<=2",
-                                           helpText("NOTE: For DTRs with the same initial treatment, Overall DTR Success is not a valid input method."))
+                                 conditionalPanel(condition="input.firstDTRcompareB==input.secondDTRcompareB & input.firstDTRcompareB != 0",
+                                           p("ERROR: Please select two different DTRs to compare.",style="color:red"))
+#                           conditionalPanel(condition="input.firstDTRcompareB.substr(0,1)==input.secondDTRcompareB.substr(0,1) && input.firstDTRcompareB != 0 && input.selectBinarySuccessB<=2",
+#                                            helpText("NOTE: For DTRs with the same initial treatment, Overall DTR Success is not a valid input method."))
+                        ),
+                        tags$hr(),
+                        
+                        
+                        
+                        fluidRow(
+                          column(6,
+                                 radioButtons("selectOutcomeB", label="Is the outcome of interest binary or continuous?",
+                                              choices=list("Binary"=1,"Continuous"=2),selected=1)
+                                 ),
+                          column(6,
+                                 numericInput("respB",
+                                              label="What is the probability that a patient responds to first-stage treatment? If you are unsure, enter 0 for a conservative estimate.",
+                                              value=0,min=0,max=1,step=0.0001)
+                                 )
+                          ),
+                        
+                        tags$hr(),
+                        
+                        fluidRow(
+                          column(7, imageOutput("designBimg",height="100%")),
+                          column(5, 
+                                 conditionalPanel(condition="input.selectOutcomeB==1",
+                                                  uiOutput("binaryDTR1probB"),
+                                                  conditionalPanel(condition="input.cellOrConditionalB",
+                                                                   fluidRow(column(1),
+                                                                            column(4,uiOutput("cellProbsDTR1B"))
+                                                                   )
+                                                  ),
+                                                  uiOutput("binaryDTR2probB"),
+                                                  conditionalPanel(condition="input.cellOrConditionalB",
+                                                                   fluidRow(column(1),
+                                                                            column(4,uiOutput("cellProbsDTR2B"))
+                                                                   )
+                                                  )
+                                 ),
+                                 conditionalPanel(condition="input.selectOutcomeB==2",
+                                                  uiOutput("continuousProbB")
+                                 )
+                          )
+                        ),
+                        
+                        tags$hr(),
+
+                        fluidRow(
+                          conditionalPanel(condition="input.selectOutcomeB==1",
+                                           checkboxInput("cellOrConditionalB",label="Check this box to input cell-specific probabilities.",value=FALSE),
+                                           checkboxInput("targetDiffCheckB",label="Check this box to input a target difference in probabilities.",value=FALSE),
+                                           conditionalPanel(condition="input.targetDiffCheckB",
+                                                            column(1), 
+                                                            column(11,
+                                                                   checkboxInput("targetOddsCheckB",label="Check this box to input a target odds-ratio instead of a target difference.",value=FALSE)
+                                                            )
+                                           )
+                          
+                          ),
+                          conditionalPanel(condition="input.selectOutcomeB==2",
+                                                  checkboxInput("meanSdCheckB",label="Check this box to input a difference in means and standard deviation.",value=FALSE)
+                                           )
+#                           conditionalPanel(condition="input.cellOrConditionalB && input.targetDiffCheckB",
+#                                            p("ERROR: You cannot input both cell-specific probabilities and a target difference in proportions or effect size.
+#                                              Please select one of the two.",style="color:red"))
                         ),
                         tags$hr(),
                         fluidRow(
-                          column(4,radioButtons("selectOutcomeB", label="Is the outcome of interest binary or continuous?",
-                                                  choices=list("Binary"=1,"Continuous"=2),selected=1)),
-                          column(4,radioButtons("selectResultsB",label="Are you interested in finding sample size or power?",
+                          column(6,radioButtons("selectResultsB",label="Are you interested in finding sample size or power?",
                                                 choices=list("Sample Size" = "sample", "Power" = "power"),
                                                 selected="sample")),
-                          column(4,
+                          column(6,
                                  numericInput("alphaB",label="Type I Error (Alpha):",value=0.05,min=0,max=1,step=0.0001),
                                  conditionalPanel(condition="input.selectResultsB=='sample'",
                                                   numericInput("inputPowerB",label="Power of Trial:",value=0.8, min=0, max=1,step=0.0001)
@@ -149,66 +210,43 @@ shinyUI(
                                  conditionalPanel(condition="input.selectResultsB=='power'",
                                                   numericInput("inputSampleSizeB",label="Total Sample Size of Trial:",value=0, min=0)
                                  )
-                        )
-                        ),
-                        tags$hr(),
-                        
-                        fluidRow(
-                          column(7, imageOutput("designBimg")),
-                          column(5, uiOutput("binaryDTR1probB"),
-                                 conditionalPanel(condition="input.cellOrConditionalB",
-                                                  fluidRow(column(1),
-                                                           column(4,uiOutput("cellProbsDTR1B"))
-                                                           )
-                                                  ),
-                                 uiOutput("binaryDTR2probB"),
-                                 conditionalPanel(condition="input.cellOrConditionalB",
-                                                  fluidRow(column(1),
-                                                           column(4,uiOutput("cellProbsDTR2B"))
-                                                  )
-                                 )
                           )
                         ),
                         tags$hr(),
-                        
-                        fluidRow(
-                          checkboxInput("cellOrConditionalB",label="Check this box to input cell-specific estimates.",value=FALSE)
-                        ),
-                        tags$hr(),
+                      
                         
                         ##### B OUTCOME OPTIONS #####
                         
-                          h3("Outcome Options"),
-                          fluidRow(
-                                  column(6
-                                         
-                                         ),
-                                  column(6,
-                                         conditionalPanel(condition="input.selectOutcomeB==1",
-                                                          selectInput("selectBinarySuccessB",label="Select a method of providing Success Probabilities:",
-                                                                       choices=list("Overall DTR Success"=1, "Marginal Treatment Success"=2, 
-                                                                                    "Target Difference"=3, "Target Odds Ratio"=4))
-                                         )
-                                  )
-                          ),
-                          tags$hr(),
+#                           h3("Outcome Options"),
+#                           fluidRow(
+#                                   column(6
+#                                          
+#                                          ),
+#                                   column(6,
+#                                          conditionalPanel(condition="input.selectOutcomeB==1",
+#                                                           selectInput("selectBinarySuccessB",label="Select a method of providing Success Probabilities:",
+#                                                                        choices=list("Overall DTR Success"=1, "Marginal Treatment Success"=2, 
+#                                                                                     "Target Difference"=3, "Target Odds Ratio"=4))
+#                                          )
+#                                   )
+#                           ),
+#                           tags$hr(),
                         
                         
                         
                           ##### B PROBABILITY INPUT #####
-                        
-                          h3("Probability Inputs"),
-                          fluidRow(
-                                   numericInput("respB",label="Probability of Response to First-Stage Treatment:",value=0,min=0,max=1,step=0.0001),
-                                   conditionalPanel(condition="input.selectOutcomeB==2",
-                                                    numericInput("effectSizeB",label="Standardized Effect Size:",value=0,min=0,step=0.0001)
-                                   ),
-                                   conditionalPanel(condition="input.selectOutcomeB==1",
-                                                    uiOutput("binaryDTRinputsB")
-                                   )
-                          ),
-                          tags$hr(),
-                        
+#                         
+#                           h3("Probability Inputs"),
+#                           fluidRow(
+#                                    conditionalPanel(condition="input.selectOutcomeB==2",
+#                                                     numericInput("effectSizeB",label="Standardized Effect Size:",value=0,min=0,step=0.0001)
+#                                    ),
+#                                    conditionalPanel(condition="input.selectOutcomeB==1",
+#                                                     uiOutput("binaryDTRinputsB")
+#                                    )
+#                           ),
+#                           tags$hr(),
+#                         
                         ##### B ERROR SPECIFICATION #####
                         
 #                           h3("Error Specification"),
@@ -231,7 +269,11 @@ shinyUI(
                                            h4(textOutput("binaryPowerB"),style="color:blue")
                                            ),
                           conditionalPanel(condition="input.selectOutcomeB==2 & input.selectResultsB=='sample'",
-                                           h4(textOutput("continuousSampleSizeB"),style="color:blue"))
+                                           h4(textOutput("continuousSampleSizeB"),style="color:blue")
+                                           ),
+                          conditionalPanel(condition="input.selectOutcomeB==2 & input.selectResultsB=='power'",
+                                           h4(textOutput("continuousPowerB"),style="color:blue")
+                          )
                     )
              ),
              tabPanel("Design C",
@@ -252,7 +294,6 @@ shinyUI(
                       mainPanel(h1("Design D"),
                                 img(src="images/SMARTdesignD.gif")
                       )
-             )
-
-  )
+             ),
+collapsable=TRUE)
 )
