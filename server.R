@@ -4,83 +4,12 @@ library(pwr)
 `%then%` <- shiny:::`%OR%`
 
 shinyServer(function(input,output,session){
-  
-  ##### HOME #####
-  ### Watch for clicks on pickTab actionButtons rendered under design diagrams
-  ### On click, redirect to appropriate tab. (More intuitive navigation structure)
-  
-  observe({
-    if(input$pickTabA) updateTabsetPanel(session,"SMARTsize",selected="Design A")
-    if(input$pickTabB) updateTabsetPanel(session,"SMARTsize",selected="Design B")
-    if(input$pickTabC) updateTabsetPanel(session,"SMARTsize",selected="Design C")
-    if(input$pickTabD) updateTabsetPanel(session,"SMARTsize",selected="Design D")
-  })
-  
-  ##### DESIGN A #####
-  
-  ##### A IMAGE HEADER #####
-  ### Render the design image which highlights selected DTRs
-  ### Takes the names of selected DTRs, generates a filepath, and renders the image in the UI
-  ### Note that this requires a very specific naming convention for image assets
-  ### 'SMARTdesignX_DTR1_DTR2.gif'; if DTRX is unselected, DTR name is 0. 
-  
-  output$designAimg <- renderImage({
-    filename<-filename<-normalizePath(file.path('./www/images',paste('SMARTdesignA_',input$firstDTRcompareA,'_',input$secondDTRcompareA,'.gif',sep='')))
-    list(src=filename)
-  },deleteFile=FALSE)
-  
-  
-  ##### DESIGN A PROBABILITY INPUT #####
-  
-  ### Read in DTR names from dropdowns and parse them to determine first and second stage treatments
-  ### Reactive function allows on-the-fly changes in return values with changes in selection
-  ### Outputs full DTR name, first-stage treatment (first character), second-stage treatment (last character)
-  ### NOTE that these positions are exclusive to design B because responders continue first-stage treatment
-  
-  substringDTR1A <- reactive({
-    DTR1 <- paste(input$firstDTRcompareA)
-    firstStage1 <- substr(DTR1,1,1)
-    secondStageR1 <- substr(DTR1,3,3)
-    secondStageNR1 <- substr(DTR1,6,6)
-    
-    return(c(DTR1, firstStage1,secondStageR1, secondStageNR1))
-    
-  })
-  
-  substringDTR2A <- reactive({
-    DTR2 <- paste(input$secondDTRcompareA)
-    firstStage2 <- substr(DTR2,1,1)
-    secondStageR2 <- substr(DTR2,3,3)
-    secondStageNR2 <- substr(DTR2,6,6)
-    
-    return(c(DTR2, firstStage2, secondStageR2, secondStageNR2))
-    
-  })
-  
-  ### Series of observe functions disallows selection of more than one input option 
-  ### (i.e. cell-specific, target difference, odds ratio)
-  
-  noCellProbA <- observe({    
-    if(input$targetDiffCheckA==TRUE){
-      updateCheckboxInput(session,"cellOrConditionalA",value=FALSE)
-    }
-  })
-  
-  noTargetsA<-observe({
-    if(input$cellOrConditionalA==TRUE){
-      updateCheckboxInput(session,"targetDiffCheckA",value=FALSE)
-      updateCheckboxInput(session,"targetOddsCheckA",value=FALSE)
-    }
-  },priority=1)
-  
-  
-  ##### DESIGN B #####
-  
+     
   ##### B IMAGE HEADER #####
-  ### Render the design image which highlights selected DTRs
-  ### Takes the names of selected DTRs, generates a filepath, and renders the image in the UI
-  ### Note that this requires a very specific naming convention for image assets
-      ### 'SMARTdesignX_DTR1_DTR2.gif'; if DTRX is unselected, DTR name is 0. 
+  # Render the design image which highlights selected DTRs
+  # Takes the names of selected DTRs, generates a filepath, and renders the image in the UI
+  # Note that this requires a very specific naming convention for image assets
+    # 'SMARTdesignX_DTR1_DTR2.gif'; if DTRX is unselected, DTR name is 0. 
   
   output$designBimg <- renderImage({
        filename<-filename<-normalizePath(file.path('./www/images',paste('SMARTdesignB_',input$firstDTRcompareB,'_',input$secondDTRcompareB,'.gif',sep='')))
@@ -89,10 +18,10 @@ shinyServer(function(input,output,session){
   
   ##### DESIGN B PROBABILITY INPUT #####
   
-  ### Read in DTR names from dropdowns and parse them to determine first and second stage treatments
-  ### Reactive function allows on-the-fly changes in return values with changes in selection
-  ### Outputs full DTR name, first-stage treatment (first character), second-stage treatment (last character)
-      ### NOTE that these positions are exclusive to design B because responders continue first-stage treatment
+  # Read in DTR names from dropdowns and parse them to determine first and second stage treatments
+  # Reactive function allows on-the-fly changes in return values with changes in selection
+  # Outputs full DTR name, first-stage treatment (first character), second-stage treatment (last character)
+    # NOTE that these positions are exclusive to design B because responders continue first-stage treatment
   
   substringDTR1B <- reactive({
     DTR1 <-paste(input$firstDTRcompareB)
@@ -112,21 +41,21 @@ shinyServer(function(input,output,session){
     
   })
   
-  ### Series of observe functions disallows selection of more than one input option 
-  ### (i.e. cell-specific, target difference, odds ratio)
+  # Series of observe functions disallows selection of more than one input option 
+  # (i.e. cell-specific, target difference, odds ratio)
   
-  noCellProbB <- observe({    
-    if(input$targetDiffCheckB){
+  observe({    
+    if(input$targetDiffCheckB==TRUE){
       updateCheckboxInput(session,"cellOrConditionalB",value=FALSE)
     }
   })
   
-  noTargetsB <- observe({
-    if(input$cellOrConditionalB){
+  observe({
+    if(input$cellOrConditionalB==TRUE){
       updateCheckboxInput(session,"targetDiffCheckB",value=FALSE)
       updateCheckboxInput(session,"targetOddsCheckB",value=FALSE)
     }
-  },priority=1)
+  })
   
   # When a first DTR is selected, render an input box corresponding to whatever input method is selected.
     # For DTR-conditional or cell-specific inputs, first numericInput is P(S|DTR1)
@@ -238,7 +167,7 @@ shinyServer(function(input,output,session){
       updateNumericInput(session,"DTRsuccB1",value=pDTR1)
       updateNumericInput(session,"DTRsuccB2",value=pDTR2)
     }
-  },priority=2)
+  },priority=3)
   
   # Render numericInputs for relevant values needed when outcome is continuous
   
