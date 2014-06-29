@@ -1,5 +1,20 @@
 library(shiny)
 
+### Function creates disabled (greyed-out) inputs
+### Taken from https://groups.google.com/d/msg/shiny-discuss/uSetp4TtW-s/Jktu3fS60RAJ
+disable <- function(x) {
+  if (inherits(x, 'shiny.tag')) {
+    if (x$name %in% c('input', 'select'))
+      x$attribs$disabled <- 'disabled'
+    x$children <- disable(x$children)
+  }
+  else if (is.list(x) && length(x) > 0) {
+    for (i in 1:length(x))
+      x[[i]] <- disable(x[[i]])
+  }
+  x
+}
+
 shinyUI(
   navbarPage("SMART Sample Size Calculator", id="SMARTsize",
 
@@ -282,6 +297,7 @@ shinyUI(
                                  conditionalPanel(condition="input.selectOutcomeB==1",
                                                   uiOutput("binaryDTR1probB"),
                                                   conditionalPanel(condition="input.cellOrConditionalB",
+#                                                                    fluidRow(disable(numericInput("disabled","disabled",value=0))),
                                                                    fluidRow(column(1),
                                                                             column(4,uiOutput("cellProbsDTR1B"))
                                                                    )
@@ -325,7 +341,6 @@ shinyUI(
                                            tags$hr()
                           )
                         ),
-                          
                         
                         ##### B RESULT OPTIONS #####
                         # Provide options to tailor results: Choose sample size or power, provide alpha and 1-beta

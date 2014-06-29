@@ -1,7 +1,31 @@
 library(shiny)
 library(pwr)
 
+### Function creates disabled (greyed-out) inputs
+### Taken from https://groups.google.com/d/msg/shiny-discuss/uSetp4TtW-s/Jktu3fS60RAJ
+disable <- function(x) {
+  if (inherits(x, 'shiny.tag')) {
+    if (x$name %in% c('input', 'select'))
+      x$attribs$disabled <- 'disabled'
+    x$children <- disable(x$children)
+  }
+  else if (is.list(x) && length(x) > 0) {
+    for (i in 1:length(x))
+      x[[i]] <- disable(x[[i]])
+  }
+  x
+}
+
+### Function evaluates full-DTR probabilities; not reactive
+fullDTRprob <- function(cell1, resp, cell2){
+  pDTR <- cell1 * resp + cell2 * (1-resp)
+  return(pDTR)
+}
+
+### Create operator to sequentially evaluate need() statements
 `%then%` <- shiny:::`%OR%`
+
+### BEGIN SERVER OPERATIONS ###
 
 shinyServer(function(input,output,session){
   
@@ -112,49 +136,54 @@ shinyServer(function(input,output,session){
     
   })
   
-  ### Series of observe functions disallows selection of more than one input option 
-  ### (i.e. cell-specific, target difference, odds ratio)
-  
-  noCellProbB <- observe({    
-    if(input$targetDiffCheckB){
-      updateCheckboxInput(session,"cellOrConditionalB",value=FALSE)
-    }
-  })
-  
-#   noTargetsB <- observe({
-#     if(input$cellOrConditionalB){
-#       updateCheckboxInput(session,"targetDiffCheckB",value=FALSE)
-#       updateCheckboxInput(session,"targetOddsCheckB",value=FALSE)
-#     }
-#   },priority=1)
-  
   # When a first DTR is selected, render an input box corresponding to whatever input method is selected.
     # For DTR-conditional or cell-specific inputs, first numericInput is P(S|DTR1)
     # For target-difference or OR, relevant numericInputs are rendered
       # This is the ONLY location in which difference and OR numericInputs are built.
   
-  output$binaryDTR1probB <- renderUI({
+  generateBinaryInputs1B <- reactive({
     validate(
       need(input$firstDTRcompareB!=0, "Please select a first DTR.")
     )
+    isolate({
     if(input$targetDiffCheckB==FALSE){
       if(substringDTR1B()[1] != substringDTR2B()[1]){
-        DTR1inputs<-c(numericInput("DTRsuccB1",label="Probability of Success for First DTR",value=0,min=0,max=1,step=0.0001))
+        return(numericInput("DTRsuccB1",label="Probability of Success for First DTR",value=0,min=0,max=1,step=0.0001))
       }
     }
+    
     if(input$targetDiffCheckB==TRUE && substringDTR2B()[1] != 0){
-      DTR1inputs<-c(numericInput("targetDiffB",label="Target Difference in Success Probabilities",value=0.1,min=0.0001,max=0.5,step=0.0001))
+      return(numericInput("targetDiffB",label="Target Difference in Success Probabilities",value=0.1,min=0.0001,max=0.5,step=0.0001))
     }
     
     if(input$targetOddsCheckB==TRUE && substringDTR2B()[1] != 0){
-      DTR1inputs<-c(numericInput("targetORB",label="Target Odds Ratio of Success",value=2,min=0,step=0.0001))
-    }
-      
-    if(input$targetDiffCheckB==TRUE && substringDTR2B()[1] == 0){
-      DTR1inputs<-c()
+      return(numericInput("targetORB",label="Target Odds Ratio of Success",value=2,min=0,step=0.0001))
     }
     
-    DTR1inputs
+    if(input$targetDiffCheckB==TRUE && substringDTR2B()[1] == 0){
+      return()
+    }
+    })
+  })
+  
+  generateBinaryInputs2B <- reactive({
+    validate(
+      need(input$secondDTRcompareB!=0, "Please select a second DTR.")
+    )
+    isolate({if(input$targetDiffCheckB==FALSE && input$targetOddsCheckB==FALSE){
+      if(substringDTR1B()[1] != substringDTR2B()[1]){
+        numericInput("DTRsuccB2",label="Probability of Success for Second DTR",value=0,min=0,max=1,step=0.0001)
+      }
+    }
+    })
+  })
+  
+  output$binaryDTR1probB <- renderUI({
+    if(input$cellOrConditionalB==TRUE){
+      disable( generateBinaryInputs1B() )
+    }
+    else
+      generateBinaryInputs1B()
   })
   
   # When a second DTR is selected, render an input box corresponding to whatever input method is selected.
@@ -162,14 +191,11 @@ shinyServer(function(input,output,session){
     # For target-difference or OR, numericInputs are NOT rendered (those are handled in output$binaryDTR1probB)
   
   output$binaryDTR2probB <- renderUI({
-    validate(
-      need(input$secondDTRcompareB!=0, "Please select a second DTR.")
-    )
-    if(input$targetDiffCheckB==FALSE && input$targetOddsCheckB==FALSE){
-      if(substringDTR1B()[1] != substringDTR2B()[1]){
-        numericInput("DTRsuccB2",label="Probability of Success for Second DTR",value=0,min=0,max=1,step=0.0001)
-      }
+    if(input$cellOrConditionalB==TRUE){
+      disable(generateBinaryInputs2B())
     }
+    else
+      generateBinaryInputs2B()
   })
   
   # For cell-specific probabilities, render a series of numericInputs labeled by information from DTR substrings
@@ -178,7 +204,7 @@ shinyServer(function(input,output,session){
   output$cellProbsDTR1B <- renderUI({
     validate(
       need(substringDTR1B()[1] != 0, "Cell-specific probabilities cannot be input until a first DTR is selected.")
-    )    
+    )
     if(substringDTR1B()[1] != substringDTR2B()[1]){
         controlInputs<-c(numericInput("marginalFirstStageB1",label=paste("P(S|",substringDTR1B()[2],",r)",sep=""),value=0,min=0,max=1,step=0.0001),
                          numericInput("marginalSecondStageNRB1",label=paste("P(S|",substringDTR1B()[2],",nr,",substringDTR1B()[3],")",sep=""),
@@ -211,34 +237,41 @@ shinyServer(function(input,output,session){
   })
   
   
-  # In the case that the second DTR is selected before the first and input is provided for P(S|stage1trt,r),
-  # then the first DTR is selected and begins with the same intial treatment, carry over the provided input 
-  # for P(S|stage1trt,r) into the new input box listed under first-stage treatment
+  ##### DESIGN B OBSERVERS #####
   
-  observe({
-    if(substringDTR1B()[2]==substringDTR2B()[2]){
-      updateNumericInput(session,"marginalFirstStageB1",value=input$marginalFirstStageB2)
+  ### Series of observe functions disallows selection of more than one input option 
+  ### (i.e. cell-specific, target difference, odds ratio)
+  
+  observe({    
+    if(input$targetDiffCheckB){
+      updateCheckboxInput(session,"cellOrConditionalB",value=FALSE)
     }
   })
-
+    
   # When taking cell-specific inputs, update full-DTR probabilities to computed values
     # High-priority observer operates before any other observers, so response is highly reactive
+  
+  generateProbsB <- reactive({
+    if(substringDTR1B()[2]==substringDTR2B()[2]){
+      pDTR1 <- fullDTRprob(input$marginalFirstStageB1,input$respB,input$marginalSecondStageNRB1)
+      pDTR2 <- fullDTRprob(input$marginalFirstStageB1,input$respB,input$marginalSecondStageNRB2)
+    }
+    
+    else{
+      pDTR1 <- fullDTRprob(input$marginalFirstStageB1,input$respB,input$marginalSecondStageNRB1)
+      pDTR2 <- fullDTRprob(input$marginalFirstStageB2,input$respB,input$marginalSecondStageNRB2)
+    }
+    
+    return(c(pDTR1,pDTR2))
+  })
   
   observe({
     if(input$cellOrConditionalB==TRUE){
       updateCheckboxInput(session,"targetDiffCheckB",value=FALSE)
       updateCheckboxInput(session,"targetOddsCheckB",value=FALSE)
-      if(substringDTR1B()[2]==substringDTR2B()[2]){
-        pDTR1 <- input$respB * input$marginalFirstStageB1 + (1-input$respB)*input$marginalSecondStageNRB1
-        pDTR2 <- input$respB * input$marginalFirstStageB1 + (1-input$respB)*input$marginalSecondStageNRB2
-      }
       
-      else{
-        pDTR1<- input$respB * input$marginalFirstStageB1 + (1-input$respB)*input$marginalSecondStageNRB1
-        pDTR2<- input$respB * input$marginalFirstStageB2 + (1-input$respB)*input$marginalSecondStageNRB2
-      }
-      updateNumericInput(session,"DTRsuccB1",value=pDTR1)
-      updateNumericInput(session,"DTRsuccB2",value=pDTR2)
+      updateNumericInput(session,"DTRsuccB1",value=generateProbsB()[1])
+      updateNumericInput(session,"DTRsuccB2",value=generateProbsB()[2])
     }
   },priority=2)
   
@@ -376,5 +409,5 @@ shinyServer(function(input,output,session){
     cat("Power =",finalPower)
   })
 
-
+  
 })
