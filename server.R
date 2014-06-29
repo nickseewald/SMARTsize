@@ -145,12 +145,13 @@ shinyServer(function(input,output,session){
     validate(
       need(input$firstDTRcompareB!=0, "Please select a first DTR.")
     )
-    isolate({
+#     isolate({
     if(input$targetDiffCheckB==FALSE){
       if(substringDTR1B()[1] != substringDTR2B()[1]){
         return(numericInput("DTRsuccB1",label="Probability of Success for First DTR",value=0,min=0,max=1,step=0.0001))
       }
     }
+#     })
     
     if(input$targetDiffCheckB==TRUE && substringDTR2B()[1] != 0){
       return(numericInput("targetDiffB",label="Target Difference in Success Probabilities",value=0.1,min=0.0001,max=0.5,step=0.0001))
@@ -163,19 +164,17 @@ shinyServer(function(input,output,session){
     if(input$targetDiffCheckB==TRUE && substringDTR2B()[1] == 0){
       return()
     }
-    })
   })
   
   generateBinaryInputs2B <- reactive({
     validate(
       need(input$secondDTRcompareB!=0, "Please select a second DTR.")
     )
-    isolate({if(input$targetDiffCheckB==FALSE && input$targetOddsCheckB==FALSE){
+    if(input$targetDiffCheckB==FALSE && input$targetOddsCheckB==FALSE){
       if(substringDTR1B()[1] != substringDTR2B()[1]){
         numericInput("DTRsuccB2",label="Probability of Success for Second DTR",value=0,min=0,max=1,step=0.0001)
       }
     }
-    })
   })
   
   output$binaryDTR1probB <- renderUI({
@@ -274,6 +273,10 @@ shinyServer(function(input,output,session){
       updateNumericInput(session,"DTRsuccB2",value=generateProbsB()[2])
     }
   },priority=2)
+  
+  observe({
+    
+  })
   
   # Render numericInputs for relevant values needed when outcome is continuous
   
