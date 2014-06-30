@@ -33,40 +33,42 @@ shinyUI(
                                       per conubia nostra, per inceptos himenaeos. Curabitur 
                                       sodales ligula in libero.")),
                       
-                      mainPanel(h1("Introduction"),br(),
-                                p("Choose a design by clicking the cooresponding tab at the top of the window. If you are using a smartphone, 
+                      mainPanel(
+                        h1("Sample Size Calculator for SMARTs with Binary or Continuous Outcomes"),
+                        br(),
+                        p("Choose a design by clicking the cooresponding tab at the top of the window. If you are using a smartphone, 
                                   options are available via the menu button (three horizontal lines) at the top of the window."),
-                                br(),
-                                fluidRow(
-                                  column(6,
-                                         img(src="images/SMARTdesignA_0_0.gif"),
-                                         actionButton("pickTabA","Design A")
-                                  ),
-                                  column(6,
-                                         img(src="images/SMARTdesignB_0_0.gif"),
-                                         actionButton("pickTabB","Design B")
-                                  )
-                                ),
-                                fluidRow(
-                                  column(6,
-                                         img(src="images/SMARTdesignC.gif"),
-                                         actionButton("pickTabC","Design C")
-                                  ),
-                                  column(6,
-                                         img(src="images/SMARTdesignD.gif"),
-                                         actionButton("pickTabD","Design D")
-                                  )
-                                ),
-                                h2("More Information"),
-                                p("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer nec odio. Praesent libero. Sed 
+                        br(),
+                        fluidRow(
+                          column(6,
+                                 img(src="images/SMARTdesignA_0_0.gif"),
+                                 actionButton("pickTabA","Design A")
+                          ),
+                          column(6,
+                                 img(src="images/SMARTdesignB_0_0.gif"),
+                                 actionButton("pickTabB","Design B")
+                          )
+                        ),
+                        fluidRow(
+                          column(6,
+                                 img(src="images/SMARTdesignC.gif"),
+                                 actionButton("pickTabC","Design C")
+                          ),
+                          column(6,
+                                 img(src="images/SMARTdesignD.gif"),
+                                 actionButton("pickTabD","Design D")
+                          )
+                        ),
+                        h2("More Information"),
+                        p("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer nec odio. Praesent libero. Sed 
                                   cursus ante dapibus diam. Sed nisi. Nulla quis sem at nibh elementum imperdiet. Duis sagittis ipsum. 
                                   Praesent mauris. Fusce nec tellus sed augue semper porta. Mauris massa. Vestibulum lacinia arcu eget nulla. "),
-                                p("Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Curabitur 
+                        p("Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Curabitur 
                                   sodales ligula in libero. Sed dignissim lacinia nunc. Curabitur tortor. Pellentesque nibh. Aenean quam.
                                   In scelerisque sem at dolor. Maecenas mattis. Sed convallis tristique sem. Proin ut ligula vel nunc 
                                   egestas porttitor. Morbi lectus risus, iaculis vel, suscipit quis, luctus non, massa. Fusce ac turpis 
                                   quis ligula lacinia aliquet. Mauris ipsum. "),
-                                p("Nulla metus metus, ullamcorper vel, tincidunt sed, euismod in, nibh. Quisque volutpat condimentum velit.
+                        p("Nulla metus metus, ullamcorper vel, tincidunt sed, euismod in, nibh. Quisque volutpat condimentum velit.
                                   Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Nam nec ante. 
                                   Sed lacinia, urna non tincidunt mattis, tortor neque adipiscing diam, a cursus ipsum ante quis turpis. 
                                   Nulla facilisi. Ut fringilla. Suspendisse potenti. Nunc feugiat mi a tellus consequat imperdiet. Vestibulum
@@ -123,7 +125,7 @@ shinyUI(
                           column(6,
                                  numericInput("respA",
                                               label="What is the probability that a patient responds to first-stage treatment? If you are unsure, enter 0 for a conservative estimate.",
-                                              value=0,min=0,max=1,step=0.0001)
+                                              value=0,min=0,max=1,step=0.01)
                           )
                         ),
                         
@@ -189,9 +191,9 @@ shinyUI(
                                                 choices=list("Sample Size" = "sample", "Power" = "power"),
                                                 selected="sample")),
                           column(6,
-                                 numericInput("alphaA",label="Type I Error (Alpha):",value=0.05,min=0,max=1,step=0.0001),
+                                 numericInput("alphaA",label="Type I Error (Alpha):",value=0.05,min=0,max=1,step=0.01),
                                  conditionalPanel(condition="input.selectResultsB=='sample'",
-                                                  numericInput("inputPowerB",label="Power of Trial:",value=0.8, min=0, max=1,step=0.0001)
+                                                  numericInput("inputPowerB",label="Power of Trial:",value=0.8, min=0, max=1,step=0.01)
                                  ),
                                  conditionalPanel(condition="input.selectResultsA=='power'",
                                                   numericInput("inputSampleSizeB",label="Total Sample Size of Trial:",value=0, min=0)
@@ -281,7 +283,7 @@ shinyUI(
                           column(6,
                                  numericInput("respB",
                                               label="What is the probability that a patient responds to first-stage treatment? If you are unsure, enter 0 for a conservative estimate.",
-                                              value=0,min=0,max=1,step=0.0001)
+                                              value=0,min=0,max=1,step=0.01)
                                  )
                           ),
                         
@@ -297,7 +299,6 @@ shinyUI(
                                  conditionalPanel(condition="input.selectOutcomeB==1",
                                                   uiOutput("binaryDTR1probB"),
                                                   conditionalPanel(condition="input.cellOrConditionalB",
-#                                                                    fluidRow(disable(numericInput("disabled","disabled",value=0))),
                                                                    fluidRow(column(1),
                                                                             column(4,uiOutput("cellProbsDTR1B"))
                                                                    )
@@ -308,39 +309,38 @@ shinyUI(
                                                                             column(4,uiOutput("cellProbsDTR2B"))
                                                                    )
                                                   )
+                                                  
                                  ),
                                  conditionalPanel(condition="input.selectOutcomeB==2",
                                                   uiOutput("continuousProbB")
+                                 ),
+                                 br(),
+                                 
+                                 ##### B INPUT OPTIONS #####
+                                 # Check for output selection (binary/continuous) then provide options for tailoring ways to input response
+                                 # For binary outcomes, options for cell-specific probabilities, target difference, and target odds-ratio
+                                 # For continuous outcomes, option to input mean difference and standard-deviation
+                                 
+                                 conditionalPanel(condition="input.firstDTRcompareB != 0 && input.secondDTRcompareB !=0",
+                                                  conditionalPanel(condition="input.selectOutcomeB==1",
+                                                                   checkboxInput("cellOrConditionalB",label="Check this box to input cell-specific probabilities.",value=FALSE),
+                                                                   checkboxInput("targetDiffCheckB",label="Check this box to input a target difference in probabilities.",value=FALSE),
+                                                                   conditionalPanel(condition="input.targetDiffCheckB",
+                                                                                    column(1), 
+                                                                                    column(11,
+                                                                                           checkboxInput("targetOddsCheckB",label="Check this box to input a target odds-ratio instead of a target difference.",value=FALSE)
+                                                                                    )
+                                                                   )
+                                                                   
+                                                  ),
+                                                  conditionalPanel(condition="input.selectOutcomeB==2",
+                                                                   checkboxInput("meanSdCheckB",label="Check this box to input a difference in means and standard deviation.",value=FALSE)
+                                                  )
                                  )
                           )
                         ),
                         
                         tags$hr(),
-
-                        ##### B INPUT OPTIONS #####
-                        # Check for output selection (binary/continuous) then provide options for tailoring ways to input response
-                          # For binary outcomes, options for cell-specific probabilities, target difference, and target odds-ratio
-                          # For continuous outcomes, option to input mean difference and standard-deviation
-
-                        fluidRow(
-                          conditionalPanel(condition="input.firstDTRcompareB != 0 && input.secondDTRcompareB !=0",
-                                            conditionalPanel(condition="input.selectOutcomeB==1",
-                                                             checkboxInput("cellOrConditionalB",label="Check this box to input cell-specific probabilities.",value=FALSE),
-                                                             checkboxInput("targetDiffCheckB",label="Check this box to input a target difference in probabilities.",value=FALSE),
-                                                             conditionalPanel(condition="input.targetDiffCheckB",
-                                                                              column(1), 
-                                                                              column(11,
-                                                                                     checkboxInput("targetOddsCheckB",label="Check this box to input a target odds-ratio instead of a target difference.",value=FALSE)
-                                                                              )
-                                                             )
-                                                             
-                                            ),
-                                            conditionalPanel(condition="input.selectOutcomeB==2",
-                                                                    checkboxInput("meanSdCheckB",label="Check this box to input a difference in means and standard deviation.",value=FALSE)
-                                            ),
-                                           tags$hr()
-                          )
-                        ),
                         
                         ##### B RESULT OPTIONS #####
                         # Provide options to tailor results: Choose sample size or power, provide alpha and 1-beta
@@ -350,9 +350,9 @@ shinyUI(
                                                 choices=list("Sample Size" = "sample", "Power" = "power"),
                                                 selected="sample")),
                           column(6,
-                                 numericInput("alphaB",label="Type I Error (Alpha):",value=0.05,min=0,max=1,step=0.0001),
+                                 numericInput("alphaB",label="Type I Error (Alpha):",value=0.05,min=0,max=1,step=0.01),
                                  conditionalPanel(condition="input.selectResultsB=='sample'",
-                                                  numericInput("inputPowerB",label="Power of Trial:",value=0.8, min=0, max=1,step=0.0001)
+                                                  numericInput("inputPowerB",label="Power of Trial:",value=0.8, min=0, max=1,step=0.01)
                                  ),
                                  conditionalPanel(condition="input.selectResultsB=='power'",
                                                   numericInput("inputSampleSizeB",label="Total Sample Size of Trial:",value=0, min=0)

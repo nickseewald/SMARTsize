@@ -145,20 +145,20 @@ shinyServer(function(input,output,session){
     validate(
       need(input$firstDTRcompareB!=0, "Please select a first DTR.")
     )
-#     isolate({
-    if(input$targetDiffCheckB==FALSE){
-      if(substringDTR1B()[1] != substringDTR2B()[1]){
-        return(numericInput("DTRsuccB1",label="Probability of Success for First DTR",value=0,min=0,max=1,step=0.0001))
+    if(input$targetDiffCheckB==FALSE && substringDTR1B()[1] != substringDTR2B()[1]){
+      if(input$cellOrConditionalB==TRUE){
+        return(disable(numericInput("DTRsuccB1disable",label="Probability of Success for First DTR",value=0,min=0,max=1,step=0.01)))
       }
+      else
+        return(numericInput("DTRsuccB1",label="Probability of Success for First DTR",value=generateProbsB()[1],min=0,max=1,step=0.01))
     }
-#     })
     
-    if(input$targetDiffCheckB==TRUE && substringDTR2B()[1] != 0){
-      return(numericInput("targetDiffB",label="Target Difference in Success Probabilities",value=0.1,min=0.0001,max=0.5,step=0.0001))
+    if(input$targetDiffCheckB==TRUE && input$targetOddsCheckB==FALSE && substringDTR2B()[1] != 0){
+      return(numericInput("targetDiffB",label="Target Difference in Success Probabilities",value=0.1,min=0.0001,max=0.5,step=0.01))
     }
     
     if(input$targetOddsCheckB==TRUE && substringDTR2B()[1] != 0){
-      return(numericInput("targetORB",label="Target Odds Ratio of Success",value=2,min=0,step=0.0001))
+      return(numericInput("targetORB",label="Target Odds Ratio of Success",value=2,min=0,step=0.01))
     }
     
     if(input$targetDiffCheckB==TRUE && substringDTR2B()[1] == 0){
@@ -170,19 +170,17 @@ shinyServer(function(input,output,session){
     validate(
       need(input$secondDTRcompareB!=0, "Please select a second DTR.")
     )
-    if(input$targetDiffCheckB==FALSE && input$targetOddsCheckB==FALSE){
-      if(substringDTR1B()[1] != substringDTR2B()[1]){
-        numericInput("DTRsuccB2",label="Probability of Success for Second DTR",value=0,min=0,max=1,step=0.0001)
+    if(input$targetDiffCheckB==FALSE && input$targetOddsCheckB==FALSE && substringDTR1B()[1] != substringDTR2B()[1]){
+      if(input$cellOrConditionalB==TRUE){
+        return(disable(numericInput("DTRsuccB2disable",label="Probability of Success for Second DTR",value=0,min=0,max=1,step=0.01)))
       }
+      else
+        return(numericInput("DTRsuccB2",label="Probability of Success for Second DTR",value=generateProbsB()[2],min=0,max=1,step=0.01))
     }
   })
   
   output$binaryDTR1probB <- renderUI({
-    if(input$cellOrConditionalB==TRUE){
-      disable( generateBinaryInputs1B() )
-    }
-    else
-      generateBinaryInputs1B()
+    generateBinaryInputs1B()
   })
   
   # When a second DTR is selected, render an input box corresponding to whatever input method is selected.
@@ -190,11 +188,7 @@ shinyServer(function(input,output,session){
     # For target-difference or OR, numericInputs are NOT rendered (those are handled in output$binaryDTR1probB)
   
   output$binaryDTR2probB <- renderUI({
-    if(input$cellOrConditionalB==TRUE){
-      disable(generateBinaryInputs2B())
-    }
-    else
-      generateBinaryInputs2B()
+    generateBinaryInputs2B()
   })
   
   # For cell-specific probabilities, render a series of numericInputs labeled by information from DTR substrings
@@ -205,9 +199,9 @@ shinyServer(function(input,output,session){
       need(substringDTR1B()[1] != 0, "Cell-specific probabilities cannot be input until a first DTR is selected.")
     )
     if(substringDTR1B()[1] != substringDTR2B()[1]){
-        controlInputs<-c(numericInput("marginalFirstStageB1",label=paste("P(S|",substringDTR1B()[2],",r)",sep=""),value=0,min=0,max=1,step=0.0001),
+        controlInputs<-c(numericInput("marginalFirstStageB1",label=paste("P(S|",substringDTR1B()[2],",r)",sep=""),value=0,min=0,max=1,step=0.01),
                          numericInput("marginalSecondStageNRB1",label=paste("P(S|",substringDTR1B()[2],",nr,",substringDTR1B()[3],")",sep=""),
-                                      value=0,min=0,max=1,step=0.0001)
+                                      value=0,min=0,max=1,step=0.01)
         )
     }
     
@@ -220,15 +214,15 @@ shinyServer(function(input,output,session){
     if(substringDTR1B()[1] != substringDTR2B()[1]){
       if(substringDTR1B()[2]==substringDTR2B()[2]){
         controlInputs<-c(numericInput("marginalSecondStageNRB2",label=paste("P(S|",substringDTR2B()[2],",nr,",substringDTR2B()[3],")",sep=""),
-                         value=0,min=0,max=1,step=0.0001)
+                         value=0,min=0,max=1,step=0.01)
         )
         
       }
       else{
         controlInputs<-c(
-                         numericInput("marginalFirstStageB2",label=paste("P(S|",substringDTR2B()[2],",r)",sep=""),value=0,min=0,max=1,step=0.0001),
+                         numericInput("marginalFirstStageB2",label=paste("P(S|",substringDTR2B()[2],",r)",sep=""),value=0,min=0,max=1,step=0.01),
                          numericInput("marginalSecondStageNRB2",label=paste("P(S|",substringDTR2B()[2],",nr,",substringDTR2B()[3],")",sep=""),
-                                      value=0,min=0,max=1,step=0.0001)
+                                      value=0,min=0,max=1,step=0.01)
         )
       }
     }
@@ -244,6 +238,9 @@ shinyServer(function(input,output,session){
   observe({    
     if(input$targetDiffCheckB){
       updateCheckboxInput(session,"cellOrConditionalB",value=FALSE)
+    }
+    if(input$targetDiffCheckB==FALSE){
+      updateCheckboxInput(session,"targetOddsCheckB",value=FALSE)
     }
   })
     
@@ -269,8 +266,8 @@ shinyServer(function(input,output,session){
       updateCheckboxInput(session,"targetDiffCheckB",value=FALSE)
       updateCheckboxInput(session,"targetOddsCheckB",value=FALSE)
       
-      updateNumericInput(session,"DTRsuccB1",value=generateProbsB()[1])
-      updateNumericInput(session,"DTRsuccB2",value=generateProbsB()[2])
+      updateNumericInput(session,"DTRsuccB1disable",value=generateProbsB()[1])
+      updateNumericInput(session,"DTRsuccB2disable",value=generateProbsB()[2])
     }
   },priority=2)
   
@@ -286,11 +283,11 @@ shinyServer(function(input,output,session){
       need(input$secondDTRcompareB!=0, "Please select a second DTR.")
     )
     if(substringDTR1B()[1]!=substringDTR2B()[1] && input$meanSdCheckB == FALSE){
-      contInput<-c(numericInput("effectSizeB",label="Standardized Effect Size:",value=0,min=0,step=0.0001))
+      contInput<-c(numericInput("effectSizeB",label="Standardized Effect Size:",value=0,min=0,step=0.01))
     }
     if(substringDTR1B()[1]!=substringDTR2B()[1] && input$meanSdCheckB == TRUE){
-      contInput<-c(numericInput("meanDiffB",label="Difference in mean outcomes between the two selected DTRs:",value=0,min=0,step=0.0001),
-                   numericInput("sdDiffB",label="Standard deviation of the above difference in means:", value=0, min=0, step=0.0001))
+      contInput<-c(numericInput("meanDiffB",label="Difference in mean outcomes between the two selected DTRs:",value=0,min=0,step=0.01),
+                   numericInput("sdDiffB",label="Standard deviation of the above difference in means:", value=0, min=0, step=0.01))
     }
     contInput
   })
@@ -304,7 +301,7 @@ shinyServer(function(input,output,session){
     
     validate(need(!(is.na(input$respB)), "Please provide a response probability. If unknown, enter 0 for a conservative estimate of power or sample size."))
     
-    if(input$selectOutcomeB==1 && input$cellOrConditionalB==FALSE){
+    if(input$selectOutcomeB==1 && input$cellOrConditionalB==FALSE && input$targetDiffCheckB==FALSE){
       validate(
         need(input$firstDTRcompareB != 0, "Select a first DTR above."),
         need(input$secondDTRcompareB != 0, "Select a second DTR above.") %then%
@@ -334,7 +331,7 @@ shinyServer(function(input,output,session){
       return(c(pDTR1,pDTR2))
      }
     
-    if(input$selectOutcomeB==1 && input$targetDiffCheckB==TRUE){
+    if(input$selectOutcomeB==1 && input$cellOrConditionalB==FALSE && input$targetDiffCheckB==TRUE && input$targetOddsCheckB==FALSE){
       validate(
         need(input$targetDiffB <= 0.5, "Target difference must be less than 0.5 to be valid input"),
         need(input$targetDiffB > 0, "Target difference must be greater than 0. Sample size is indeterminate for equal DTR probabilities.
@@ -343,7 +340,7 @@ shinyServer(function(input,output,session){
       return(c(0.5,0.5+input$targetDiffB))
     }
     
-    if(input$selectOutcomeB==1 && input$targetOddsCheckB==TRUE){
+    if(input$selectOutcomeB==1 && input$targetOddsCheckB==TRUE && input$targetDiffCheckB==TRUE){
       validate(
         need(input$targetORB != 1, "Sample size is indeterminate for an odds ratio of 1. Please enter a different target odds ratio."),
         need(input$targetORB != 0, "Sample size is indeterminate for an odds ratio of 0. Please enter a different target odds ratio.")
@@ -365,7 +362,7 @@ shinyServer(function(input,output,session){
         need(input$sdDiffB != 0, "Sample size is indeterminate for a standard deviation of 0.")
       )
       effectSize <- abs(input$meanDiffB / input$sdDiffB)
-      
+        
       return(effectSize)
     }  
   })
@@ -392,6 +389,9 @@ shinyServer(function(input,output,session){
   })
 
   output$binaryPowerB <- renderPrint({
+    validate(
+      need(input$inputSampleSizeB != 0, "Power is indeterminate for a sample size of 0. Please provide a valid sample size.")  
+    )
     designEffect<-selectEffectB()
     size<-(input$inputSampleSizeB/designEffect)
     finalPower<-round(power.prop.test(p1=dataCompilerB()[1],p2=dataCompilerB()[2],n=size,sig.level=input$alphaB)$power,digits=3)
@@ -406,6 +406,9 @@ shinyServer(function(input,output,session){
   })
   
   output$continuousPowerB <- renderPrint({
+    validate(
+      need(input$inputSampleSizeB != 0, "Power is indeterminate for a sample size of 0. Please provide a valid sample size.")  
+    )
     designEffect<-selectEffectB()
     size<-(input$inputSampleSizeB/(2*designEffect))
     finalPower<-round(pwr.norm.test(d=dataCompilerB(),sig.level=input$alphaB,n=size,alternative="two.sided")$power,digits=3)
