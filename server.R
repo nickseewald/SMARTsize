@@ -16,12 +16,6 @@ disable <- function(x) {
   x
 }
 
-### Create lists of all DTRs for each design
-designA.DTRs <- c("ArCnrE", "ArCnrF", "ArDnrE", "ArDnrF", "BrGnrI", "BrGnrJ", "BrHnrI", "BrHnrJ")
-designB.DTRs <- c("ArCnrD", "ArCnrE", "BrFnrG", "BrFnrH")
-designC.DTRs <- c("ArCnrD", "ArCnrE", "BrFnrG")
-designD.DTRs <- c("AC", "AD", "BE", "BF")
-
 ### Function evaluates full-DTR probabilities; not reactive
 fullDTRprob <- function(cell1, resp, cell2){
   pDTR <- cell1 * resp + cell2 * (1-resp)
@@ -46,68 +40,67 @@ shinyServer(function(input,output,session){
     if(input$pickTabD) updateTabsetPanel(session,"SMARTsize",selected="Design D")
   })
   
-  ##### DESIGN A #####
-  
-  ##### A IMAGE HEADER #####
-  ### Render the design image which highlights selected DTRs
-  ### Takes the names of selected DTRs, generates a filepath, and renders the image in the UI
-  ### Note that this requires a very specific naming convention for image assets
-  ### 'SMARTdesignX_DTR1_DTR2.gif'; if DTRX is unselected, DTR name is 0. 
-  
-  output$designAimg <- renderImage({
-    filename<-filename<-normalizePath(file.path('./www/images',paste('SMARTdesignA_',input$firstDTRcompareA,'_',input$secondDTRcompareA,'.gif',sep='')))
-    list(src=filename)
-  },deleteFile=FALSE)
-  
-  
-  ##### DESIGN A PROBABILITY INPUT #####
-  
-  ### Read in DTR names from dropdowns and parse them to determine first and second stage treatments
-  ### Reactive function allows on-the-fly changes in return values with changes in selection
-  ### Outputs full DTR name, first-stage treatment (first character), second-stage treatment (last character)
-  ### NOTE that these positions are exclusive to design B because responders continue first-stage treatment
-  
-  substringDTR1A <- reactive({
-    DTR1 <- paste(input$firstDTRcompareA)
-    firstStage1 <- substr(DTR1,1,1)
-    secondStageR1 <- substr(DTR1,3,3)
-    secondStageNR1 <- substr(DTR1,6,6)
-    
-    return(c(DTR1, firstStage1,secondStageR1, secondStageNR1))
-    
-  })
-  
-  substringDTR2A <- reactive({
-    DTR2 <- paste(input$secondDTRcompareA)
-    firstStage2 <- substr(DTR2,1,1)
-    secondStageR2 <- substr(DTR2,3,3)
-    secondStageNR2 <- substr(DTR2,6,6)
-    
-    return(c(DTR2, firstStage2, secondStageR2, secondStageNR2))
-    
-  })
-  
-  ### Series of observe functions disallows selection of more than one input option 
-  ### (i.e. cell-specific, target difference, odds ratio)
-  
-  noCellProbA <- observe({    
-    if(input$targetDiffCheckA==TRUE){
-      updateCheckboxInput(session,"cellOrConditionalA",value=FALSE)
-    }
-  })
-  
-  noTargetsA<-observe({
-    if(input$cellOrConditionalA==TRUE){
-      updateCheckboxInput(session,"targetDiffCheckA",value=FALSE)
-      updateCheckboxInput(session,"targetOddsCheckA",value=FALSE)
-    }
-  },priority=1)
-  
+#   ##### DESIGN A #####
+#   
+#   ##### A IMAGE HEADER #####
+#   ### Render the design image which highlights selected DTRs
+#   ### Takes the names of selected DTRs, generates a filepath, and renders the image in the UI
+#   ### Note that this requires a very specific naming convention for image assets
+#   ### 'SMARTdesignX_DTR1_DTR2.gif'; if DTRX is unselected, DTR name is 0. 
+#   
+#   output$designAimg <- renderImage({
+#     filename<-filename<-normalizePath(file.path('./www/images',paste('SMARTdesignA_',input$firstDTRcompareA,'_',input$secondDTRcompareA,'.gif',sep='')))
+#     list(src=filename)
+#   },deleteFile=FALSE)
+#   
+#   
+#   ##### DESIGN A PROBABILITY INPUT #####
+#   
+#   ### Read in DTR names from dropdowns and parse them to determine first and second stage treatments
+#   ### Reactive function allows on-the-fly changes in return values with changes in selection
+#   ### Outputs full DTR name, first-stage treatment (first character), second-stage treatment (last character)
+#   ### NOTE that these positions are exclusive to design B because responders continue first-stage treatment
+#   
+#   substringDTR1A <- reactive({
+#     DTR1 <- paste(input$firstDTRcompareA)
+#     firstStage1 <- substr(DTR1,1,1)
+#     secondStageR1 <- substr(DTR1,3,3)
+#     secondStageNR1 <- substr(DTR1,6,6)
+#     
+#     return(c(DTR1, firstStage1,secondStageR1, secondStageNR1))
+#     
+#   })
+#   
+#   substringDTR2A <- reactive({
+#     DTR2 <- paste(input$secondDTRcompareA)
+#     firstStage2 <- substr(DTR2,1,1)
+#     secondStageR2 <- substr(DTR2,3,3)
+#     secondStageNR2 <- substr(DTR2,6,6)
+#     
+#     return(c(DTR2, firstStage2, secondStageR2, secondStageNR2))
+#     
+#   })
+#   
+#   ### Series of observe functions disallows selection of more than one input option 
+#   ### (i.e. cell-specific, target difference, odds ratio)
+#   
+#   noCellProbA <- observe({    
+#     if(input$targetDiffCheckA==TRUE){
+#       updateCheckboxInput(session,"cellOrConditionalA",value=FALSE)
+#     }
+#   })
+#   
+#   noTargetsA<-observe({
+#     if(input$cellOrConditionalA==TRUE){
+#       updateCheckboxInput(session,"targetDiffCheckA",value=FALSE)
+#       updateCheckboxInput(session,"targetOddsCheckA",value=FALSE)
+#     }
+#   },priority=1)
+#   
   
   ##### DESIGN B #####
   
-  ##### B HEADER #####
-  
+  ##### B IMAGE HEADER #####
   ### Render the design image which highlights selected DTRs
   ### Takes the names of selected DTRs, generates a filepath, and renders the image in the UI
   ### Note that this requires a very specific naming convention for image assets
@@ -118,17 +111,19 @@ shinyServer(function(input,output,session){
        list(src=filename)
    },deleteFile=FALSE)
   
-  ### Render dropdown menus 
-  
   output$selectAI1B <- renderUI({
     AI <- selectizeInput("firstDTRcompareB",label="Compare AI",
                        choices=designB.DTRs,
                        options = list(
                          placeholder = 'Please select a first AI.',
-                         onInitialize = I('function() { this.setValue(""); }')
+                         onInitialize = I('function() { this.setValue(0); }')
                        )
           )
     return(AI)
+  })
+  
+  output$DTR1B <- renderPrint({
+    input$firstDTRcompareB  
   })
   
   output$selectAI2B <- renderUI({ 
@@ -142,10 +137,12 @@ shinyServer(function(input,output,session){
     return(AI)
   })
   
+  ##### DESIGN B PROBABILITY INPUT #####
+  
   ### Read in DTR names from dropdowns and parse them to determine first and second stage treatments
   ### Reactive function allows on-the-fly changes in return values with changes in selection
   ### Outputs full DTR name, first-stage treatment (first character), second-stage treatment (last character)
-  ### NOTE that these positions are exclusive to design B because responders continue first-stage treatment
+      ### NOTE that these positions are exclusive to design B because responders continue first-stage treatment
   
   substringDTR1B <- reactive({
     if(length(input$firstDTRcompareB) > 0){
@@ -171,12 +168,10 @@ shinyServer(function(input,output,session){
     }
   })
   
-  ##### DESIGN B PROBABILITY INPUT #####
-  
-  ### When a first DTR is selected, render an input box corresponding to whatever input method is selected.
-    ### For DTR-conditional or cell-specific inputs, first numericInput is P(S|DTR1), enabled/disabled depending on cellOrConditionalB
-    ### For target-difference or OR, relevant numericInputs are rendered
-      ### This is the ONLY location in which difference and OR numericInputs are built.
+ #When a first DTR is selected, render an input box corresponding to whatever input method is selected.
+    # For DTR-conditional or cell-specific inputs, first numericInput is P(S|DTR1), enabled/disabled depending on cellOrConditionalB
+    # For target-difference or OR, relevant numericInputs are rendered
+      # This is the ONLY location in which difference and OR numericInputs are built.
   
   generateBinaryInputs1B <- reactive({
     validate(
@@ -322,18 +317,23 @@ shinyServer(function(input,output,session){
   ### Compute full DTR probabilities or effect size when providing cell-specific probabilities or mean/SD 
   
   generateProbsB <- reactive({
-    if(input$selectOutcomeB==1 && substringDTR1B()[2]==substringDTR2B()[2]){
+    if(input$selectOutcomeB==1 && substringDTR1B()[2]==substringDTR2B()[2] && input$cellOrConditionalB==TRUE){
       pDTR1 <- fullDTRprob(input$marginalFirstStageB1,input$respB,input$marginalSecondStageNRB1)
       pDTR2 <- fullDTRprob(input$marginalFirstStageB1,input$respB,input$marginalSecondStageNRB2)
       effectSize <- 0
     }
     
-    else if (input$selectOutcomeB==1 && substringDTR1B()[2]!=substringDTR2B()[2]){
+    else if (input$selectOutcomeB==1 && substringDTR1B()[2]!=substringDTR2B()[2] && input$cellOrConditionalB==TRUE){
       pDTR1 <- fullDTRprob(input$marginalFirstStageB1,input$respB,input$marginalSecondStageNRB1)
       pDTR2 <- fullDTRprob(input$marginalFirstStageB2,input$respB,input$marginalSecondStageNRB2)
       effectSize <- 0
     }
-    else{
+    else if (input$selectOutcomeB==1 && input$cellOrConditionalB==FALSE){
+      pDTR1 <- input$DTRsuccB1
+      pDTR2 <- input$DTRsuccB2
+      effectSize <- 0
+    }
+    else {
       pDTR1 <- 0
       pDTR2 <- 0
       effectSize <- (input$meanDiffB / input$sdDiffB)
@@ -472,6 +472,10 @@ shinyServer(function(input,output,session){
   # Pass arguments from dataCompilerB() to appropriate R function; extract and render relevant output
   
   output$binarySampleSizeB <- renderUI({
+    validate(
+      need(input$inputPowerB > 0, "Sample size is indeterminate for 0% power. Please specify a power greater than zero."),
+      need(input$inputPowerB < 1, "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1.")
+    )
     designEffect<-selectEffectB()
     rawSampleSize<-power.prop.test(p1=dataCompilerB()[1],p2=dataCompilerB()[2],power=input$inputPowerB,sig.level=input$alphaB)$n
     finalSampleSize<-ceiling(designEffect * rawSampleSize)
@@ -499,6 +503,10 @@ shinyServer(function(input,output,session){
   })
   
   output$continuousSampleSizeB <- renderUI({
+    validate(
+      need(input$inputPowerB > 0, "Sample size is indeterminate for 0% power. Please specify a power greater than zero."),
+      need(input$inputPowerB < 1, "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1.")
+    )
     designEffect<-selectEffectB()
     rawSampleSize<-pwr.norm.test(d=dataCompilerB(),sig.level=input$alphaB,power=input$inputPowerB,alternative="two.sided")
     finalSampleSize<-ceiling(2*designEffect*rawSampleSize$n)

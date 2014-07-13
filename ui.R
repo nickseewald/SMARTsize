@@ -103,36 +103,31 @@ shinyUI(
                       sidebarPanel(h3("About this design:"),
                                    p("Include information about the design, its requirements, and describe the input.")
                       ),
+                      
                       mainPanel(
                         
                         ##### A PAGE HEADER #####
                         
                         h1("Design A"),
                         tags$hr(),
-                                
+                        
                         ##### A DTR SELECTION #####
                         # Dropdown menus provide options to select DTRs for comparison.
                         # Currently the menus are not reactively-repopulating (making it possible to select the same DTR twice). Possible future improvement.
                         
-                        p("Which two dynamic treatment regimes would you like to compare? Choose two from the menus below.",
-                          "The image below will change to highlight the DTRs you select."),
+                        p("Which two adaptive interventions would you like to compare? Choose two from the menus below.",
+                          "The image below will change to highlight the AIs you select."),
                         
                         fluidRow(
                           column(6,
-                                 selectInput("firstDTRcompareA",label="Compare DTR",
-                                             choices=list("[Choose First DTR]"=0, "ArCnrE"="ArCnrE", "ArCnrF"="ArCnrF", "ArDnrE"="ArDnrE", 
-                                                          "ArDnrF"="ArDnrF", "BrGnrI"="BrGnrI", "BrGnrJ"="BrGnrJ", "BrHnrI"="BrHnrI", "BrHnrJ"="BrHnrJ"),
-                                             selected=0)
+                                 uiOutput("selectAI1A")
                           ),
                           column(6,
-                                 selectInput("secondDTRcompareA",label="to DTR",
-                                             choices=list("[Choose Second DTR]"=0, "ArCnrE"="ArCnrE", "ArCnrF"="ArCnrF", "ArDnrE"="ArDnrE", 
-                                                          "ArDnrF"="ArDnrF", "BrGnrI"="BrGnrI", "BrGnrJ"="BrGnrJ", "BrHnrI"="BrHnrI", "BrHnrJ"="BrHnrJ"),
-                                             selected=0)  
+                                 uiOutput("selectAI2A")  
                           )
                         ),
-                        tags$hr(),
                         
+                        tags$hr(),
                         
                         ##### A OUTCOME SELECT AND RESPONSE INPUT #####
                         # Provide options to select binary/continuous outcome
@@ -157,10 +152,10 @@ shinyUI(
                         # Call uiOutput, which reactively renders UI inputs according to selected DTRs and options selected below.
                         
                         fluidRow(
-                          column(7, imageOutput("designAimg",height="100%")
-                                 ),
+                          column(7, imageOutput("designAimg",height="100%")),
                           column(5, 
                                  conditionalPanel(condition="input.selectOutcomeA==1",
+                                                  p("Please provide the probability of success for each of the AI's of interest."),
                                                   uiOutput("binaryDTR1probA"),
                                                   conditionalPanel(condition="input.cellOrConditionalA",
                                                                    fluidRow(column(1),
@@ -175,30 +170,36 @@ shinyUI(
                                                   )
                                  ),
                                  conditionalPanel(condition="input.selectOutcomeA==2",
-                                                  uiOutput("continuousProbA")
+                                                  uiOutput("continuousProbA"),
+                                                  conditionalPanel(condition="input.meanSdCheckA",
+                                                                   fluidRow(column(1),
+                                                                            column(4,uiOutput("meanEstA"))
+                                                                   )
+                                                  )
+                                 ),
+                                 
+                                 ##### A INPUT OPTIONS #####
+                                 # Check for output selection (binary/continuous) then provide options for tailoring ways to input response
+                                 # For binary outcomes, options for cell-specific probabilities, target difference, and target odds-ratio
+                                 # For continuous outcomes, option to input mean difference and standard-deviation
+                                 
+                                 conditionalPanel(condition="input.firstDTRcompareA != 0 && input.secondDTRcompareA !=0",
+                                                  br(),
+                                                  helpText("If you prefer to provide different information, check the appropriate box below."),
+                                                  conditionalPanel(condition="input.selectOutcomeA==1",
+                                                                   checkboxInput("cellOrConditionalA",label="Check this box to input cell-specific probabilities.",value=FALSE),
+                                                                   checkboxInput("targetDiffCheckA",label="Check this box to input a target difference in probabilities.",value=FALSE),
+                                                                   conditionalPanel(condition="input.targetDiffCheckA",
+                                                                                    column(1), 
+                                                                                    column(11,
+                                                                                           checkboxInput("targetOddsCheckA",label="Check this box to input a target odds-ratio instead of a target difference.",value=FALSE)
+                                                                                    )
+                                                                   )
+                                                  ),
+                                                  conditionalPanel(condition="input.selectOutcomeA==2",
+                                                                   checkboxInput("meanSdCheckA",label="Check this box to input a difference in means and standard deviation.",value=FALSE)
+                                                  )
                                  )
-                          )
-                        ),
-                        tags$hr(),
-                        
-                        ##### A INPUT OPTIONS #####
-                        # Check for output selection (binary/continuous) then provide options for tailoring ways to input response
-                        # For binary outcomes, options for cell-specific probabilities, target difference, and target odds-ratio
-                        # For continuous outcomes, option to input mean difference and standard-deviation
-                        
-                        fluidRow(
-                          conditionalPanel(condition="input.selectOutcomeA==1",
-                                           checkboxInput("cellOrConditionalA",label="Check this box to input cell-specific probabilities.",value=FALSE),
-                                           checkboxInput("targetDiffCheckA",label="Check this box to input a target difference in probabilities.",value=FALSE),
-                                           conditionalPanel(condition="input.targetDiffCheckA",
-                                                            column(1), 
-                                                            column(11,
-                                                                   checkboxInput("targetOddsCheckA",label="Check this box to input a target odds-ratio instead of a target difference.",value=FALSE)
-                                                            )
-                                           )
-                          ),
-                          conditionalPanel(condition="input.selectOutcomeA==2",
-                                           checkboxInput("meanSdCheckB",label="Check this box to input a difference in means and standard deviation.",value=FALSE)
                           )
                         ),
                         
@@ -213,7 +214,7 @@ shinyUI(
                                                 selected="sample")),
                           column(6,
                                  numericInput("alphaA",label="Type I Error (Alpha):",value=0.05,min=0,max=1,step=0.01),
-                                 conditionalPanel(condition="input.selectResultsB=='sample'",
+                                 conditionalPanel(condition="input.selectResultsA=='sample'",
                                                   numericInput("inputPowerA",label="Power of Trial:",value=0.8, min=0, max=1,step=0.01)
                                  ),
                                  conditionalPanel(condition="input.selectResultsA=='power'",
@@ -228,18 +229,17 @@ shinyUI(
                         
                         h3("Results"),
                         conditionalPanel(condition="input.selectOutcomeA==1 & input.selectResultsA=='sample'",
-                                         h4(textOutput("binarySampleSizeA"), style = "color:blue")
+                                         htmlOutput("binarySampleSizeA")
                         ),
                         conditionalPanel(condition="input.selectOutcomeA==1 & input.selectResultsA=='power'",
-                                         h4(textOutput("binaryPowerA"),style="color:blue")
+                                         htmlOutput("binaryPowerA")
                         ),
                         conditionalPanel(condition="input.selectOutcomeA==2 & input.selectResultsA=='sample'",
-                                         h4(textOutput("continuousSampleSizeA"),style="color:blue")
+                                         htmlOutput("continuousSampleSizeA")
                         ),
                         conditionalPanel(condition="input.selectOutcomeA==2 & input.selectResultsA=='power'",
-                                         h4(textOutput("continuousPowerA"),style="color:blue")
+                                         htmlOutput("continuousPowerA")
                         )
-                        
                       )
              ),
              
