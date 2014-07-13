@@ -16,6 +16,12 @@ disable <- function(x) {
   x
 }
 
+### Create lists of all DTRs for each design
+designA.DTRs <- c("ArCnrE", "ArCnrF", "ArDnrE", "ArDnrF", "BrGnrI", "BrGnrJ", "BrHnrI", "BrHnrJ")
+designB.DTRs <- c("ArCnrD", "ArCnrE", "BrFnrG", "BrFnrH")
+designC.DTRs <- c("ArCnrD", "ArCnrE", "BrFnrG")
+designD.DTRs <- c("AC", "AD", "BE", "BF")
+
 ### Function evaluates full-DTR probabilities; not reactive
 fullDTRprob <- function(cell1, resp, cell2){
   pDTR <- cell1 * resp + cell2 * (1-resp)
@@ -100,7 +106,8 @@ shinyServer(function(input,output,session){
   
   ##### DESIGN B #####
   
-  ##### B IMAGE HEADER #####
+  ##### B HEADER #####
+  
   ### Render the design image which highlights selected DTRs
   ### Takes the names of selected DTRs, generates a filepath, and renders the image in the UI
   ### Note that this requires a very specific naming convention for image assets
@@ -111,39 +118,69 @@ shinyServer(function(input,output,session){
        list(src=filename)
    },deleteFile=FALSE)
   
-  ##### DESIGN B PROBABILITY INPUT #####
+  ### Render dropdown menus 
+  
+  output$selectAI1B <- renderUI({
+    AI <- selectizeInput("firstDTRcompareB",label="Compare AI",
+                       choices=designB.DTRs,
+                       options = list(
+                         placeholder = 'Please select a first AI.',
+                         onInitialize = I('function() { this.setValue(""); }')
+                       )
+          )
+    return(AI)
+  })
+  
+  output$selectAI2B <- renderUI({ 
+    AI <- selectizeInput("secondDTRcompareB",label="to AI",
+                     choices=setdiff(designB.DTRs,input$firstDTRcompareB),
+                     options = list(
+                       placeholder = 'Please select a second AI.',
+                       onInitialize = I('function() { this.setValue(""); }')
+                     )
+      )
+    return(AI)
+  })
   
   ### Read in DTR names from dropdowns and parse them to determine first and second stage treatments
   ### Reactive function allows on-the-fly changes in return values with changes in selection
   ### Outputs full DTR name, first-stage treatment (first character), second-stage treatment (last character)
-      ### NOTE that these positions are exclusive to design B because responders continue first-stage treatment
+  ### NOTE that these positions are exclusive to design B because responders continue first-stage treatment
   
   substringDTR1B <- reactive({
-    DTR1 <-paste(input$firstDTRcompareB)
-    firstStage1<-substr(DTR1,1,1)
-    secondStageNR1<-substr(DTR1,6,6)
-    
-    return(c(DTR1, firstStage1,secondStageNR1))
-    
+    if(length(input$firstDTRcompareB) > 0){
+      DTR1 <-paste(input$firstDTRcompareB)
+      firstStage1<-substr(DTR1,1,1)
+      secondStageNR1<-substr(DTR1,6,6)
+      return(c(DTR1, firstStage1,secondStageNR1))
+    }
+    else{
+      return(c(0,0,0))
+    }   
   })
   
   substringDTR2B <- reactive({
-    DTR2 <-paste(input$secondDTRcompareB)
-    firstStage2<-substr(DTR2,1,1)
-    secondStageNR2<-substr(DTR2,6,6)
-    
-    return(c(DTR2, firstStage2, secondStageNR2))
-    
+    if(length(input$secondDTRcompareB) >0){
+      DTR2 <-paste(input$secondDTRcompareB)
+      firstStage2<-substr(DTR2,1,1)
+      secondStageNR2<-substr(DTR2,6,6)
+      return(c(DTR2, firstStage2, secondStageNR2))
+    }
+    else{
+      return(c(0,0,0))
+    }
   })
   
-  # When a first DTR is selected, render an input box corresponding to whatever input method is selected.
-    # For DTR-conditional or cell-specific inputs, first numericInput is P(S|DTR1), enabled/disabled depending on cellOrConditionalB
-    # For target-difference or OR, relevant numericInputs are rendered
-      # This is the ONLY location in which difference and OR numericInputs are built.
+  ##### DESIGN B PROBABILITY INPUT #####
+  
+  ### When a first DTR is selected, render an input box corresponding to whatever input method is selected.
+    ### For DTR-conditional or cell-specific inputs, first numericInput is P(S|DTR1), enabled/disabled depending on cellOrConditionalB
+    ### For target-difference or OR, relevant numericInputs are rendered
+      ### This is the ONLY location in which difference and OR numericInputs are built.
   
   generateBinaryInputs1B <- reactive({
     validate(
-      need(input$firstDTRcompareB!=0, "Please select a first AI.")
+      need(input$firstDTRcompareB, "Please select a first AI.")
     )
     if(input$targetDiffCheckB==FALSE && substringDTR1B()[1] != substringDTR2B()[1]){
       if(input$cellOrConditionalB==TRUE){
@@ -172,7 +209,7 @@ shinyServer(function(input,output,session){
   
   generateBinaryInputs2B <- reactive({
     validate(
-      need(input$secondDTRcompareB!=0, "Please select a second AI.")
+      need(input$secondDTRcompareB, "Please select a second AI.")
     )
     if(input$targetDiffCheckB==FALSE && input$targetOddsCheckB==FALSE && substringDTR1B()[1] != substringDTR2B()[1]){
       if(input$cellOrConditionalB==TRUE){
@@ -232,8 +269,8 @@ shinyServer(function(input,output,session){
   
   generateContinuousInputB <- reactive({
     validate(
-      need(input$firstDTRcompareB!=0, "Please select a first AI."),
-      need(input$secondDTRcompareB!=0, "Please select a second AI.")
+      need(input$firstDTRcompareB, "Please select a first AI."),
+      need(input$secondDTRcompareB, "Please select a second AI.")
     )
     if(input$meanSdCheckB==TRUE && substringDTR1B()[1] != substringDTR2B()[1]){
       return(disable(numericInput("effectSizeBdisable",label="Standardized Effect Size",value=0,min=0,max=1,step=0.01)))
@@ -334,8 +371,8 @@ shinyServer(function(input,output,session){
     
     if(input$selectOutcomeB==1 && input$cellOrConditionalB==FALSE && input$targetDiffCheckB==FALSE){
       validate(
-        need(input$firstDTRcompareB != 0, "Select a first AI above."),
-        need(input$secondDTRcompareB != 0, "Select a second AI above.") %then%
+        need(input$firstDTRcompareB, "Select a first AI above."),
+        need(input$secondDTRcompareB, "Select a second AI above.") %then%
         need(input$DTRsuccB1 != input$DTRsuccB2, "Please provide unique success probabilities for each AI. Sample size is indeterminate for equal AI probabilities.") %then%
         need(checkDTRinputsB(), "The provided success probability for at least one AI is not a valid probability. Please enter a value between 0 and 1.")
       )
@@ -344,8 +381,8 @@ shinyServer(function(input,output,session){
     
     if(input$selectOutcomeB==1 && input$cellOrConditionalB==TRUE){  
       validate(
-        need(input$firstDTRcompareB != 0, "Select a first AI above."),
-        need(input$firstDTRcompareB != 0, "select a second AI above."),
+        need(input$firstDTRcompareB, "Select a first AI above."),
+        need(input$firstDTRcompareB, "select a second AI above."),
         need(generateProbsB()[1] != generateProbsB()[2], "The provided marginal probabilities yield identical overall AI success probabilities. Sample size is indeterminate for equal AI probabilities. Please adjust your inputs.")
       )
       
@@ -371,8 +408,8 @@ shinyServer(function(input,output,session){
     
     if(input$selectOutcomeB==2 && input$meanSdCheckB==FALSE){
       validate(
-        need(input$firstDTRcompareB != 0, "Select a first AI above."),
-        need(input$secondDTRcompareB != 0, "Select a second AI above.") %then%
+        need(input$firstDTRcompareB, "Select a first AI above."),
+        need(input$secondDTRcompareB, "Select a second AI above.") %then%
         need(input$effectSizeB != 0, "Sample size is indeterminate for an effect size of 0. Please enter a different target effect size.")
       )
       

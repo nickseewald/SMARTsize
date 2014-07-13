@@ -62,7 +62,7 @@ shinyUI(
                                  helpText("8 embedded adaptive interventions: ArCnrE, ArCnrF, ArDnrE, ArDnrF, BrGnrI, BrGnrJ, BrHnrI, BrHnrJ")
                           ),
                           column(6,
-                                 img(src="images/SMARTdesignB_0_0.gif"),
+                                 img(src="images/SMARTdesignB__.gif"),
                                  actionButton("pickTabB","Design B"),
                                  helpText("4 embedded adaptive interventions: ArCnrD, ArCnrE, BrFnrG, BrFnrH")
                           )
@@ -288,25 +288,13 @@ shinyUI(
                         
                         fluidRow(
                           column(6,
-                                 selectInput("firstDTRcompareB",label="Compare AI",
-                                             choices=list("[Choose First AI]"=0, "ArCnrD"="ArCnrD", "ArCnrE"="ArCnrE", "BrFnrG"="BrFnrG", "BrFnrH"="BrFnrH"),
-                                             selected=0)
+                                 uiOutput("selectAI1B")
                           ),
                           column(6,
-                                 selectInput("secondDTRcompareB",label="to AI",
-                                             choices=list("[Choose Second AI]"=0, "ArCnrD"="ArCnrD", "ArCnrE"="ArCnrE", "BrFnrG"="BrFnrG", "BrFnrH"="BrFnrH"),
-                                             selected=0)  
+                                 uiOutput("selectAI2B")  
                           )
                         ),
                         
-                        # If the same DTR is selected twice, print an error message.
-                        # Currently, UI and Server code conditions on non-unique DTR selection. If above dropdowns become dynamic, deprecate this conditioning.
-                        
-                        fluidRow(
-                                 conditionalPanel(condition="input.firstDTRcompareB==input.secondDTRcompareB & input.firstDTRcompareB != 0",
-                                           p("ERROR: Please select two different AIs to compare.",style="color:red")
-                                 )
-                        ),
                         tags$hr(),
                         
                         ##### B OUTCOME SELECT AND RESPONSE INPUT #####
