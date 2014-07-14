@@ -123,7 +123,7 @@ shinyUI(
                                  uiOutput("selectAI1A")
                           ),
                           column(6,
-                                 uiOutput("selectAI2A")  
+                                 uiOutput("selectAI2A")
                           )
                         ),
                         
@@ -178,12 +178,12 @@ shinyUI(
                                                   )
                                  ),
                                  
-                                 ##### A INPUT OPTIONS #####
+                                 ##### B INPUT OPTIONS #####
                                  # Check for output selection (binary/continuous) then provide options for tailoring ways to input response
                                  # For binary outcomes, options for cell-specific probabilities, target difference, and target odds-ratio
                                  # For continuous outcomes, option to input mean difference and standard-deviation
                                  
-                                 conditionalPanel(condition="input.firstDTRcompareA != 0 && input.secondDTRcompareA !=0",
+                                 conditionalPanel(condition="input.firstDTRcompareA != 0 && input.secondDTRcompareA != 0",
                                                   br(),
                                                   helpText("If you prefer to provide different information, check the appropriate box below."),
                                                   conditionalPanel(condition="input.selectOutcomeA==1",
@@ -204,6 +204,7 @@ shinyUI(
                         ),
                         
                         tags$hr(),
+                        
                         
                         ##### A RESULT OPTIONS #####
                         # Provide options to tailor results: Choose sample size or power, provide alpha and 1-beta
@@ -280,8 +281,7 @@ shinyUI(
                         tags$hr(),
                         
                         ##### B DTR SELECTION #####
-                        # Dropdown menus provide options to select DTRs for comparison.
-                        # Currently the menus are not reactively-repopulating (making it possible to select the same DTR twice). Possible future improvement.
+                        # Dropdown menus provide options to select DTRs for comparison, rendered in server.R
                         
                         p("Which two adaptive interventions would you like to compare? Choose two from the menus below.",
                           "The image below will change to highlight the AIs you select."),
