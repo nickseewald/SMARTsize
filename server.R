@@ -255,6 +255,7 @@ shinyServer(function(input,output,session){
     }
   },priority=2)
   
+  
   ### Compute full DTR probabilities or effect size when providing cell-specific probabilities or mean/SD 
   
   generateProbsA <- reactive({
@@ -369,11 +370,19 @@ shinyServer(function(input,output,session){
   # Compute the "design effect" for design B. Varies based on whether DTRs are separate- or shared-path
   
   selectEffectA <- reactive({
-    if(substringDTR1A()[2] != substringDTR2A()[2]){
-      designEffect <- 4
+    if(substringDTR1A()[2] == substringDTR2A()[2] 
+       && substringDTR1A()[3] == substringDTR2A()[3]
+       && substringDTR1A()[4] != substringDTR2A()[4]
+       ){
+      designEffect <- 4/(1-input$respA)
+    }
+    else if (substringDTR1A()[2] == substringDTR2A()[2] 
+       && substringDTR1A()[3] != substringDTR2A()[3]
+       && substringDTR1A()[4] == substringDTR2A()[4]){
+      designEffect <- 4/(input$respA)
     }
     else{
-      designEffect <- 8/(1-input$respA)
+      designEffect <- 4
     }
     return(designEffect)
   })
