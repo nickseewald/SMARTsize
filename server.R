@@ -100,7 +100,7 @@ shinyServer(function(input,output,session){
       firstStage1 <- substr(DTR1,1,1)
       secondStageR1 <- substr(DTR1,3,3)
       secondStageNR1 <- substr(DTR1,6,6)
-      return(c(DTR1, firstStage1,secondStageR1, secondStageNR1))
+      return(c(DTR1, firstStage1, secondStageR1, secondStageNR1))
     }
     else{
       return(c(0,0,0,0))
@@ -113,7 +113,7 @@ shinyServer(function(input,output,session){
       firstStage1 <- substr(DTR2,1,1)
       secondStageR1 <- substr(DTR2,3,3)
       secondStageNR1 <- substr(DTR2,6,6)
-      return(c(DTR2, firstStage1,secondStageR1, secondStageNR1))
+      return(c(DTR2, firstStage1, secondStageR1, secondStageNR1))
     }
     else{
       return(c(0,0,0,0))
@@ -181,31 +181,24 @@ shinyServer(function(input,output,session){
   ### When DTR1 and DTR2 begin with the same treatment, P(S|stage1trt,r) is rendered only once, in output$cellProbsDTR1B
   
   output$cellProbsDTR1A <- renderUI({
-    validate(
-      need(substringDTR1A()[1] != 0, "Cell-specific probabilities cannot be input until a first AI is selected.")
+    controlInputs<-c(numericInput("marginalFirstStageA1",label=paste("P(S|",substringDTR1A()[2],",r,", substringDTR1A()[3],")",sep=""),value=0,min=0,max=1,step=0.01),
+                     numericInput("marginalSecondStageNRA1",label=paste("P(S|",substringDTR1A()[2],",nr,",substringDTR1A()[4],")",sep=""),
+                                  value=0,min=0,max=1,step=0.01)
     )
-    if(substringDTR1A()[1] != substringDTR2A()[1]){
-      controlInputs<-c(numericInput("marginalFirstStageB1",label=paste("P(S|",substringDTR1B()[2],",r)",sep=""),value=0,min=0,max=1,step=0.01),
-                       numericInput("marginalSecondStageNRB1",label=paste("P(S|",substringDTR1B()[2],",nr,",substringDTR1B()[3],")",sep=""),
-                                    value=0,min=0,max=1,step=0.01)
-      )
-    }
   })
   
   output$cellProbsDTR2A <- renderUI({
-    if(substringDTR1A()[1] != substringDTR2A()[1]){
-      if(substringDTR1A()[2]==substringDTR2A()[2]){
-        controlInputs<-c(numericInput("marginalSecondStageNRA2",label=paste("P(S|",substringDTR2A()[2],",nr,",substringDTR2A()[3],")",sep=""),
-                                      value=0,min=0,max=1,step=0.01)
-        )
-      }
-      else{
-        controlInputs<-c(
-          numericInput("marginalFirstStageA2",label=paste("P(S|",substringDTR2A()[2],",r)",sep=""),value=0,min=0,max=1,step=0.01),
-          numericInput("marginalSecondStageNRA2",label=paste("P(S|",substringDTR2A()[2],",nr,",substringDTR2A()[3],")",sep=""),
-                       value=0,min=0,max=1,step=0.01)
-        )
-      }
+    if(substringDTR1A()[2]==substringDTR2A()[2] && substringDTR1A()[3]==substringDTR2A()[3]){
+      controlInputs<-c(numericInput("marginalSecondStageNRA2",label=paste("P(S|",substringDTR2A()[2],",nr,",substringDTR2A()[4],")",sep=""),
+                                    value=0,min=0,max=1,step=0.01)
+      )
+    }
+    else{
+      controlInputs<-c(
+        numericInput("marginalFirstStageA2",label=paste("P(S|",substringDTR2A()[2],",r,", substringDTR2A()[3],")",sep=""),value=0,min=0,max=1,step=0.01),
+        numericInput("marginalSecondStageNRA2",label=paste("P(S|",substringDTR2A()[2],",nr,",substringDTR2A()[4],")",sep=""),
+                     value=0,min=0,max=1,step=0.01)
+      )
     }
     controlInputs
   })
@@ -265,13 +258,13 @@ shinyServer(function(input,output,session){
   ### Compute full DTR probabilities or effect size when providing cell-specific probabilities or mean/SD 
   
   generateProbsA <- reactive({
-    if(input$selectOutcomeA==1 && substringDTR1A()[2]==substringDTR2A()[2] && input$cellOrConditionalA==TRUE){
+    if(input$selectOutcomeA==1 && substringDTR1A()[2]==substringDTR2A()[2] && substringDTR1A()[3]==substringDTR2A()[3] && input$cellOrConditionalA==TRUE){
       pDTR1 <- fullDTRprob(input$marginalFirstStageA1,input$respA,input$marginalSecondStageNRA1)
       pDTR2 <- fullDTRprob(input$marginalFirstStageA1,input$respA,input$marginalSecondStageNRA2)
       effectSize <- 0
     }
     
-    else if (input$selectOutcomeA==1 && substringDTR1A()[2]!=substringDTR2A()[2] && input$cellOrConditionalA==TRUE){
+    else if (input$selectOutcomeA==1 && substringDTR1A()[2]!=substringDTR2A()[2] && substringDTR1A()[3]!=substringDTR2A()[3] && input$cellOrConditionalA==TRUE){
       pDTR1 <- fullDTRprob(input$marginalFirstStageA1,input$respA,input$marginalSecondStageNRA1)
       pDTR2 <- fullDTRprob(input$marginalFirstStageA2,input$respA,input$marginalSecondStageNRA2)
       effectSize <- 0
@@ -298,7 +291,7 @@ shinyServer(function(input,output,session){
     }
   })  
   
-  ##### DESIGN B RESULT #####
+  ##### DESIGN A RESULT #####
   
   # Based on provided input probabilities and selected options, compute appropriate arguments to pass to power.prop.test or pwr.norm.test
   

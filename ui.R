@@ -57,7 +57,7 @@ shinyUI(
                         br(),
                         fluidRow(
                           column(6,
-                                 img(src="images/SMARTdesignA_0_0.gif"),
+                                 img(src="images/SMARTdesignA__.gif"),
                                  actionButton("pickTabA","Design A"),
                                  helpText("8 embedded adaptive interventions: ArCnrE, ArCnrF, ArDnrE, ArDnrF, BrGnrI, BrGnrJ, BrHnrI, BrHnrJ")
                           ),
