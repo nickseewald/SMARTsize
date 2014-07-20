@@ -69,12 +69,12 @@ shinyUI(
                         ),
                         fluidRow(
                           column(6,
-                                 img(src="images/SMARTdesignC.gif"),
+                                 img(src="images/SMARTdesignC__.gif"),
                                  actionButton("pickTabC","Design C"),
                                  helpText("3 embedded adaptive interventions: ArCnrD, ArCnrE, BrFnrG")
                           ),
                           column(6,
-                                 img(src="images/SMARTdesignD.gif"),
+                                 img(src="images/SMARTdesignD__.gif"),
                                  actionButton("pickTabD","Design D"),
                                  helpText("4 embedded non-adaptive interventions: AC, AD, BE, BF")
                           )
@@ -583,7 +583,7 @@ shinyUI(
                         
                         tags$hr(),
                         
-                        ##### A OUTCOME SELECT AND RESPONSE INPUT #####
+                        ##### D OUTCOME SELECT AND RESPONSE INPUT #####
                         # Provide options to select binary/continuous outcome
                         # User input to provide response probabilities
                         
@@ -591,11 +591,6 @@ shinyUI(
                           column(6,
                                  radioButtons("selectOutcomeD", label="Is the outcome of interest binary or continuous?",
                                               choices=list("Binary"=1,"Continuous"=2),selected=1)
-                          ),
-                          column(6,
-                                 numericInput("respD",
-                                              label="What is the probability that a patient responds to first-stage treatment? If you are unsure, enter 0 for a conservative estimate.",
-                                              value=0,min=0,max=1,step=0.01)
                           )
                         ),
                         
@@ -611,17 +606,7 @@ shinyUI(
                                  conditionalPanel(condition="input.selectOutcomeD==1",
                                                   p("Please provide the probability of success for each of the AI's of interest."),
                                                   uiOutput("binaryDTR1probD"),
-                                                  conditionalPanel(condition="input.cellOrConditionalD",
-                                                                   fluidRow(column(1),
-                                                                            column(4,uiOutput("cellProbsDTR1D"))
-                                                                   )
-                                                  ),
-                                                  uiOutput("binaryDTR2probD"),
-                                                  conditionalPanel(condition="input.cellOrConditionalD",
-                                                                   fluidRow(column(1),
-                                                                            column(4,uiOutput("cellProbsDTR2D"))
-                                                                   )
-                                                  )
+                                                  uiOutput("binaryDTR2probD")
                                  ),
                                  conditionalPanel(condition="input.selectOutcomeD==2",
                                                   uiOutput("continuousProbD"),
@@ -641,7 +626,6 @@ shinyUI(
                                                   br(),
                                                   helpText("If you prefer to provide different information, check the appropriate box below."),
                                                   conditionalPanel(condition="input.selectOutcomeD==1",
-                                                                   checkboxInput("cellOrConditionalD",label="Check this box to input cell-specific probabilities.",value=FALSE),
                                                                    checkboxInput("targetDiffCheckD",label="Check this box to input a target difference in probabilities.",value=FALSE),
                                                                    conditionalPanel(condition="input.targetDiffCheckD",
                                                                                     column(1), 

@@ -344,7 +344,7 @@ shinyServer(function(input,output,session){
         need(input$targetORA != 1, "Sample size is indeterminate for an odds ratio of 1. Please enter a different target odds ratio."),
         need(input$targetORA != 0, "Sample size is indeterminate for an odds ratio of 0. Please enter a different target odds ratio.")
       )
-      return(c(0.5,input$targetORB/(1+input$targetORB)))
+      return(c(0.5,input$targetORA/(1+input$targetORA)))
     }
     
     if(input$selectOutcomeA==2 && input$meanSdCheckA==FALSE){
@@ -367,7 +367,7 @@ shinyServer(function(input,output,session){
     }  
   })
   
-  # Compute the "design effect" for design B. Varies based on whether DTRs are separate- or shared-path
+  # Compute the "design effect" for design A. Varies based on whether DTRs are separate- or shared-path
   
   selectEffectA <- reactive({
     if(substringDTR1A()[2] == substringDTR2A()[2] 
@@ -389,7 +389,7 @@ shinyServer(function(input,output,session){
   
   sentenceCompilerA <- reactive({
     if(input$selectOutcomeA==1 && input$cellOrConditionalA==FALSE && input$targetDiffCheckA==FALSE){
-      str <- paste("with success probabilities of",input$DTRsuccB1,"and",input$DTRsuccB2,"respectively,")
+      str <- paste("with success probabilities of",input$DTRsuccA1,"and",input$DTRsuccA2,"respectively,")
       return(str)
     }
     if(input$selectOutcomeA==1 && input$cellOrConditionalA==TRUE){
@@ -436,18 +436,18 @@ shinyServer(function(input,output,session){
          input$secondDTRcompareA,sentenceCompilerA(), "with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
   })
   
-  output$binaryPowerB <- renderUI({
+  output$binaryPowerA <- renderUI({
     validate(
       need(input$inputSampleSizeA != 0, "Power is indeterminate for a sample size of 0. Please provide a valid sample size.")  
     )
     designEffect<-selectEffectA()
     size<-(input$inputSampleSizeA/designEffect)
-    finalPower<-round(power.prop.test(p1=dataCompilerA()[1],p2=dataCompilerA()[2],n=size,sig.level=input$alphaAA$power,digits=3))
+    finalPower<-round(power.prop.test(p1=dataCompilerA()[1],p2=dataCompilerA()[2],n=size,sig.level=input$alphaA)$power,digits=3)
     formatPower<-paste(finalPower*100,"%",sep="")
-    formatAlpha<-paste(input$alphaB*100,"%",sep="")
+    formatAlpha<-paste(input$alphaA*100,"%",sep="")
     
     HTML("<h4> <font color='blue'> power=",paste(finalPower),"</font> </h4>
-         <p><em> Given a sample size of",input$inputSampleSizeB,"a comparison of adaptive interventions",input$firstDTRcompareA, "and",
+         <p><em> Given a sample size of",input$inputSampleSizeA,"a comparison of adaptive interventions",input$firstDTRcompareA, "and",
          input$secondDTRcompareA,sentenceCompilerA(), "can be made with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
   })
   
@@ -457,14 +457,14 @@ shinyServer(function(input,output,session){
       need(input$inputPowerA < 1, "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1.")
     )
     designEffect<-selectEffectA()
-    rawSampleSize<-pwr.norm.test(d=dataCompilerA(),sig.level=input$alphaB,power=input$inputPowerA,alternative="two.sided")
+    rawSampleSize<-pwr.norm.test(d=dataCompilerA(),sig.level=input$alphaA,power=input$inputPowerA,alternative="two.sided")
     finalSampleSize<-ceiling(2*designEffect*rawSampleSize$n)
     formatPower<-paste(input$inputPowerA*100,"%",sep="")
-    formatAlpha<-paste(input$alphaB*100,"%",sep="")
+    formatAlpha<-paste(input$alphaA*100,"%",sep="")
     
     HTML("<h4> <font color='blue'> N=",paste(finalSampleSize),"</font> </h4>
          <p><em> We require a sample size of",finalSampleSize,"to compare adaptive interventions",input$firstDTRcompareA, "and",
-         input$secondDTRcompareB,sentenceCompilerA(), "with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
+         input$secondDTRcompareA,sentenceCompilerA(), "with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
   })
   
   output$continuousPowerA <- renderUI({
@@ -473,13 +473,13 @@ shinyServer(function(input,output,session){
     )
     designEffect<-selectEffectA()
     size<-(input$inputSampleSizeA/(2*designEffect))
-    finalPower<-round(pwr.norm.test(d=dataCompilerB(),sig.level=input$alphaA,n=size,alternative="two.sided")$power,digits=3)
+    finalPower<-round(pwr.norm.test(d=dataCompilerA(),sig.level=input$alphaA,n=size,alternative="two.sided")$power,digits=3)
     formatPower<-paste(finalPower*100,"%",sep="")
     formatAlpha<-paste(input$alphaA*100,"%",sep="")
     
     HTML("<h4> <font color='blue'> power=",paste(finalPower),"</font> </h4>
          <p><em> Given a sample size of",input$inputSampleSizeA,"a comparison of adaptive interventions",input$firstDTRcompareA, "and",
-         input$secondDTRcompareB,sentenceCompilerA(), "can be made with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
+         input$secondDTRcompareA,sentenceCompilerA(), "can be made with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
   })
   
   
@@ -919,6 +919,788 @@ shinyServer(function(input,output,session){
          <p><em> Given a sample size of",input$inputSampleSizeB,"a comparison of adaptive interventions",input$firstDTRcompareB, "and",
          input$secondDTRcompareB,sentenceCompilerB(), "can be made with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
   })
+ 
+ ##### DESIGN C #####
+ 
+ ##### C HEADER #####
+ 
+ ### Render the design image which highlights selected DTRs
+ ### Takes the names of selected DTRs, generates a filepath, and renders the image in the UI
+ ### Note that this requires a very specific naming convention for image assets
+ ### 'SMARTdesignX_DTR1_DTR2.gif'; if DTRX is unselected, DTR name is 0. 
+ 
+ output$designCimg <- renderImage({
+   filename<-filename<-normalizePath(file.path('./www/images',paste('SMARTdesignC_',input$firstDTRcompareC,'_',input$secondDTRcompareC,'.gif',sep='')))
+   list(src=filename)
+ },deleteFile=FALSE)
+ 
+ ### Render 'selectize' dropdown boxes with placeholder text for AI selection.
+ ### Second DTR input populates with all DTRs that are NOT the first DTR--eliminates ability to select same DTR twice
+ ### Placed in server.R rather than ui.R because of dependency on first DTR selection
+ 
+ output$selectAI1C <- renderUI({
+   AI <- selectizeInput("firstDTRcompareC",label="Compare AI",
+                        choices=designC.DTRs,
+                        options = list(
+                          placeholder = 'Please select a first AI.',
+                          onInitialize = I('function() { this.setValue(0); }')
+                        )
+   )
+   return(AI)
+ })
+ 
+ output$selectAI2C <- renderUI({ 
+   AI <- selectizeInput("secondDTRcompareC",label="to AI",
+                        choices=setdiff(designC.DTRs,input$firstDTRcompareC),
+                        options = list(
+                          placeholder = 'Please select a second AI.',
+                          onInitialize = I('function() { this.setValue(""); }')
+                        )
+   )
+   return(AI)
+ })  
+ 
+ ##### DESIGN C PROBABILITY INPUT #####
+ 
+ ### Read in DTR names from dropdowns and parse them to determine first and second stage treatments
+ ### Reactive function allows on-the-fly changes in return values with changes in selection
+ ### Outputs full DTR name, first-stage treatment (first character), second-stage treatment if response (third character),
+ ### and second-stage treatment if non-response(last character)
+ ### NOTE that these positions are exclusive to design A because responders have two second-stage treatment options
+ 
+  substringDTR1C <- reactive({
+    if(length(input$firstDTRcompareC) > 0){
+      DTR1 <-paste(input$firstDTRcompareC)
+      firstStage1<-substr(DTR1,1,1)
+      secondStageNR1<-substr(DTR1,6,6)
+      return(c(DTR1, firstStage1,secondStageNR1))
+    }
+    else{
+      return(c(0,0,0))
+    }   
+  })
+  
+  substringDTR2C <- reactive({
+    if(length(input$secondDTRcompareC) >0){
+      DTR2 <-paste(input$secondDTRcompareC)
+      firstStage2<-substr(DTR2,1,1)
+      secondStageNR2<-substr(DTR2,6,6)
+      return(c(DTR2, firstStage2, secondStageNR2))
+    }
+    else{
+      return(c(0,0,0))
+    }
+  })
+ 
+ #When a first DTR is selected, render an input box corresponding to whatever input method is selected.
+ # For DTR-conditional or cell-specific inputs, first numericInput is P(S|DTR1), enabled/disabled depending on cellOrConditionalB
+ # For target-difference or OR, relevant numericInputs are rendered
+ # This is the ONLY location in which difference and OR numericInputs are built.
+ 
+ generateBinaryInputs1C <- reactive({
+   validate(
+     need(input$firstDTRcompareC, "Please select a first AI.")
+   )
+   if(input$targetDiffCheckC==FALSE){
+     if(input$cellOrConditionalC==TRUE){
+       return(disable(numericInput("DTRsuccC1disable",label="Probability of Success for First AI",value=0,min=0,max=1,step=0.01)))
+     }
+     else
+       return(numericInput("DTRsuccC1",label="Probability of Success for First AI",value=generateProbsC()[1],min=0,max=1,step=0.01))
+   }
+   
+   if(input$targetDiffCheckC==TRUE && input$targetOddsCheckC==FALSE && substringDTR2C()[1] != 0){
+     return(numericInput("targetDiffC",label="Target Difference in Success Probabilities",value=0.1,min=0.0001,max=0.5,step=0.01))
+   }
+   
+   if(input$targetOddsCheckC==TRUE && substringDTR2C()[1] != 0){
+     return(numericInput("targetORC",label="Target Odds Ratio of Success",value=2,min=0,step=0.01))
+   }
+   
+   if(input$targetDiffCheckC==TRUE && substringDTR2C()[1] == 0){
+     return()
+   }
+ })
+ 
+ # When a second DTR is selected, render an input box corresponding to whatever input method is selected.
+ # For DTR-conditional or cell-specific inputs, first numericInput is P(S|DTR2), enabled/disabled depending on cellOrConditionalB
+ # For target-difference or OR, numericInputs are NOT rendered (those are handled in output$binaryDTR1probB)
+ 
+ generateBinaryInputs2C <- reactive({
+   validate(
+     need(input$secondDTRcompareC, "Please select a second AI.")
+   )
+   if(input$targetDiffCheckC==FALSE && input$targetOddsCheckC==FALSE){
+     if(input$cellOrConditionalC==TRUE){
+       return(disable(numericInput("DTRsuccC2disable",label="Probability of Success for Second AI",value=0,min=0,max=1,step=0.01)))
+     }
+     else
+       return(numericInput("DTRsuccC2",label="Probability of Success for Second AI",value=generateProbsA()[2],min=0,max=1,step=0.01))
+   }
+ })
+ 
+ ### Render UI components generated above
+ 
+ output$binaryDTR1probC <- renderUI({
+   generateBinaryInputs1C()
+ })
+ 
+ output$binaryDTR2probC <- renderUI({
+   generateBinaryInputs2C()
+ })
+ 
+ ### For cell-specific probabilities, render a series of numericInputs labeled by information from DTR substrings
+ ### When DTR1 and DTR2 begin with the same treatment, P(S|stage1trt,r) is rendered only once, in output$cellProbsDTR1B
+ 
+ output$cellProbsDTR1C <- renderUI({
+   controlInputs<-c(numericInput("marginalFirstStageC1",label=paste("P(S|",substringDTR1C()[2],",r,", substringDTR1C()[3],")",sep=""),value=0,min=0,max=1,step=0.01),
+                    numericInput("marginalSecondStageNRC1",label=paste("P(S|",substringDTR1C()[2],",nr,",substringDTR1C()[4],")",sep=""),
+                                 value=0,min=0,max=1,step=0.01)
+   )
+ })
+ 
+ output$cellProbsDTR2C <- renderUI({
+   if(substringDTR1C()[2]==substringDTR2C()[2] && substringDTR1C()[3]==substringDTR2C()[3]){
+     controlInputs<-c(numericInput("marginalSecondStageNRC2",label=paste("P(S|",substringDTR2C()[2],",nr,",substringDTR2C()[4],")",sep=""),
+                                   value=0,min=0,max=1,step=0.01)
+     )
+   }
+   else{
+     controlInputs<-c(
+       numericInput("marginalFirstStageC2",label=paste("P(S|",substringDTR2C()[2],",r,", substringDTR2C()[3],")",sep=""),value=0,min=0,max=1,step=0.01),
+       numericInput("marginalSecondStageNRC2",label=paste("P(S|",substringDTR2C()[2],",nr,",substringDTR2C()[4],")",sep=""),
+                    value=0,min=0,max=1,step=0.01)
+     )
+   }
+   controlInputs
+ })
+ 
+ ### Render enabled/disabled numericInputs when outcome is continuous
+ 
+ generateContinuousInputC <- reactive({
+   validate(
+     need(input$firstDTRcompareC, "Please select a first AI."),
+     need(input$secondDTRcompareC, "Please select a second AI.")
+   )
+   if(input$meanSdCheckC==TRUE && substringDTR1C()[1] != substringDTR2C()[1]){
+     return(disable(numericInput("effectSizeCdisable",label="Standardized Effect Size",value=0,min=0,max=1,step=0.01)))
+   }
+   else {
+     return(numericInput("effectSizeC",label="Standardized Effect Size",value=generateProbsC()[3],min=0,max=1,step=0.01))
+   }
+ })
+ 
+ output$continuousProbC<-renderUI({
+   generateContinuousInputC()
+ })
+ 
+ output$meanEstC <- renderUI({
+   contInput<-c(numericInput("meanDiffC",label="Difference in mean outcomes between the two selected DTRs:",value=0,min=0,step=0.01),
+                numericInput("sdDiffC",label="Standard deviation of the above difference in means:", value=0, min=0, step=0.01))
+   contInput
+ })
+ 
+ ##### DESIGN C OBSERVERS #####
+ 
+ ### For binary outcome, disallow cell-specific input if target difference input is selected
+ ### If target difference is not selected, also deselect target OR
+ 
+ observe({    
+   if(input$targetDiffCheckC){
+     updateCheckboxInput(session,"cellOrConditionalC",value=FALSE)
+   }
+   if(input$targetDiffCheckC==FALSE){
+     updateCheckboxInput(session,"targetOddsCheckC",value=FALSE)
+   }
+ })
+ 
+ ### If cell-specific input is selected, deselect target difference and OR options
+ ### Update disabled full DTR success inputs with computed probabilities
+ 
+ observe({
+   if(input$cellOrConditionalC==TRUE){
+     updateCheckboxInput(session,"targetDiffCheckC",value=FALSE)
+     updateCheckboxInput(session,"targetOddsCheckC",value=FALSE)
+     
+     updateNumericInput(session,"DTRsuccC1disable",value=generateProbsC()[1])
+     updateNumericInput(session,"DTRsuccC2disable",value=generateProbsC()[2])
+   }
+ },priority=2)
+ 
+ 
+ ### Compute full DTR probabilities or effect size when providing cell-specific probabilities or mean/SD 
+ 
+ generateProbsC <- reactive({
+   if(input$selectOutcomeC==1 && substringDTR1C()[2]==substringDTR2C()[2] && substringDTR1C()[3]==substringDTR2C()[3] && input$cellOrConditionalC==TRUE){
+     pDTR1 <- fullDTRprob(input$marginalFirstStageC1,input$respC,input$marginalSecondStageNRC1)
+     pDTR2 <- fullDTRprob(input$marginalFirstStageC1,input$respC,input$marginalSecondStageNRC2)
+     effectSize <- 0
+   }
+   
+   else if (input$selectOutcomeC==1 && substringDTR1C()[2]!=substringDTR2C()[2] && substringDTR1C()[3]!=substringDTR2C()[3] && input$cellOrConditionalC==TRUE){
+     pDTR1 <- fullDTRprob(input$marginalFirstStageC1,input$respC,input$marginalSecondStageNRC1)
+     pDTR2 <- fullDTRprob(input$marginalFirstStageC2,input$respC,input$marginalSecondStageNRC2)
+     effectSize <- 0
+   }
+   else if (input$selectOutcomeC==1 && input$cellOrConditionalC==FALSE){
+     pDTR1 <- input$DTRsuccC1
+     pDTR2 <- input$DTRsuccC2
+     effectSize <- 0
+   }
+   else {
+     pDTR1 <- 0
+     pDTR2 <- 0
+     effectSize <- (input$meanDiffC / input$sdDiffC)
+   }
+   
+   return(c(pDTR1,pDTR2,effectSize))
+ })
+ 
+ ### If providing mean difference and SD, update disabled effect size input with computed value
+ 
+ observe({
+   if(input$meanSdCheckC==TRUE){
+     updateNumericInput(session,"effectSizeCdisable",value=generateProbsC()[3])
+   }
+ })  
+ 
+ ##### DESIGN C RESULT #####
+ 
+ # Based on provided input probabilities and selected options, compute appropriate arguments to pass to power.prop.test or pwr.norm.test
+ 
+ checkDTRinputsC <- reactive({
+   if ((0<=input$DTRsuccC1 & input$DTRsuccC1 <=1) & (0<=input$DTRsuccC2 & input$DTRsuccC2<=1))
+     return(TRUE)
+   else
+     return(FALSE)
+ })
+ 
+ dataCompilerC <- reactive({
+   
+   validate(
+     need(!(is.na(input$respC)), "Please provide a response probability. If unknown, enter 0 for a conservative estimate of power or sample size.") %then%
+       need(0<=input$respC && input$respC<=1, "The provided response probability is not a valid probability. Please enter a value between 0 and 1.")
+   )
+   
+   if(input$selectOutcomeC==1 && input$cellOrConditionalC==FALSE && input$targetDiffCheckC==FALSE){
+     validate(
+       need(input$firstDTRcompareC, "Select a first AI above."),
+       need(input$secondDTRcompareC, "Select a second AI above.") %then%
+         need(input$DTRsuccC1 != input$DTRsuccC2, "Please provide unique success probabilities for each AI. Sample size is indeterminate for equal AI probabilities.") %then%
+         need(checkDTRinputsC(), "The provided success probability for at least one AI is not a valid probability. Please enter a value between 0 and 1.")
+     )
+     return(c(input$DTRsuccC1,input$DTRsuccC2))
+   }
+   
+   if(input$selectOutcomeC==1 && input$cellOrConditionalC==TRUE){  
+     validate(
+       need(input$firstDTRcompareC, "Select a first AI above."),
+       need(input$firstDTRcompareC, "select a second AI above."),
+       need(generateProbsC()[1] != generateProbsC()[2], "The provided marginal probabilities yield identical overall AI success probabilities. Sample size is indeterminate for equal AI probabilities. Please adjust your inputs.")
+     )
+     
+     return(c(generateProbsC()[1],generateProbsC()[2]))
+   }
+   
+   if(input$selectOutcomeC==1 && input$cellOrConditionalC==FALSE && input$targetDiffCheckC==TRUE && input$targetOddsCheckC==FALSE){
+     validate(
+       need(input$targetDiffC <= 0.5, "Target difference must be less than 0.5 to be valid input"),
+       need(input$targetDiffC > 0, "Target difference must be greater than 0. Sample size is indeterminate for equal AI probabilities.
+            Please adjust your inputs.")
+       )
+     return(c(0.5,0.5+input$targetDiffC))
+   }
+   
+   if(input$selectOutcomeC==1 && input$targetOddsCheckC==TRUE && input$targetDiffCheckC==TRUE){
+     validate(
+       need(input$targetORC != 1, "Sample size is indeterminate for an odds ratio of 1. Please enter a different target odds ratio."),
+       need(input$targetORC != 0, "Sample size is indeterminate for an odds ratio of 0. Please enter a different target odds ratio.")
+     )
+     return(c(0.5,input$targetORC/(1+input$targetORC)))
+   }
+   
+   if(input$selectOutcomeC==2 && input$meanSdCheckC==FALSE){
+     validate(
+       need(input$firstDTRcompareC, "Select a first AI above."),
+       need(input$secondDTRcompareC, "Select a second AI above.") %then%
+         need(input$effectSizeC != 0, "Sample size is indeterminate for an effect size of 0. Please enter a different target effect size.")
+     )
+     
+     return(input$effectSizeC)
+   }
+   
+   if(input$selectOutcomeC==2 && input$meanSdCheckC==TRUE){
+     validate(
+       need(input$meanDiffC != 0, "Sample size is indeterminate for a mean difference of 0."),
+       need(input$sdDiffC != 0, "Sample size is indeterminate for a standard deviation of 0.")
+     )
+     
+     return(generateProbsC()[3])
+   }  
+ })
+ 
+ # Compute the "design effect" for design C. Varies based on whether DTRs are separate- or shared-path
+ 
+ selectEffectC <- reactive({
+   if(substringDTR1C()[2] != substringDTR2C()[2]){
+     designEffect <- 3*(1-input$respC) + 2*input$respC  
+   }
+   
+   else{
+     designEffect <- 4/(1-input$respC)
+   }
+   return(designEffect)
+ })
+ 
+ sentenceCompilerC <- reactive({
+   if(input$selectOutcomeC==1 && input$cellOrConditionalC==FALSE && input$targetDiffCheckC==FALSE){
+     str <- paste("with success probabilities of",input$DTRsuccC1,"and",input$DTRsuccC2,"respectively,")
+     return(str)
+   }
+   if(input$selectOutcomeC==1 && input$cellOrConditionalC==TRUE){
+     str <- paste("with success probabilities of",generateProbsC()[1],"and",generateProbsC()[2],"respectively,")
+     return(str)
+   }
+   
+   if(input$selectOutcomeC==1 && input$cellOrConditionalC==FALSE && input$targetDiffCheckC==TRUE && input$targetOddsCheckC==FALSE){
+     str <- paste("with a difference in success probabilities of",input$targetDiffC)
+     return(str)
+   }
+   
+   if(input$selectOutcomeC==1 && input$targetOddsCheckC==TRUE && input$targetDiffCheckC==TRUE){
+     str <- paste("with an odds ratio of",input$targetORC)
+     return(str)
+   }
+   
+   if(input$selectOutcomeC==2 && input$meanSdCheckC==FALSE){
+     str <- paste("with a standardized effect size of", input$effectSizeC)
+     return(str)
+   }
+   
+   if(input$selectOutcomeC==2 && input$meanSdCheckC==TRUE){
+     str <- paste("(with a standardized effect size of ", generateProbsC()[3],")",sep="")
+     return(str)
+   }  
+ })
+ 
+ # Pass arguments from dataCompilerB() to appropriate R function; extract and render relevant output
+ 
+ output$binarySampleSizeC <- renderUI({
+   validate(
+     need(input$inputPowerC > 0, "Sample size is indeterminate for 0% power. Please specify a power greater than zero."),
+     need(input$inputPowerC < 1, "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1.")
+   )
+   designEffect<-selectEffectC()
+   rawSampleSize<-power.prop.test(p1=dataCompilerC()[1],p2=dataCompilerC()[2],power=input$inputPowerC,sig.level=input$alphaC)$n
+   finalSampleSize<-ceiling(designEffect * rawSampleSize)
+   formatPower<-paste(input$inputPowerC*100,"%",sep="")
+   formatAlpha<-paste(input$alphaC*100,"%",sep="")
+   
+   HTML("<h4> <font color='blue'> N=",paste(finalSampleSize),"</font> </h4>
+        <p><em> We require a sample size of",finalSampleSize,"to compare adaptive interventions",input$firstDTRcompareC, "and",
+        input$secondDTRcompareC,sentenceCompilerC(), "with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
+ })
+ 
+ output$binaryPowerC <- renderUI({
+   validate(
+     need(input$inputSampleSizeC != 0, "Power is indeterminate for a sample size of 0. Please provide a valid sample size.")  
+   )
+   designEffect<-selectEffectC()
+   size<-(input$inputSampleSizeC/designEffect)
+   finalPower<-round(power.prop.test(p1=dataCompilerC()[1],p2=dataCompilerC()[2],n=size,sig.level=input$alphaC)$power,digits=3)
+   formatPower<-paste(finalPower*100,"%",sep="")
+   formatAlpha<-paste(input$alphaC*100,"%",sep="")
+   
+   HTML("<h4> <font color='blue'> power=",paste(finalPower),"</font> </h4>
+        <p><em> Given a sample size of",input$inputSampleSizeC,"a comparison of adaptive interventions",input$firstDTRcompareC, "and",
+        input$secondDTRcompareA,sentenceCompilerC(), "can be made with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
+ })
+ 
+ output$continuousSampleSizeC <- renderUI({
+   validate(
+     need(input$inputPowerC > 0, "Sample size is indeterminate for 0% power. Please specify a power greater than zero."),
+     need(input$inputPowerC < 1, "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1.")
+   )
+   designEffect<-selectEffectC()
+   rawSampleSize<-pwr.norm.test(d=dataCompilerC(),sig.level=input$alphaC,power=input$inputPowerC,alternative="two.sided")
+   finalSampleSize<-ceiling(2*designEffect*rawSampleSize$n)
+   formatPower<-paste(input$inputPowerC*100,"%",sep="")
+   formatAlpha<-paste(input$alphaC*100,"%",sep="")
+   
+   HTML("<h4> <font color='blue'> N=",paste(finalSampleSize),"</font> </h4>
+        <p><em> We require a sample size of",finalSampleSize,"to compare adaptive interventions",input$firstDTRcompareC, "and",
+        input$secondDTRcompareC,sentenceCompilerC(), "with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
+ })
+ 
+ output$continuousPowerC <- renderUI({
+   validate(
+     need(input$inputSampleSizeC!=0, "Power is indeterminate for a sample size of 0. Please provide a valid sample size.")  
+   )
+   designEffect<-selectEffectC()
+   size<-(input$inputSampleSizeC/(2*designEffect))
+   finalPower<-round(pwr.norm.test(d=dataCompilerC(),sig.level=input$alphaC,n=size,alternative="two.sided")$power,digits=3)
+   formatPower<-paste(finalPower*100,"%",sep="")
+   formatAlpha<-paste(input$alphaC*100,"%",sep="")
+   
+   HTML("<h4> <font color='blue'> power=",paste(finalPower),"</font> </h4>
+        <p><em> Given a sample size of",input$inputSampleSizeC,"a comparison of adaptive interventions",input$firstDTRcompareC, "and",
+        input$secondDTRcompareC,sentenceCompilerC(), "can be made with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
+ })
 
+ 
+ ##### DESIGN D #####
+ 
+ ##### D HEADER #####
+ 
+ ### Render the design image which highlights selected DTRs
+ ### Takes the names of selected DTRs, generates a filepath, and renders the image in the UI
+ ### Note that this requires a very specific naming convention for image assets
+ ### 'SMARTdesignX_DTR1_DTR2.gif'; if DTRX is unselected, DTR name is 0. 
+ 
+ output$designDimg <- renderImage({
+   filename<-filename<-normalizePath(file.path('./www/images',paste('SMARTdesignD_',input$firstDTRcompareD,'_',input$secondDTRcompareD,'.gif',sep='')))
+   list(src=filename)
+ },deleteFile=FALSE)
+ 
+ ### Render 'selectize' dropdown boxes with placeholder text for AI selection.
+ ### Second DTR input populates with all DTRs that are NOT the first DTR--eliminates ability to select same DTR twice
+ ### Placed in server.R rather than ui.R because of dependency on first DTR selection
+ 
+ output$selectAI1D <- renderUI({
+   AI <- selectizeInput("firstDTRcompareD",label="Compare AI",
+                        choices=designD.DTRs,
+                        options = list(
+                          placeholder = 'Please select a first AI.',
+                          onInitialize = I('function() { this.setValue(0); }')
+                        )
+   )
+   return(AI)
+ })
+ 
+ output$selectAI2D <- renderUI({ 
+   AI <- selectizeInput("secondDTRcompareD",label="to AI",
+                        choices=setdiff(designD.DTRs,input$firstDTRcompareD),
+                        options = list(
+                          placeholder = 'Please select a second AI.',
+                          onInitialize = I('function() { this.setValue(""); }')
+                        )
+   )
+   return(AI)
+ })  
+ 
+ ##### DESIGN D PROBABILITY INPUT #####
+ 
+ ### Read in DTR names from dropdowns and parse them to determine first and second stage treatments
+ ### Reactive function allows on-the-fly changes in return values with changes in selection
+ ### Outputs full DTR name, first-stage treatment (first character), second-stage treatment if response (third character),
+ ### and second-stage treatment if non-response(last character)
+ ### NOTE that these positions are exclusive to design A because responders have two second-stage treatment options
+ 
+ substringDTR1D <- reactive({
+   if(length(input$firstDTRcompareD) > 0){
+     DTR1 <-paste(input$firstDTRcompareD)
+     firstStage1<-substr(DTR1,1,1)
+     secondStage1<-substr(DTR1,2,2)
+     return(c(DTR1, firstStage1,secondStage1))
+   }
+   else{
+     return(c(0,0,0))
+   }   
+ })
+ 
+ substringDTR2D <- reactive({
+   if(length(input$secondDTRcompareD) >0){
+     DTR2 <-paste(input$secondDTRcompareD)
+     firstStage2<-substr(DTR2,1,1)
+     secondStage2<-substr(DTR2,2,2)
+     return(c(DTR2, firstStage2, secondStage2))
+   }
+   else{
+     return(c(0,0,0))
+   }
+ })
+ 
+ #When a first DTR is selected, render an input box corresponding to whatever input method is selected.
+ # For DTR-conditional or cell-specific inputs, first numericInput is P(S|DTR1), enabled/disabled depending on cellOrConditionalB
+ # For target-difference or OR, relevant numericInputs are rendered
+ # This is the ONLY location in which difference and OR numericInputs are built.
+ 
+ generateBinaryInputs1D <- reactive({
+   validate(
+     need(input$firstDTRcompareD, "Please select a first AI.")
+   )
+   if(input$targetDiffCheckD==FALSE){
+       return(numericInput("DTRsuccC1",label="Probability of Success for First AI",value=generateProbsC()[1],min=0,max=1,step=0.01))
+   }
+   
+   if(input$targetDiffCheckD==TRUE && input$targetOddsCheckD==FALSE && substringDTR2D()[1] != 0){
+     return(numericInput("targetDiffD",label="Target Difference in Success Probabilities",value=0.1,min=0.0001,max=0.5,step=0.01))
+   }
+   
+   if(input$targetOddsCheckD==TRUE && substringDTR2D()[1] != 0){
+     return(numericInput("targetORD",label="Target Odds Ratio of Success",value=2,min=0,step=0.01))
+   }
+   
+   if(input$targetDiffCheckD==TRUE && substringDTR2D()[1] == 0){
+     return()
+   }
+ })
+ 
+ # When a second DTR is selected, render an input box corresponding to whatever input method is selected.
+ # For DTR-conditional or cell-specific inputs, first numericInput is P(S|DTR2), enabled/disabled depending on cellOrConditionalB
+ # For target-difference or OR, numericInputs are NOT rendered (those are handled in output$binaryDTR1probB)
+ 
+ generateBinaryInputs2D <- reactive({
+   validate(
+     need(input$secondDTRcompareD, "Please select a second AI.")
+   )
+   if(input$targetDiffCheckD==FALSE && input$targetOddsCheckD==FALSE){
+       return(numericInput("DTRsuccD2",label="Probability of Success for Second AI",value=0,min=0,max=1,step=0.01))
+   }
+ })
+ 
+ ### Render UI components generated above
+ 
+ output$binaryDTR1probD <- renderUI({
+   generateBinaryInputs1D()
+ })
+ 
+ output$binaryDTR2probD <- renderUI({
+   generateBinaryInputs2D()
+ })
+ 
+ ### For cell-specific probabilities, render a series of numericInputs labeled by information from DTR substrings
+ ### When DTR1 and DTR2 begin with the same treatment, P(S|stage1trt,r) is rendered only once, in output$cellProbsDTR1B
+ 
+ output$cellProbsDTR1D <- renderUI({
+   controlInputs<-c(numericInput("marginalFirstStageD1",label=paste("P(S|",substringDTR1C()[2],",r,", substringDTR1C()[3],")",sep=""),value=0,min=0,max=1,step=0.01),
+                    numericInput("marginalSecondStageNRD1",label=paste("P(S|",substringDTR1C()[2],",nr,",substringDTR1C()[4],")",sep=""),
+                                 value=0,min=0,max=1,step=0.01)
+   )
+ })
+ 
+ output$cellProbsDTR2D <- renderUI({
+   if(substringDTR1C()[2]==substringDTR2D()[2] && substringDTR1D()[3]==substringDTR2D()[3]){
+     controlInputs<-c(numericInput("marginalSecondStageNRD2",label=paste("P(S|",substringDTR2C()[2],",nr,",substringDTR2C()[4],")",sep=""),
+                                   value=0,min=0,max=1,step=0.01)
+     )
+   }
+   else{
+     controlInputs<-c(
+       numericInput("marginalFirstStageD2",label=paste("P(S|",substringDTR2D()[2],",r,", substringDTR2D()[3],")",sep=""),value=0,min=0,max=1,step=0.01),
+       numericInput("marginalSecondStageNRD2",label=paste("P(S|",substringDTR2D()[2],",nr,",substringDTR2D()[4],")",sep=""),
+                    value=0,min=0,max=1,step=0.01)
+     )
+   }
+   controlInputs
+ })
+ 
+ ### Render enabled/disabled numericInputs when outcome is continuous
+ 
+ generateContinuousInputD <- reactive({
+   validate(
+     need(input$firstDTRcompareD, "Please select a first AI."),
+     need(input$secondDTRcompareD, "Please select a second AI.")
+   )
+   if(input$meanSdCheckD==TRUE && substringDTR1D()[1] != substringDTR2D()[1]){
+     return(disable(numericInput("effectSizeDdisable",label="Standardized Effect Size",value=0,min=0,max=1,step=0.01)))
+   }
+   else {
+     return(numericInput("effectSizeD",label="Standardized Effect Size",value=generateProbsC()[3],min=0,max=1,step=0.01))
+   }
+ })
+ 
+ output$continuousProbD <- renderUI({
+   generateContinuousInputD()
+ })
+ 
+ output$meanEstD <- renderUI({
+   contInput<-c(numericInput("meanDiffD",label="Difference in mean outcomes between the two selected DTRs:",value=0,min=0,step=0.01),
+                numericInput("sdDiffD",label="Standard deviation of the above difference in means:", value=0, min=0, step=0.01))
+   contInput
+ })
+ 
+ ##### DESIGN D OBSERVERS #####
+ 
+ ### For binary outcome, disallow cell-specific input if target difference input is selected
+ ### If target difference is not selected, also deselect target OR
+ 
+ observe({
+   if(input$targetDiffCheckD==FALSE){
+     updateCheckboxInput(session,"targetOddsCheckD",value=FALSE)
+   }
+ }) 
+ 
+ ### Compute full DTR probabilities or effect size when providing cell-specific probabilities or mean/SD 
+ 
+ generateProbsD <- reactive({
+   effectSize <- (input$meanDiffD / input$sdDiffD)
+   return(c(0,0,effectSize))
+ })
+ 
+ ### If providing mean difference and SD, update disabled effect size input with computed value
+ 
+ observe({
+   if(input$meanSdCheckD==TRUE){
+     updateNumericInput(session,"effectSizeDdisable",value=generateProbsD()[3])
+   }
+ })  
+ 
+ ##### DESIGN C RESULT #####
+ 
+ # Based on provided input probabilities and selected options, compute appropriate arguments to pass to power.prop.test or pwr.norm.test
+ 
+ checkDTRinputsD <- reactive({
+   if ((0<=input$DTRsuccD1 & input$DTRsuccD1 <=1) & (0<=input$DTRsuccD2 & input$DTRsuccD2<=1))
+     return(TRUE)
+   else
+     return(FALSE)
+ })
+ 
+ dataCompilerD <- reactive({
+     
+   if(input$selectOutcomeD==1 && input$targetDiffCheckD==FALSE){
+     validate(
+       need(input$firstDTRcompareD, "Select a first AI above."),
+       need(input$secondDTRcompareD, "Select a second AI above.") %then%
+         need(input$DTRsuccD1 != input$DTRsuccD2, "Please provide unique success probabilities for each AI. Sample size is indeterminate for equal AI probabilities.") %then%
+         need(checkDTRinputsD(), "The provided success probability for at least one AI is not a valid probability. Please enter a value between 0 and 1.")
+     )
+     return(c(input$DTRsuccD1,input$DTRsuccD2))
+   }
+   
+   if(input$selectOutcomeD==1 && input$targetDiffCheckD==TRUE && input$targetOddsCheckD==FALSE){
+     validate(
+       need(input$targetDiffD <= 0.5, "Target difference must be less than 0.5 to be valid input"),
+       need(input$targetDiffD > 0, "Target difference must be greater than 0. Sample size is indeterminate for equal AI probabilities.
+            Please adjust your inputs.")
+       )
+     return(c(0.5,0.5+input$targetDiffD))
+   }
+   
+   if(input$selectOutcomeD==1 && input$targetOddsCheckD==TRUE && input$targetDiffCheckD==TRUE){
+     validate(
+       need(input$targetORD != 1, "Sample size is indeterminate for an odds ratio of 1. Please enter a different target odds ratio."),
+       need(input$targetORD != 0, "Sample size is indeterminate for an odds ratio of 0. Please enter a different target odds ratio.")
+     )
+     return(c(0.5,input$targetORD/(1+input$targetORD)))
+   }
+   
+   if(input$selectOutcomeD==2 && input$meanSdCheckD==FALSE){
+     validate(
+       need(input$firstDTRcompareD, "Select a first AI above."),
+       need(input$secondDTRcompareD, "Select a second AI above.") %then%
+         need(input$effectSizeD != 0, "Sample size is indeterminate for an effect size of 0. Please enter a different target effect size.")
+     )
+     
+     return(input$effectSizeD)
+   }
+   
+   if(input$selectOutcomeD==2 && input$meanSdCheckD==TRUE){
+     validate(
+       need(input$meanDiffD != 0, "Sample size is indeterminate for a mean difference of 0."),
+       need(input$sdDiffD != 0, "Sample size is indeterminate for a standard deviation of 0.")
+     )
+     
+     return(generateProbsD()[3])
+   }  
+ })
+ 
+ # Compute the "design effect" for design C. Varies based on whether DTRs are separate- or shared-path
+ 
+ selectEffectD <- reactive({
+   return(4)
+ })
+ 
+ sentenceCompilerD <- reactive({
+   if(input$selectOutcomeD==1 && input$targetDiffCheckD==FALSE){
+     str <- paste("with success probabilities of",input$DTRsuccD1,"and",input$DTRsuccD2,"respectively,")
+     return(str)
+   }
+   
+   if(input$selectOutcomeD==1 && input$targetDiffCheckD==TRUE && input$targetOddsCheckD==FALSE){
+     str <- paste("with a difference in success probabilities of",input$targetDiffD)
+     return(str)
+   }
+   
+   if(input$selectOutcomeD==1 && input$targetOddsCheckD==TRUE && input$targetDiffCheckD==TRUE){
+     str <- paste("with an odds ratio of",input$targetORD)
+     return(str)
+   }
+   
+   if(input$selectOutcomeD==2 && input$meanSdCheckD==FALSE){
+     str <- paste("with a standardized effect size of", input$effectSizeD)
+     return(str)
+   }
+   
+   if(input$selectOutcomeD==2 && input$meanSdCheckD==TRUE){
+     str <- paste("(with a standardized effect size of ", generateProbsD()[3],")",sep="")
+     return(str)
+   }  
+ })
+ 
+ # Pass arguments from dataCompilerB() to appropriate R function; extract and render relevant output
+ 
+ output$binarySampleSizeD <- renderUI({
+   validate(
+     need(input$inputPowerD > 0, "Sample size is indeterminate for 0% power. Please specify a power greater than zero."),
+     need(input$inputPowerD < 1, "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1.")
+   )
+   designEffect<-selectEffectD()
+   rawSampleSize<-power.prop.test(p1=dataCompilerD()[1],p2=dataCompilerD()[2],power=input$inputPowerD,sig.level=input$alphaD)$n
+   finalSampleSize<-ceiling(designEffect * rawSampleSize)
+   formatPower<-paste(input$inputPowerD*100,"%",sep="")
+   formatAlpha<-paste(input$alphaD*100,"%",sep="")
+   
+   HTML("<h4> <font color='blue'> N=",paste(finalSampleSize),"</font> </h4>
+        <p><em> We require a sample size of",finalSampleSize,"to compare adaptive interventions",input$firstDTRcompareC, "and",
+        input$secondDTRcompareD,sentenceCompilerD(), "with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
+ })
+ 
+ output$binaryPowerD <- renderUI({
+   validate(
+     need(input$inputSampleSizeD != 0, "Power is indeterminate for a sample size of 0. Please provide a valid sample size.")  
+   )
+   designEffect<-selectEffectD()
+   size<-(input$inputSampleSizeD/designEffect)
+   finalPower<-round(power.prop.test(p1=dataCompilerD()[1],p2=dataCompilerD()[2],n=size,sig.level=input$alphaD)$power,digits=3)
+   formatPower<-paste(finalPower*100,"%",sep="")
+   formatAlpha<-paste(input$alphaD*100,"%",sep="")
+   
+   HTML("<h4> <font color='blue'> power=",paste(finalPower),"</font> </h4>
+        <p><em> Given a sample size of",input$inputSampleSizeD,"a comparison of adaptive interventions",input$firstDTRcompareD, "and",
+        input$secondDTRcompareA,sentenceCompilerD(), "can be made with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
+ })
+ 
+ output$continuousSampleSizeD <- renderUI({
+   validate(
+     need(input$inputPowerD > 0, "Sample size is indeterminate for 0% power. Please specify a power greater than zero."),
+     need(input$inputPowerD < 1, "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1.")
+   )
+   designEffect<-selectEffectD()
+   rawSampleSize<-pwr.norm.test(d=dataCompilerD(),sig.level=input$alphaD,power=input$inputPowerD,alternative="two.sided")
+   finalSampleSize<-ceiling(2*designEffect*rawSampleSize$n)
+   formatPower<-paste(input$inputPowerD*100,"%",sep="")
+   formatAlpha<-paste(input$alphaD*100,"%",sep="")
+   
+   HTML("<h4> <font color='blue'> N=",paste(finalSampleSize),"</font> </h4>
+        <p><em> We require a sample size of",finalSampleSize,"to compare adaptive interventions",input$firstDTRcompareD, "and",
+        input$secondDTRcompareD,sentenceCompilerD(), "with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
+ })
+ 
+ output$continuousPowerD <- renderUI({
+   validate(
+     need(input$inputSampleSizeD!=0, "Power is indeterminate for a sample size of 0. Please provide a valid sample size.")  
+   )
+   designEffect<-selectEffectD()
+   size<-(input$inputSampleSizeD/(2*designEffect))
+   finalPower<-round(pwr.norm.test(d=dataCompilerD(),sig.level=input$alphaD,n=size,alternative="two.sided")$power,digits=3)
+   formatPower<-paste(finalPower*100,"%",sep="")
+   formatAlpha<-paste(input$alphaD*100,"%",sep="")
+   
+   HTML("<h4> <font color='blue'> power=",paste(finalPower),"</font> </h4>
+        <p><em> Given a sample size of",input$inputSampleSizeD,"a comparison of adaptive interventions",input$firstDTRcompareD, "and",
+        input$secondDTRcompareD,sentenceCompilerD(), "can be made with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
+ })
   
 })
