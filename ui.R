@@ -222,7 +222,7 @@ shinyUI(
                                                   uiOutput("continuousProbA"),
                                                   conditionalPanel(condition="input.meanSdCheckA",
                                                                    fluidRow(column(1),
-                                                                            column(4,uiOutput("meanEstA"))
+                                                                            column(11,uiOutput("meanEstA"))
                                                                    )
                                                   )
                                  ),
@@ -394,7 +394,7 @@ shinyUI(
                                                   uiOutput("continuousProbB"),
                                                   conditionalPanel(condition="input.meanSdCheckB",
                                                                    fluidRow(column(1),
-                                                                            column(4,uiOutput("meanEstB"))
+                                                                            column(11,uiOutput("meanEstB"))
                                                                    )
                                                   )
                                  ),
@@ -542,13 +542,13 @@ shinyUI(
                                                   uiOutput("binaryDTR1probC"),
                                                   conditionalPanel(condition="input.cellOrConditionalC",
                                                                    fluidRow(column(1),
-                                                                            column(4,uiOutput("cellProbsDTR1C"))
+                                                                            column(11,uiOutput("cellProbsDTR1C"))
                                                                    )
                                                   ),
                                                   uiOutput("binaryDTR2probC"),
                                                   conditionalPanel(condition="input.cellOrConditionalC",
                                                                    fluidRow(column(1),
-                                                                            column(4,uiOutput("cellProbsDTR2C"))
+                                                                            column(11,uiOutput("cellProbsDTR2C"))
                                                                    )
                                                   )
                                  ),
@@ -556,7 +556,7 @@ shinyUI(
                                                   uiOutput("continuousProbC"),
                                                   conditionalPanel(condition="input.meanSdCheckC",
                                                                    fluidRow(column(1),
-                                                                            column(4,uiOutput("meanEstC"))
+                                                                            column(11,uiOutput("meanEstC"))
                                                                    )
                                                   )
                                  ),
@@ -703,7 +703,7 @@ shinyUI(
                                                   uiOutput("continuousProbD"),
                                                   conditionalPanel(condition="input.meanSdCheckD",
                                                                    fluidRow(column(1),
-                                                                            column(4,uiOutput("meanEstD"))
+                                                                            column(11,uiOutput("meanEstD"))
                                                                    )
                                                   )
                                  ),
