@@ -129,12 +129,12 @@ shinyServer(function(input,output,session){
     validate(
       need(input$firstDTRcompareA, "Please select a first AI.")
     )
-    if(input$targetDiffCheckA==FALSE){
+    if(input$targetDiffCheckA==FALSE && input$targetOddsCheckA==FALSE){
       if(input$cellOrConditionalA==TRUE){
         return(disable(numericInput("DTRsuccA1disable",label="Probability of Success for First AI",value=0,min=0,max=1,step=0.01)))
       }
       else
-        return(numericInput("DTRsuccA1",label="Probability of Success for First AI",value=generateProbsA()[1],min=0,max=1,step=0.01))
+        return(numericInput("DTRsuccA1",label="Probability of Success for First AI",value=0,min=0,max=1,step=0.01))
     }
     
     if(input$targetDiffCheckA==TRUE && input$targetOddsCheckA==FALSE && substringDTR2A()[1] != 0){
@@ -163,7 +163,7 @@ shinyServer(function(input,output,session){
         return(disable(numericInput("DTRsuccA2disable",label="Probability of Success for Second AI",value=0,min=0,max=1,step=0.01)))
       }
       else
-        return(numericInput("DTRsuccA2",label="Probability of Success for Second AI",value=generateProbsA()[2],min=0,max=1,step=0.01))
+        return(numericInput("DTRsuccA2",label="Probability of Success for Second AI",value=0,min=0,max=1,step=0.01))
     }
   })
   
@@ -181,9 +181,9 @@ shinyServer(function(input,output,session){
   ### When DTR1 and DTR2 begin with the same treatment, P(S|stage1trt,r) is rendered only once, in output$cellProbsDTR1B
   
   output$cellProbsDTR1A <- renderUI({
-    controlInputs<-c(numericInput("marginalFirstStageA1",label=paste("P(S|",substringDTR1A()[2],",r,", substringDTR1A()[3],")",sep=""),value=0,min=0,max=1,step=0.01),
-                     numericInput("marginalSecondStageNRA1",label=paste("P(S|",substringDTR1A()[2],",nr,",substringDTR1A()[4],")",sep=""),
-                                  value=0,min=0,max=1,step=0.01)
+    controlInputs<-c(
+           numericInput("marginalFirstStageA1",label=paste("Probability of success for Path ",substringDTR1A()[2],"r",substringDTR1A()[3],sep=""),value=0,min=0,max=1,step=0.01),
+           numericInput("marginalSecondStageNRA1",label=paste("Probability of success for Path ",substringDTR1A()[2],"nr",substringDTR1A()[4],sep=""), value=0,min=0,max=1,step=0.01)
     )
   })
   
@@ -195,8 +195,8 @@ shinyServer(function(input,output,session){
     }
     else{
       controlInputs<-c(
-        numericInput("marginalFirstStageA2",label=paste("P(S|",substringDTR2A()[2],",r,", substringDTR2A()[3],")",sep=""),value=0,min=0,max=1,step=0.01),
-        numericInput("marginalSecondStageNRA2",label=paste("P(S|",substringDTR2A()[2],",nr,",substringDTR2A()[4],")",sep=""),
+        numericInput("marginalFirstStageA2",label=paste("Probability of success for Path ",substringDTR2A()[2],"r", substringDTR2A()[3],sep=""),value=0,min=0,max=1,step=0.01),
+        numericInput("marginalSecondStageNRA2",label=paste("Probability of success for Path ",substringDTR2A()[2],"nr",substringDTR2A()[4],sep=""),
                      value=0,min=0,max=1,step=0.01)
       )
     }
@@ -236,9 +236,14 @@ shinyServer(function(input,output,session){
   observe({    
     if(input$targetDiffCheckA){
       updateCheckboxInput(session,"cellOrConditionalA",value=FALSE)
-    }
-    if(input$targetDiffCheckA==FALSE){
       updateCheckboxInput(session,"targetOddsCheckA",value=FALSE)
+    }
+  })
+  
+  observe({    
+    if(input$targetOddsCheckA){
+      updateCheckboxInput(session,"cellOrConditionalA",value=FALSE)
+      updateCheckboxInput(session,"targetDiffCheckA",value=FALSE)
     }
   })
   
@@ -426,7 +431,7 @@ shinyServer(function(input,output,session){
       need(input$inputPowerA < 1, "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1.")
     )
     designEffect<-selectEffectA()
-    rawSampleSize<-power.prop.test(p1=dataCompilerA()[1],p2=dataCompilerA()[2],power=input$inputPowerA,sig.level=input$alphaA)$n
+    rawSampleSize<-power.prop.test(p1=dataCompilerA()[1],p2=dataCompilerA()[2],power=input$inputPowerA,sig.level=input$alphaA,alternative=c(input$selectSidedA))$n
     finalSampleSize<-ceiling(designEffect * rawSampleSize)
     formatPower<-paste(input$inputPowerA*100,"%",sep="")
     formatAlpha<-paste(input$alphaA*100,"%",sep="")
@@ -442,7 +447,7 @@ shinyServer(function(input,output,session){
     )
     designEffect<-selectEffectA()
     size<-(input$inputSampleSizeA/designEffect)
-    finalPower<-round(power.prop.test(p1=dataCompilerA()[1],p2=dataCompilerA()[2],n=size,sig.level=input$alphaA)$power,digits=3)
+    finalPower<-round(power.prop.test(p1=dataCompilerA()[1],p2=dataCompilerA()[2],n=size,sig.level=input$alphaA,alternative=c(input$selectSidedA))$power,digits=3)
     formatPower<-paste(finalPower*100,"%",sep="")
     formatAlpha<-paste(input$alphaA*100,"%",sep="")
     
@@ -457,7 +462,7 @@ shinyServer(function(input,output,session){
       need(input$inputPowerA < 1, "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1.")
     )
     designEffect<-selectEffectA()
-    rawSampleSize<-pwr.norm.test(d=dataCompilerA(),sig.level=input$alphaA,power=input$inputPowerA,alternative="two.sided")
+    rawSampleSize<-pwr.norm.test(d=dataCompilerA(),sig.level=input$alphaA,power=input$inputPowerA,alternative=c(input$selectSidedA))
     finalSampleSize<-ceiling(2*designEffect*rawSampleSize$n)
     formatPower<-paste(input$inputPowerA*100,"%",sep="")
     formatAlpha<-paste(input$alphaA*100,"%",sep="")
@@ -473,7 +478,7 @@ shinyServer(function(input,output,session){
     )
     designEffect<-selectEffectA()
     size<-(input$inputSampleSizeA/(2*designEffect))
-    finalPower<-round(pwr.norm.test(d=dataCompilerA(),sig.level=input$alphaA,n=size,alternative="two.sided")$power,digits=3)
+    finalPower<-round(pwr.norm.test(d=dataCompilerA(),sig.level=input$alphaA,n=size,alternative=c(input$selectSidedA))$power,digits=3)
     formatPower<-paste(finalPower*100,"%",sep="")
     formatAlpha<-paste(input$alphaA*100,"%",sep="")
     
@@ -535,8 +540,9 @@ shinyServer(function(input,output,session){
     if(length(input$firstDTRcompareB) > 0){
       DTR1 <-paste(input$firstDTRcompareB)
       firstStage1<-substr(DTR1,1,1)
+      secondStageR1<-substr(DTR1,3,3)
       secondStageNR1<-substr(DTR1,6,6)
-      return(c(DTR1, firstStage1,secondStageNR1))
+      return(c(DTR1, firstStage1,secondStageR1, secondStageNR1))
     }
     else{
       return(c(0,0,0))
@@ -547,8 +553,9 @@ shinyServer(function(input,output,session){
     if(length(input$secondDTRcompareB) >0){
       DTR2 <-paste(input$secondDTRcompareB)
       firstStage2<-substr(DTR2,1,1)
+      secondStageR2<-substr(DTR2,3,3)
       secondStageNR2<-substr(DTR2,6,6)
-      return(c(DTR2, firstStage2, secondStageNR2))
+      return(c(DTR2, firstStage2, secondStageR2, secondStageNR2))
     }
     else{
       return(c(0,0,0))
@@ -564,7 +571,7 @@ shinyServer(function(input,output,session){
     validate(
       need(input$firstDTRcompareB, "Please select a first AI.")
     )
-    if(input$targetDiffCheckB==FALSE && substringDTR1B()[1] != substringDTR2B()[1]){
+    if(input$targetDiffCheckB==FALSE && input$targetOddsCheckB==FALSE){
       if(input$cellOrConditionalB==TRUE){
         return(disable(numericInput("DTRsuccB1disable",label="Probability of Success for First AI",value=0,min=0,max=1,step=0.01)))
       }
@@ -572,11 +579,11 @@ shinyServer(function(input,output,session){
         return(numericInput("DTRsuccB1",label="Probability of Success for First AI",value=generateProbsB()[1],min=0,max=1,step=0.01))
     }
     
-    if(input$targetDiffCheckB==TRUE && input$targetOddsCheckB==FALSE && substringDTR2B()[1] != 0){
+    if(input$targetDiffCheckB==TRUE && input$targetOddsCheckB==FALSE){
       return(numericInput("targetDiffB",label="Target Difference in Success Probabilities",value=0.1,min=0.0001,max=0.5,step=0.01))
     }
     
-    if(input$targetOddsCheckB==TRUE && substringDTR2B()[1] != 0){
+    if(input$targetOddsCheckB==TRUE){
       return(numericInput("targetORB",label="Target Odds Ratio of Success",value=2,min=0,step=0.01))
     }
     
@@ -621,8 +628,8 @@ shinyServer(function(input,output,session){
       need(substringDTR1B()[1] != 0, "Cell-specific probabilities cannot be input until a first AI is selected.")
     )
     if(substringDTR1B()[1] != substringDTR2B()[1]){
-        controlInputs<-c(numericInput("marginalFirstStageB1",label=paste("P(S|",substringDTR1B()[2],",r)",sep=""),value=0,min=0,max=1,step=0.01),
-                         numericInput("marginalSecondStageNRB1",label=paste("P(S|",substringDTR1B()[2],",nr,",substringDTR1B()[3],")",sep=""),
+        controlInputs<-c(numericInput("marginalFirstStageB1",label=paste("Probability of success for Path ",substringDTR1B()[2],"r",substringDTR1B()[3],sep=""),value=0,min=0,max=1,step=0.01),
+                         numericInput("marginalSecondStageNRB1",label=paste("Probability of success for Path ",substringDTR1B()[2],"nr",substringDTR1B()[4],sep=""),
                                       value=0,min=0,max=1,step=0.01)
         )
     }
@@ -632,14 +639,14 @@ shinyServer(function(input,output,session){
   output$cellProbsDTR2B <- renderUI({
     if(substringDTR1B()[1] != substringDTR2B()[1]){
       if(substringDTR1B()[2]==substringDTR2B()[2]){
-        controlInputs<-c(numericInput("marginalSecondStageNRB2",label=paste("P(S|",substringDTR2B()[2],",nr,",substringDTR2B()[3],")",sep=""),
+        controlInputs<-c(numericInput("marginalSecondStageNRB2",label=paste("Probability of success for Path ",substringDTR2B()[2],"nr",substringDTR2B()[4],,sep=""),
                          value=0,min=0,max=1,step=0.01)
         )
       }
       else{
         controlInputs<-c(
-                         numericInput("marginalFirstStageB2",label=paste("P(S|",substringDTR2B()[2],",r)",sep=""),value=0,min=0,max=1,step=0.01),
-                         numericInput("marginalSecondStageNRB2",label=paste("P(S|",substringDTR2B()[2],",nr,",substringDTR2B()[3],")",sep=""),
+                         numericInput("marginalFirstStageB2",label=paste("Probability of success for Path ",substringDTR2B()[2],"r",substringDTR2B()[3],sep=""),value=0,min=0,max=1,step=0.01),
+                         numericInput("marginalSecondStageNRB2",label=paste("Probability of success for Path ",substringDTR2B()[2],"nr",substringDTR2B()[4],sep=""),
                                       value=0,min=0,max=1,step=0.01)
         )
       }
@@ -682,9 +689,14 @@ shinyServer(function(input,output,session){
   observe({    
     if(input$targetDiffCheckB){
       updateCheckboxInput(session,"cellOrConditionalB",value=FALSE)
-    }
-    if(input$targetDiffCheckB==FALSE){
       updateCheckboxInput(session,"targetOddsCheckB",value=FALSE)
+    }
+  })
+ 
+  observe({
+    if(input$targetOddsCheckB){
+      updateCheckboxInput(session,"cellOrConditionalB",value=FALSE)
+      updateCheckboxInput(session,"targetDiffCheckB",value=FALSE)
     }
   })
   
@@ -864,7 +876,7 @@ shinyServer(function(input,output,session){
       need(input$inputPowerB < 1, "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1.")
     )
     designEffect<-selectEffectB()
-    rawSampleSize<-power.prop.test(p1=dataCompilerB()[1],p2=dataCompilerB()[2],power=input$inputPowerB,sig.level=input$alphaB)$n
+    rawSampleSize<-power.prop.test(p1=dataCompilerB()[1],p2=dataCompilerB()[2],power=input$inputPowerB,sig.level=input$alphaB,alternative=c(input$selectSidedB))$n
     finalSampleSize<-ceiling(designEffect * rawSampleSize)
     formatPower<-paste(input$inputPowerB*100,"%",sep="")
     formatAlpha<-paste(input$alphaB*100,"%",sep="")
@@ -880,7 +892,7 @@ shinyServer(function(input,output,session){
     )
     designEffect<-selectEffectB()
     size<-(input$inputSampleSizeB/designEffect)
-    finalPower<-round(power.prop.test(p1=dataCompilerB()[1],p2=dataCompilerB()[2],n=size,sig.level=input$alphaB)$power,digits=3)
+    finalPower<-round(power.prop.test(p1=dataCompilerB()[1],p2=dataCompilerB()[2],n=size,sig.level=input$alphaB,alternative=c(input$selectSidedB))$power,digits=3)
     formatPower<-paste(finalPower*100,"%",sep="")
     formatAlpha<-paste(input$alphaB*100,"%",sep="")
     
@@ -895,7 +907,7 @@ shinyServer(function(input,output,session){
       need(input$inputPowerB < 1, "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1.")
     )
     designEffect<-selectEffectB()
-    rawSampleSize<-pwr.norm.test(d=dataCompilerB(),sig.level=input$alphaB,power=input$inputPowerB,alternative="two.sided")
+    rawSampleSize<-pwr.norm.test(d=dataCompilerB(),sig.level=input$alphaB,power=input$inputPowerB,alternative=c(input$selectSidedB))
     finalSampleSize<-ceiling(2*designEffect*rawSampleSize$n)
     formatPower<-paste(input$inputPowerB*100,"%",sep="")
     formatAlpha<-paste(input$alphaB*100,"%",sep="")
@@ -911,7 +923,7 @@ shinyServer(function(input,output,session){
     )
     designEffect<-selectEffectB()
     size<-(input$inputSampleSizeB/(2*designEffect))
-    finalPower<-round(pwr.norm.test(d=dataCompilerB(),sig.level=input$alphaB,n=size,alternative="two.sided")$power,digits=3)
+    finalPower<-round(pwr.norm.test(d=dataCompilerB(),sig.level=input$alphaB,n=size,alternative=c(input$selectSidedB))$power,digits=3)
     formatPower<-paste(finalPower*100,"%",sep="")
     formatAlpha<-paste(input$alphaB*100,"%",sep="")
     
@@ -972,8 +984,9 @@ shinyServer(function(input,output,session){
     if(length(input$firstDTRcompareC) > 0){
       DTR1 <-paste(input$firstDTRcompareC)
       firstStage1<-substr(DTR1,1,1)
+      secondStageR1<-substr(DTR1,3,3)
       secondStageNR1<-substr(DTR1,6,6)
-      return(c(DTR1, firstStage1,secondStageNR1))
+      return(c(DTR1, firstStage1,secondStageR1,secondStageNR1))
     }
     else{
       return(c(0,0,0))
@@ -984,8 +997,9 @@ shinyServer(function(input,output,session){
     if(length(input$secondDTRcompareC) >0){
       DTR2 <-paste(input$secondDTRcompareC)
       firstStage2<-substr(DTR2,1,1)
+      secondStageR2<-substr(DTR2,3,3)
       secondStageNR2<-substr(DTR2,6,6)
-      return(c(DTR2, firstStage2, secondStageNR2))
+      return(c(DTR2, firstStage2, secondStageR2, secondStageNR2))
     }
     else{
       return(c(0,0,0))
@@ -1001,12 +1015,12 @@ shinyServer(function(input,output,session){
    validate(
      need(input$firstDTRcompareC, "Please select a first AI.")
    )
-   if(input$targetDiffCheckC==FALSE){
+   if(input$targetDiffCheckC==FALSE && input$targetOddsCheckC==FALSE){
      if(input$cellOrConditionalC==TRUE){
        return(disable(numericInput("DTRsuccC1disable",label="Probability of Success for First AI",value=0,min=0,max=1,step=0.01)))
      }
      else
-       return(numericInput("DTRsuccC1",label="Probability of Success for First AI",value=generateProbsC()[1],min=0,max=1,step=0.01))
+       return(numericInput("DTRsuccC1",label="Probability of Success for First AI",value=0,min=0,max=1,step=0.01))
    }
    
    if(input$targetDiffCheckC==TRUE && input$targetOddsCheckC==FALSE && substringDTR2C()[1] != 0){
@@ -1035,7 +1049,7 @@ shinyServer(function(input,output,session){
        return(disable(numericInput("DTRsuccC2disable",label="Probability of Success for Second AI",value=0,min=0,max=1,step=0.01)))
      }
      else
-       return(numericInput("DTRsuccC2",label="Probability of Success for Second AI",value=generateProbsA()[2],min=0,max=1,step=0.01))
+       return(numericInput("DTRsuccC2",label="Probability of Success for Second AI",value=0,min=0,max=1,step=0.01))
    }
  })
  
@@ -1053,22 +1067,22 @@ shinyServer(function(input,output,session){
  ### When DTR1 and DTR2 begin with the same treatment, P(S|stage1trt,r) is rendered only once, in output$cellProbsDTR1B
  
  output$cellProbsDTR1C <- renderUI({
-   controlInputs<-c(numericInput("marginalFirstStageC1",label=paste("P(S|",substringDTR1C()[2],",r,", substringDTR1C()[3],")",sep=""),value=0,min=0,max=1,step=0.01),
-                    numericInput("marginalSecondStageNRC1",label=paste("P(S|",substringDTR1C()[2],",nr,",substringDTR1C()[4],")",sep=""),
+   controlInputs<-c(numericInput("marginalFirstStageC1",label=paste("Probability of success for Path ",substringDTR1C()[2],"r", substringDTR1C()[3],sep=""),value=0,min=0,max=1,step=0.01),
+                    numericInput("marginalSecondStageNRC1",label=paste("Probability of success for Path ",substringDTR1C()[2],"nr",substringDTR1C()[4],sep=""),
                                  value=0,min=0,max=1,step=0.01)
    )
  })
  
  output$cellProbsDTR2C <- renderUI({
    if(substringDTR1C()[2]==substringDTR2C()[2] && substringDTR1C()[3]==substringDTR2C()[3]){
-     controlInputs<-c(numericInput("marginalSecondStageNRC2",label=paste("P(S|",substringDTR2C()[2],",nr,",substringDTR2C()[4],")",sep=""),
+     controlInputs<-c(numericInput("marginalSecondStageNRC2",label=paste("Probability of success for Path ",substringDTR2C()[2],"nr",substringDTR2C()[4],sep=""),
                                    value=0,min=0,max=1,step=0.01)
      )
    }
    else{
      controlInputs<-c(
-       numericInput("marginalFirstStageC2",label=paste("P(S|",substringDTR2C()[2],",r,", substringDTR2C()[3],")",sep=""),value=0,min=0,max=1,step=0.01),
-       numericInput("marginalSecondStageNRC2",label=paste("P(S|",substringDTR2C()[2],",nr,",substringDTR2C()[4],")",sep=""),
+       numericInput("marginalFirstStageC2",label=paste("Probability of success for Path ",substringDTR2C()[2], "r", substringDTR2C()[3],sep=""),value=0,min=0,max=1,step=0.01),
+       numericInput("marginalSecondStageNRC2",label=paste("Probability of success for Path ",substringDTR2C()[2],"nr",substringDTR2C()[4],sep=""),
                     value=0,min=0,max=1,step=0.01)
      )
    }
@@ -1106,11 +1120,16 @@ shinyServer(function(input,output,session){
  ### If target difference is not selected, also deselect target OR
  
  observe({    
-   if(input$targetDiffCheckC){
+   if(input$targetOddsCheckC){
      updateCheckboxInput(session,"cellOrConditionalC",value=FALSE)
+     updateCheckboxInput(session,"targetDiffCheckC",value=FALSE)
    }
-   if(input$targetDiffCheckC==FALSE){
+ })
+ 
+ observe({
+   if(input$targetDiffCheckC){
      updateCheckboxInput(session,"targetOddsCheckC",value=FALSE)
+     updateCheckboxInput(session,"cellOrConditionalC",value=FALSE)
    }
  })
  
@@ -1291,7 +1310,7 @@ shinyServer(function(input,output,session){
      need(input$inputPowerC < 1, "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1.")
    )
    designEffect<-selectEffectC()
-   rawSampleSize<-power.prop.test(p1=dataCompilerC()[1],p2=dataCompilerC()[2],power=input$inputPowerC,sig.level=input$alphaC)$n
+   rawSampleSize<-power.prop.test(p1=dataCompilerC()[1],p2=dataCompilerC()[2],power=input$inputPowerC,sig.level=input$alphaC,alternative=c(input$selectSidedC))$n
    finalSampleSize<-ceiling(designEffect * rawSampleSize)
    formatPower<-paste(input$inputPowerC*100,"%",sep="")
    formatAlpha<-paste(input$alphaC*100,"%",sep="")
@@ -1307,7 +1326,7 @@ shinyServer(function(input,output,session){
    )
    designEffect<-selectEffectC()
    size<-(input$inputSampleSizeC/designEffect)
-   finalPower<-round(power.prop.test(p1=dataCompilerC()[1],p2=dataCompilerC()[2],n=size,sig.level=input$alphaC)$power,digits=3)
+   finalPower<-round(power.prop.test(p1=dataCompilerC()[1],p2=dataCompilerC()[2],n=size,sig.level=input$alphaC,alternative=c(input$selectSidedC))$power,digits=3)
    formatPower<-paste(finalPower*100,"%",sep="")
    formatAlpha<-paste(input$alphaC*100,"%",sep="")
    
@@ -1322,7 +1341,7 @@ shinyServer(function(input,output,session){
      need(input$inputPowerC < 1, "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1.")
    )
    designEffect<-selectEffectC()
-   rawSampleSize<-pwr.norm.test(d=dataCompilerC(),sig.level=input$alphaC,power=input$inputPowerC,alternative="two.sided")
+   rawSampleSize<-pwr.norm.test(d=dataCompilerC(),sig.level=input$alphaC,power=input$inputPowerC,alternative=c(input$selectSidedC))
    finalSampleSize<-ceiling(2*designEffect*rawSampleSize$n)
    formatPower<-paste(input$inputPowerC*100,"%",sep="")
    formatAlpha<-paste(input$alphaC*100,"%",sep="")
@@ -1338,7 +1357,7 @@ shinyServer(function(input,output,session){
    )
    designEffect<-selectEffectC()
    size<-(input$inputSampleSizeC/(2*designEffect))
-   finalPower<-round(pwr.norm.test(d=dataCompilerC(),sig.level=input$alphaC,n=size,alternative="two.sided")$power,digits=3)
+   finalPower<-round(pwr.norm.test(d=dataCompilerC(),sig.level=input$alphaC,n=size,alternative=c(input$selectSidedC))$power,digits=3)
    formatPower<-paste(finalPower*100,"%",sep="")
    formatAlpha<-paste(input$alphaC*100,"%",sep="")
    
@@ -1367,10 +1386,10 @@ shinyServer(function(input,output,session){
  ### Placed in server.R rather than ui.R because of dependency on first DTR selection
  
  output$selectAI1D <- renderUI({
-   AI <- selectizeInput("firstDTRcompareD",label="Compare AI",
+   AI <- selectizeInput("firstDTRcompareD",label="Compare intervention path",
                         choices=designD.DTRs,
                         options = list(
-                          placeholder = 'Please select a first AI.',
+                          placeholder = 'Select a first intervention.',
                           onInitialize = I('function() { this.setValue(0); }')
                         )
    )
@@ -1378,10 +1397,10 @@ shinyServer(function(input,output,session){
  })
  
  output$selectAI2D <- renderUI({ 
-   AI <- selectizeInput("secondDTRcompareD",label="to AI",
+   AI <- selectizeInput("secondDTRcompareD",label="to intervention path",
                         choices=setdiff(designD.DTRs,input$firstDTRcompareD),
                         options = list(
-                          placeholder = 'Please select a second AI.',
+                          placeholder = 'Select a second intervention.',
                           onInitialize = I('function() { this.setValue(""); }')
                         )
    )
@@ -1427,22 +1446,18 @@ shinyServer(function(input,output,session){
  
  generateBinaryInputs1D <- reactive({
    validate(
-     need(input$firstDTRcompareD, "Please select a first AI.")
+     need(input$firstDTRcompareD, "Please select a first intervention path.")
    )
-   if(input$targetDiffCheckD==FALSE){
-       return(numericInput("DTRsuccC1",label="Probability of Success for First AI",value=generateProbsC()[1],min=0,max=1,step=0.01))
+   if(input$targetDiffCheckD==FALSE && input$targetOddsCheckD==FALSE){
+       return(numericInput("DTRsuccD1",label="Probability of Success for First Intervention Path",value=0,min=0,max=1,step=0.01))
    }
    
-   if(input$targetDiffCheckD==TRUE && input$targetOddsCheckD==FALSE && substringDTR2D()[1] != 0){
+   if(input$targetDiffCheckD==TRUE && substringDTR2D()[1] != 0){
      return(numericInput("targetDiffD",label="Target Difference in Success Probabilities",value=0.1,min=0.0001,max=0.5,step=0.01))
    }
    
    if(input$targetOddsCheckD==TRUE && substringDTR2D()[1] != 0){
      return(numericInput("targetORD",label="Target Odds Ratio of Success",value=2,min=0,step=0.01))
-   }
-   
-   if(input$targetDiffCheckD==TRUE && substringDTR2D()[1] == 0){
-     return()
    }
  })
  
@@ -1452,10 +1467,10 @@ shinyServer(function(input,output,session){
  
  generateBinaryInputs2D <- reactive({
    validate(
-     need(input$secondDTRcompareD, "Please select a second AI.")
+     need(input$secondDTRcompareD, "Please select a second intervention path.")
    )
    if(input$targetDiffCheckD==FALSE && input$targetOddsCheckD==FALSE){
-       return(numericInput("DTRsuccD2",label="Probability of Success for Second AI",value=0,min=0,max=1,step=0.01))
+       return(numericInput("DTRsuccD2",label="Probability of Success for Second Intervention Path",value=generateProbsD()[2],min=0,max=1,step=0.01))
    }
  })
  
@@ -1473,22 +1488,22 @@ shinyServer(function(input,output,session){
  ### When DTR1 and DTR2 begin with the same treatment, P(S|stage1trt,r) is rendered only once, in output$cellProbsDTR1B
  
  output$cellProbsDTR1D <- renderUI({
-   controlInputs<-c(numericInput("marginalFirstStageD1",label=paste("P(S|",substringDTR1C()[2],",r,", substringDTR1C()[3],")",sep=""),value=0,min=0,max=1,step=0.01),
-                    numericInput("marginalSecondStageNRD1",label=paste("P(S|",substringDTR1C()[2],",nr,",substringDTR1C()[4],")",sep=""),
+   controlInputs<-c(numericInput("marginalFirstStageD1",label=paste("Probability of success for Path ",substringDTR1C()[2],"r", substringDTR1C()[3],sep=""),value=0,min=0,max=1,step=0.01),
+                    numericInput("marginalSecondStageNRD1",label=paste("Probability of success for Path ",substringDTR1C()[2],"nr",substringDTR1C()[4],sep=""),
                                  value=0,min=0,max=1,step=0.01)
    )
  })
  
  output$cellProbsDTR2D <- renderUI({
    if(substringDTR1C()[2]==substringDTR2D()[2] && substringDTR1D()[3]==substringDTR2D()[3]){
-     controlInputs<-c(numericInput("marginalSecondStageNRD2",label=paste("P(S|",substringDTR2C()[2],",nr,",substringDTR2C()[4],")",sep=""),
+     controlInputs<-c(numericInput("marginalSecondStageNRD2",label=paste("Probability of success for Path ",substringDTR2C()[2],"nr",substringDTR2C()[4],,sep=""),
                                    value=0,min=0,max=1,step=0.01)
      )
    }
    else{
      controlInputs<-c(
-       numericInput("marginalFirstStageD2",label=paste("P(S|",substringDTR2D()[2],",r,", substringDTR2D()[3],")",sep=""),value=0,min=0,max=1,step=0.01),
-       numericInput("marginalSecondStageNRD2",label=paste("P(S|",substringDTR2D()[2],",nr,",substringDTR2D()[4],")",sep=""),
+       numericInput("marginalFirstStageD2",label=paste("Probability of success for Path ",substringDTR2D()[2],"r", substringDTR2D()[3],sep=""),value=0,min=0,max=1,step=0.01),
+       numericInput("marginalSecondStageNRD2",label=paste("Probability of success for Path ",substringDTR2D()[2],"nr",substringDTR2D()[4],sep=""),
                     value=0,min=0,max=1,step=0.01)
      )
    }
@@ -1499,8 +1514,8 @@ shinyServer(function(input,output,session){
  
  generateContinuousInputD <- reactive({
    validate(
-     need(input$firstDTRcompareD, "Please select a first AI."),
-     need(input$secondDTRcompareD, "Please select a second AI.")
+     need(input$firstDTRcompareD, "Please select a first intervention path."),
+     need(input$secondDTRcompareD, "Please select a second intervention path.")
    )
    if(input$meanSdCheckD==TRUE && substringDTR1D()[1] != substringDTR2D()[1]){
      return(disable(numericInput("effectSizeDdisable",label="Standardized Effect Size",value=0,min=0,max=1,step=0.01)))
@@ -1526,8 +1541,14 @@ shinyServer(function(input,output,session){
  ### If target difference is not selected, also deselect target OR
  
  observe({
-   if(input$targetDiffCheckD==FALSE){
+   if(input$targetDiffCheckD){
      updateCheckboxInput(session,"targetOddsCheckD",value=FALSE)
+   }
+ }) 
+ 
+ observe({
+   if(input$targetOddsCheckD){
+     updateCheckboxInput(session,"targetDiffCheckD",value=FALSE)
    }
  }) 
  
@@ -1546,7 +1567,7 @@ shinyServer(function(input,output,session){
    }
  })  
  
- ##### DESIGN C RESULT #####
+ ##### DESIGN D RESULT #####
  
  # Based on provided input probabilities and selected options, compute appropriate arguments to pass to power.prop.test or pwr.norm.test
  
@@ -1559,26 +1580,26 @@ shinyServer(function(input,output,session){
  
  dataCompilerD <- reactive({
      
-   if(input$selectOutcomeD==1 && input$targetDiffCheckD==FALSE){
+   if(input$selectOutcomeD==1 && input$targetDiffCheckD==FALSE && input$targetOddsCheckD==FALSE){
      validate(
-       need(input$firstDTRcompareD, "Select a first AI above."),
-       need(input$secondDTRcompareD, "Select a second AI above.") %then%
-         need(input$DTRsuccD1 != input$DTRsuccD2, "Please provide unique success probabilities for each AI. Sample size is indeterminate for equal AI probabilities.") %then%
-         need(checkDTRinputsD(), "The provided success probability for at least one AI is not a valid probability. Please enter a value between 0 and 1.")
+       need(input$firstDTRcompareD, "Select a first intervention path above."),
+       need(input$secondDTRcompareD, "Select a second intervention path above.") %then%
+         need(input$DTRsuccD1 != input$DTRsuccD2, "Please provide unique success probabilities for each intervention path. Sample size is indeterminate for equal intervention path probabilities.") %then%
+         need(checkDTRinputsD(), "The provided success probability for at least one intervention path is not a valid probability. Please enter a value between 0 and 1.")
      )
      return(c(input$DTRsuccD1,input$DTRsuccD2))
    }
    
-   if(input$selectOutcomeD==1 && input$targetDiffCheckD==TRUE && input$targetOddsCheckD==FALSE){
+   if(input$selectOutcomeD==1 && input$targetDiffCheckD==TRUE){
      validate(
        need(input$targetDiffD <= 0.5, "Target difference must be less than 0.5 to be valid input"),
-       need(input$targetDiffD > 0, "Target difference must be greater than 0. Sample size is indeterminate for equal AI probabilities.
+       need(input$targetDiffD > 0, "Target difference must be greater than 0. Sample size is indeterminate for equal intervention path probabilities.
             Please adjust your inputs.")
        )
      return(c(0.5,0.5+input$targetDiffD))
    }
    
-   if(input$selectOutcomeD==1 && input$targetOddsCheckD==TRUE && input$targetDiffCheckD==TRUE){
+   if(input$selectOutcomeD==1 && input$targetOddsCheckD==TRUE){
      validate(
        need(input$targetORD != 1, "Sample size is indeterminate for an odds ratio of 1. Please enter a different target odds ratio."),
        need(input$targetORD != 0, "Sample size is indeterminate for an odds ratio of 0. Please enter a different target odds ratio.")
@@ -1588,8 +1609,8 @@ shinyServer(function(input,output,session){
    
    if(input$selectOutcomeD==2 && input$meanSdCheckD==FALSE){
      validate(
-       need(input$firstDTRcompareD, "Select a first AI above."),
-       need(input$secondDTRcompareD, "Select a second AI above.") %then%
+       need(input$firstDTRcompareD, "Select a first intervention path above."),
+       need(input$secondDTRcompareD, "Select a second intervention path above.") %then%
          need(input$effectSizeD != 0, "Sample size is indeterminate for an effect size of 0. Please enter a different target effect size.")
      )
      
@@ -1606,24 +1627,24 @@ shinyServer(function(input,output,session){
    }  
  })
  
- # Compute the "design effect" for design C. Varies based on whether DTRs are separate- or shared-path
+ # Compute the "design effect" for design D. Varies based on whether DTRs are separate- or shared-path
  
  selectEffectD <- reactive({
    return(4)
  })
  
  sentenceCompilerD <- reactive({
-   if(input$selectOutcomeD==1 && input$targetDiffCheckD==FALSE){
+   if(input$selectOutcomeD==1 && input$targetDiffCheckD==FALSE && input$targetOddsCheckD==FALSE){
      str <- paste("with success probabilities of",input$DTRsuccD1,"and",input$DTRsuccD2,"respectively,")
      return(str)
    }
    
-   if(input$selectOutcomeD==1 && input$targetDiffCheckD==TRUE && input$targetOddsCheckD==FALSE){
+   if(input$selectOutcomeD==1 && input$targetDiffCheckD==TRUE){
      str <- paste("with a difference in success probabilities of",input$targetDiffD)
      return(str)
    }
    
-   if(input$selectOutcomeD==1 && input$targetOddsCheckD==TRUE && input$targetDiffCheckD==TRUE){
+   if(input$selectOutcomeD==1 && input$targetOddsCheckD==TRUE){
      str <- paste("with an odds ratio of",input$targetORD)
      return(str)
    }
@@ -1647,13 +1668,13 @@ shinyServer(function(input,output,session){
      need(input$inputPowerD < 1, "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1.")
    )
    designEffect<-selectEffectD()
-   rawSampleSize<-power.prop.test(p1=dataCompilerD()[1],p2=dataCompilerD()[2],power=input$inputPowerD,sig.level=input$alphaD)$n
+   rawSampleSize<-power.prop.test(p1=dataCompilerD()[1],p2=dataCompilerD()[2],power=input$inputPowerD,sig.level=input$alphaD,,alternative=c(input$selectSidedD))$n
    finalSampleSize<-ceiling(designEffect * rawSampleSize)
    formatPower<-paste(input$inputPowerD*100,"%",sep="")
    formatAlpha<-paste(input$alphaD*100,"%",sep="")
    
    HTML("<h4> <font color='blue'> N=",paste(finalSampleSize),"</font> </h4>
-        <p><em> We require a sample size of",finalSampleSize,"to compare adaptive interventions",input$firstDTRcompareC, "and",
+        <p><em> We require a sample size of",finalSampleSize,"to compare intervention paths",input$firstDTRcompareD, "and",
         input$secondDTRcompareD,sentenceCompilerD(), "with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
  })
  
@@ -1663,12 +1684,12 @@ shinyServer(function(input,output,session){
    )
    designEffect<-selectEffectD()
    size<-(input$inputSampleSizeD/designEffect)
-   finalPower<-round(power.prop.test(p1=dataCompilerD()[1],p2=dataCompilerD()[2],n=size,sig.level=input$alphaD)$power,digits=3)
+   finalPower<-round(power.prop.test(p1=dataCompilerD()[1],p2=dataCompilerD()[2],n=size,sig.level=input$alphaD,,alternative=c(input$selectSidedD))$power,digits=3)
    formatPower<-paste(finalPower*100,"%",sep="")
    formatAlpha<-paste(input$alphaD*100,"%",sep="")
    
    HTML("<h4> <font color='blue'> power=",paste(finalPower),"</font> </h4>
-        <p><em> Given a sample size of",input$inputSampleSizeD,"a comparison of adaptive interventions",input$firstDTRcompareD, "and",
+        <p><em> Given a sample size of",input$inputSampleSizeD,"a comparison of intervention paths",input$firstDTRcompareD, "and",
         input$secondDTRcompareA,sentenceCompilerD(), "can be made with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
  })
  
@@ -1678,13 +1699,13 @@ shinyServer(function(input,output,session){
      need(input$inputPowerD < 1, "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1.")
    )
    designEffect<-selectEffectD()
-   rawSampleSize<-pwr.norm.test(d=dataCompilerD(),sig.level=input$alphaD,power=input$inputPowerD,alternative="two.sided")
+   rawSampleSize<-pwr.norm.test(d=dataCompilerD(),sig.level=input$alphaD,power=input$inputPowerD,alternative=c(input$selectSidedD))
    finalSampleSize<-ceiling(2*designEffect*rawSampleSize$n)
    formatPower<-paste(input$inputPowerD*100,"%",sep="")
    formatAlpha<-paste(input$alphaD*100,"%",sep="")
    
    HTML("<h4> <font color='blue'> N=",paste(finalSampleSize),"</font> </h4>
-        <p><em> We require a sample size of",finalSampleSize,"to compare adaptive interventions",input$firstDTRcompareD, "and",
+        <p><em> We require a sample size of",finalSampleSize,"to compare intervention paths",input$firstDTRcompareD, "and",
         input$secondDTRcompareD,sentenceCompilerD(), "with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
  })
  
@@ -1694,12 +1715,12 @@ shinyServer(function(input,output,session){
    )
    designEffect<-selectEffectD()
    size<-(input$inputSampleSizeD/(2*designEffect))
-   finalPower<-round(pwr.norm.test(d=dataCompilerD(),sig.level=input$alphaD,n=size,alternative="two.sided")$power,digits=3)
+   finalPower<-round(pwr.norm.test(d=dataCompilerD(),sig.level=input$alphaD,n=size,alternative=c(input$selectSidedD))$power,digits=3)
    formatPower<-paste(finalPower*100,"%",sep="")
    formatAlpha<-paste(input$alphaD*100,"%",sep="")
    
    HTML("<h4> <font color='blue'> power=",paste(finalPower),"</font> </h4>
-        <p><em> Given a sample size of",input$inputSampleSizeD,"a comparison of adaptive interventions",input$firstDTRcompareD, "and",
+        <p><em> Given a sample size of",input$inputSampleSizeD,"a comparison of intervention paths",input$firstDTRcompareD, "and",
         input$secondDTRcompareD,sentenceCompilerD(), "can be made with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
  })
   

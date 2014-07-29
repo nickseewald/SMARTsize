@@ -42,18 +42,22 @@ shinyUI(
                                    br(),
                                    h4("Notation"),
                                    p("Throughout the application, we use the following notations:"),
-                                   p("- ",img(src="images/randomize.gif",width=25),"refers to a randomization, with probability 0.5, of all available individuals into 
-                                     the two subsequent treatments. For example, in design B at right, the rightmost ",img(src="images/randomize.gif",width=17),"indicates
-                                     that non-responders to first-stage treatment are randomized equally between two available second-stage treatments."),
-                                   p("- Adaptive Interventions (AI) are named by combining first stage treatment, then the second stage treatments for responders and non-responders,
-                                     respectively. The AI 'Give A; then, if response, give C; if no response, give E' is named 'ArCnrE'.")
+                                   tags$ul(
+                                     tags$li(img(src="images/randomize.gif",width=25),"refers to a randomization, with probability 0.5, of all available individuals into 
+                                             the two subsequent treatments. For example, in design B at right, the rightmost ",img(src="images/randomize.gif",width=17),"indicates
+                                             that non-responders to first-stage treatment are randomized equally between two available second-stage treatments."
+                                       ),
+                                     tags$li("Adaptive Interventions (AI) are named by combining first stage treatment, then the second stage treatments for responders and non-responders,
+                                             respectively. The AI 'Give A; then, if response, give C; if no response, give E' is named 'ArCnrE'."
+                                       )
+                                   )
                       ),
                       
                       mainPanel(
                         h1("Sample Size Calculator for SMARTs with Binary or Continuous Outcomes"),
                         br(),
                         p("Choose a design by clicking the cooresponding tab at the top of the window, or the button below the corresponding diagram. 
-                          For notational information, see the sidebar."),
+                          For more information about SMARTs, see below the diagrams. Notation is established in the sidebar."),
                         br(),
                         fluidRow(
                           column(6,
@@ -67,6 +71,7 @@ shinyUI(
                                  helpText("4 embedded adaptive interventions: ArCnrD, ArCnrE, BrFnrG, BrFnrH")
                           )
                         ),
+                        br(),
                         fluidRow(
                           column(6,
                                  img(src="images/SMARTdesignC__.gif"),
@@ -92,16 +97,58 @@ shinyUI(
                           switch to another chemotherapy.' Note that this AI includes a decision point after six cycles of chemotherapy, at which point, depending on the patient's response
                           thus far, a secondary treatment is recommended. This secondary treatment is different for responders and non-responders."),
                         
+                        p("The notion of a 'tailoring variable' which we evaluate at each decision point is critical for an adaptive intervention. In fact, this variable is what makes the 
+                          intervention",em("adaptive."), "Tailoring variables let us construct decision rules for assigning subsequent treatments, so they should be identified based solely
+                          on practical, ethical, or scientific reasoning, and produce clear, specific, and objective decision rules. In the above example, and throughout this application, 
+                          we use 'response to first-stage treatment' as the variable by which we determine the subsequent treatment an individual will receive. For more information about
+                          tailoring variables, see Nahum-Shani, et al. (2012)."),
+                        
+                        tags$caption(h5("A note about 'response':")),
+                        tags$blockquote("Depending on your area of research, 'response' may be classfied differently than in the diagrams above. For example, in Design B, if your trial 
+                                        stipulates that individuals who respond to first stage treatment are rerandomized and non-responders are not, the application can accomodate your needs.
+                                        To make this change, simply provide 'non-response probability' when prompted for 'response probability'. "),
+                        
                         p("In order to make comparisons of adaptive interventions, we utilize a ",strong("Sequential Multiple Assignment Randomized Trial (SMART)"), ". A SMART is an
-                          experimental design in which individuals are randomized mutliple times and follow specific adaptive interventions.")
+                          experimental design in which individuals are randomized mutliple times and follow specific intervention sequences. There are several advantages to using a SMART.
+                          First, it allows investigators to detect 'delayed effects' in treatment; that is, the long-term effects of a treatment after a subsequent treatment is administered.
+                          These delayed effects may be synergistic or antagonistic, and cannot be detected by separate two-arm trials for each stage. Along these same lines, a SMART may decrease
+                          the likelihood of participant drop-out (due to the promise of subsequent treatment regardless of response), and, because of this, may reduce selection bias found in
+                          a standard non-responder trial. Additionally, a SMART allows for the same analyses as standard trial designs, with the extra advantage of the ability to compare sequences
+                          of treatments.")
                       )
              ), 
              
              ##### DESIGN A #####
              
+             ##### A SIDEBAR #####
+             
              tabPanel("Design A",
-                      sidebarPanel(h3("About this design:"),
-                                   p("Include information about the design, its requirements, and describe the input.")
+                      sidebarPanel(h4("About this design:"),
+                                   p("This design is a SMART in which whether an individual is rerandomized does not depend on her response to first-stage treatment. For example, 
+                                     a participant in the trial who 'responds' to treatment B is randomized to second-stage treatment G or H, whereas an individual who 'does not
+                                     respond' to B is randomized to either I or J."),
+                                   p("It is", em("not"), "necessary that all second-stage treatment options be distinct: one may wish
+                                     to rerandomize all 'responders' between the same two treatments and similarly with 'non-responders', for example."),
+                                   p("The key feature of Design A is that all individuals are rerandomized, regardless of response to first-stage treatment or the availability of
+                                     second-stage treatments. There are",em("eight"),"embedded adaptive interventions."),
+                                   tags$hr(),
+                                   h4("Inputs:"),
+                                   tags$ul(
+                                     tags$li("We assume that the probability of response is equal for both first-stage treatments."),
+                                     tags$li("For binary outcomes, the default input is probabilities of success for an individual consistent with each of the selected AI's.
+                                     'Cell-specific probabilities' refer to the probability of success for an individual whose intervention ended with a particular cell."),
+                                     tags$li("For continuous outcomes, the default input is the standardized effect size for making comparisons between the two selected AI's.
+                                     Alterntively, you can provide mean outcomes for the two AI's of interest, along with the standard error of the difference between those means.")
+                                   ),
+                                   h5("Input Formatting Rules:"),
+                                   tags$blockquote("All inputs must be given in decimal form (with leading zero), and can be precise to two decimal places. Fractional input is
+                                                   disallowed. For example, '0.07' is valid input; both '.07' and '7/100' are invalid. Improperly-formatted input may result in 
+                                                   unpredictable behavior."),
+                                   tags$hr(),
+                                   h4("Example:"),
+                                   p("Consider a SMART modeled after design A which has a binary outcome and in which the probability of response to first stage treatment is 0.5. 
+                                     Suppose also that we wish to compare AIs ArCnrE and BrGnrI, which have success probabilities 0.65 and 0.80, respectively. Given a 5% type-I 
+                                     error rate, we require a sample size of 522 individuals in order to make this comparison with 80% power.")
                       ),
                       
                       mainPanel(
@@ -159,13 +206,15 @@ shinyUI(
                                                   uiOutput("binaryDTR1probA"),
                                                   conditionalPanel(condition="input.cellOrConditionalA",
                                                                    fluidRow(column(1),
-                                                                            column(4,uiOutput("cellProbsDTR1A"))
+                                                                            column(11,uiOutput("cellProbsDTR1A"))
                                                                    )
                                                   ),
                                                   uiOutput("binaryDTR2probA"),
+                                                  
                                                   conditionalPanel(condition="input.cellOrConditionalA",
                                                                    fluidRow(column(1),
-                                                                            column(4,uiOutput("cellProbsDTR2A"))
+                                                                            column(11,
+                                                                                   uiOutput("cellProbsDTR2A"))
                                                                    )
                                                   )
                                  ),
@@ -178,7 +227,7 @@ shinyUI(
                                                   )
                                  ),
                                  
-                                 ##### B INPUT OPTIONS #####
+                                 ##### A INPUT OPTIONS #####
                                  # Check for output selection (binary/continuous) then provide options for tailoring ways to input response
                                  # For binary outcomes, options for cell-specific probabilities, target difference, and target odds-ratio
                                  # For continuous outcomes, option to input mean difference and standard-deviation
@@ -187,14 +236,9 @@ shinyUI(
                                                   br(),
                                                   helpText("If you prefer to provide different information, check the appropriate box below."),
                                                   conditionalPanel(condition="input.selectOutcomeA==1",
-                                                                   checkboxInput("cellOrConditionalA",label="Check this box to input cell-specific probabilities.",value=FALSE),
-                                                                   checkboxInput("targetDiffCheckA",label="Check this box to input a target difference in probabilities.",value=FALSE),
-                                                                   conditionalPanel(condition="input.targetDiffCheckA",
-                                                                                    column(1), 
-                                                                                    column(11,
-                                                                                           checkboxInput("targetOddsCheckA",label="Check this box to input a target odds-ratio instead of a target difference.",value=FALSE)
-                                                                                    )
-                                                                   )
+                                                                   checkboxInput("cellOrConditionalA",label="Cell-Specific Success Probabilities",value=FALSE),
+                                                                   checkboxInput("targetDiffCheckA",label="Target Difference in Success Probabilities",value=FALSE),
+                                                                   checkboxInput("targetOddsCheckA",label="Target Odds Ratio",value=FALSE)
                                                   ),
                                                   conditionalPanel(condition="input.selectOutcomeA==2",
                                                                    checkboxInput("meanSdCheckA",label="Check this box to input a difference in means and standard deviation.",value=FALSE)
@@ -210,9 +254,14 @@ shinyUI(
                         # Provide options to tailor results: Choose sample size or power, provide alpha and 1-beta
                         
                         fluidRow(
-                          column(6,radioButtons("selectResultsA",label="Are you interested in finding sample size or power?",
+                          column(6,
+                                 radioButtons("selectResultsA",label="Are you interested in finding sample size or power?",
                                                 choices=list("Sample Size" = "sample", "Power" = "power"),
-                                                selected="sample")),
+                                                selected="sample"),
+                                 radioButtons("selectSidedA", label="Do you want to perform a one- or two-sided test?",
+                                              choices=list("One-Sided" = 'one.sided', "Two-Sided"='two.sided'),
+                                              selected="two.sided")
+                                 ),
                           column(6,
                                  numericInput("alphaA",label="Type I Error (Alpha):",value=0.05,min=0,max=1,step=0.01),
                                  conditionalPanel(condition="input.selectResultsA=='sample'",
@@ -252,20 +301,24 @@ shinyUI(
                       ##### B SIDEBAR #####
                       
                       sidebarPanel(h4("About this design:"),
-                                   p("Design B is a SMART in which rerandomization to second-stage treatment options depends on response to the first-stage treatment.
-                                     For example, individuals who do not respond to treatment A are randomized a second time and given either D or E as second-stage treatment,
-                                     whereas individuals who do respond to treatment A are not rerandomized and are provided second-stage treatment C. Note that A, C, D, and E
-                                     need not all be distinct: it is possible that C is a continuation of A, for example. It is required, however, that D and E be different."),
+                                   p("Design B is a SMART in which rerandomization to second-stage treatment options depends on response to the first-stage treatment. Individuals who do not respond
+                                     to treatment A or B are re-randomized between two options for second-stage treatment, whereas responders are all assigned to the same second-stage treatment."),
+                                   p("It is",em("not"),"necessary that all possible second-stage treatments are distinct. We might, have, for example, that treatment C is the same as treatment A,
+                                     or that F is the same as G. What",em("is"),"required, however, is that D and E are distinct, and that G and H are distinct."),
+                                   p("There are",em("four"),"adaptive interventions in this design."),
                                    tags$hr(),
                                    h4("Inputs:"),
-                                   p("- We assume that the probability of response is equal for both first-stage treatments. "),
-                                   p("- For binary outcomes, the default input is probabilities of success for an individual consistent with each of the selected AI's.
+                                   tags$ul(
+                                     tags$li("We assume that the probability of response is equal for both first-stage treatments."),
+                                     tags$li("For binary outcomes, the default input is probabilities of success for an individual consistent with each of the selected AI's.
                                      'Cell-specific probabilities' refer to the probability of success for an individual whose intervention ended with a particular cell."),
-                                   p("- For continuous outcomes, the default input is the standardized effect size for making comparisons between the two selected AI's.
-                                     Alterntively, you can provide mean outcomes for the two AI's of interest, along with the standard error of the difference between those means. "),
-                                   h5("A Note on Input Formatting:"),
-                                   p("All inputs must be given in decimal form (with leading zero), and can be precise to two decimal places.
-                                     Fractional input is disallowed. For example, '0.07' is valid input; both '.07' and '7/100' are invalid."),
+                                     tags$li("For continuous outcomes, the default input is the standardized effect size for making comparisons between the two selected AI's.
+                                     Alterntively, you can provide mean outcomes for the two AI's of interest, along with the standard error of the difference between those means.")
+                                   ),
+                                   h5("Input Formatting Rules:"),
+                                   tags$blockquote("All inputs must be given in decimal form (with leading zero), and can be precise to two decimal places. Fractional input is
+                                                   disallowed. For example, '0.07' is valid input; both '.07' and '7/100' are invalid. Improperly-formatted input may result in 
+                                                   unpredictable behavior."),
                                    tags$hr(),
                                    h4("Example:"),
                                    p("Consider a trial with a binary outcome in which the probability of response to first-stage treatment is 0.6, and that we are interested in comparing AI's ArCnrD to BrFnrG.
@@ -327,13 +380,13 @@ shinyUI(
                                                   uiOutput("binaryDTR1probB"),
                                                   conditionalPanel(condition="input.cellOrConditionalB",
                                                                    fluidRow(column(1),
-                                                                            column(4,uiOutput("cellProbsDTR1B"))
+                                                                            column(11,uiOutput("cellProbsDTR1B"))
                                                                    )
                                                   ),
                                                   uiOutput("binaryDTR2probB"),
                                                   conditionalPanel(condition="input.cellOrConditionalB",
                                                                    fluidRow(column(1),
-                                                                            column(4,uiOutput("cellProbsDTR2B"))
+                                                                            column(11,uiOutput("cellProbsDTR2B"))
                                                                    )
                                                   )
                                  ),
@@ -351,18 +404,13 @@ shinyUI(
                                  # For binary outcomes, options for cell-specific probabilities, target difference, and target odds-ratio
                                  # For continuous outcomes, option to input mean difference and standard-deviation
                                  
-                                 conditionalPanel(condition="input.firstDTRcompareB != 0 && input.secondDTRcompareB !=0",
+                                 conditionalPanel(condition="input.firstDTRcompareB != 0 && input.secondDTRcompareB != 0",
                                                   br(),
                                                   helpText("If you prefer to provide different information, check the appropriate box below."),
                                                   conditionalPanel(condition="input.selectOutcomeB==1",
-                                                                   checkboxInput("cellOrConditionalB",label="Check this box to input cell-specific probabilities.",value=FALSE),
-                                                                   checkboxInput("targetDiffCheckB",label="Check this box to input a target difference in probabilities.",value=FALSE),
-                                                                   conditionalPanel(condition="input.targetDiffCheckB",
-                                                                                    column(1), 
-                                                                                    column(11,
-                                                                                           checkboxInput("targetOddsCheckB",label="Check this box to input a target odds-ratio instead of a target difference.",value=FALSE)
-                                                                                    )
-                                                                   )
+                                                                   checkboxInput("cellOrConditionalB",label="Cell-Specific Success Probabilities",value=FALSE),
+                                                                   checkboxInput("targetDiffCheckB",label="Target Difference in Success Probabilities",value=FALSE),
+                                                                   checkboxInput("targetOddsCheckB",label="Target Odds Ratio",value=FALSE)
                                                   ),
                                                   conditionalPanel(condition="input.selectOutcomeB==2",
                                                                    checkboxInput("meanSdCheckB",label="Check this box to input a difference in means and standard deviation.",value=FALSE)
@@ -374,12 +422,16 @@ shinyUI(
                         tags$hr(),
                         
                         ##### B RESULT OPTIONS #####
-                        # Provide options to tailor results: Choose sample size or power, provide alpha and 1-beta
+                        ### Provide options to tailor results: Choose sample size or power, provide alpha and 1-beta
                         
                         fluidRow(
                           column(6,radioButtons("selectResultsB",label="Are you interested in finding sample size or power?",
                                                 choices=list("Sample Size" = "sample", "Power" = "power"),
-                                                selected="sample")),
+                                                selected="sample"),
+                                 radioButtons("selectSidedB",label="Do you want to perform a one- or two-sided test?",
+                                              choices=list("One-Sided"="one.sided","Two-Sided"="two.sided"),
+                                              selected="two.sided")
+                                 ),
                           column(6,
                                  numericInput("alphaB",label="Type I Error (Alpha):",value=0.05,min=0,max=1,step=0.01),
                                  conditionalPanel(condition="input.selectResultsB=='sample'",
@@ -393,7 +445,7 @@ shinyUI(
                         tags$hr(),
                         
                         ##### B RESULTS #####
-                        # Choose which result to display based on binary/continuous outcome and selected result option
+                        ### Choose which result to display based on binary/continuous outcome and selected result option
                 
                           h3("Results"),
                           conditionalPanel(condition="input.selectOutcomeB==1 & input.selectResultsB=='sample'",
@@ -413,7 +465,28 @@ shinyUI(
   
              tabPanel("Design C",
                       sidebarPanel(h3("About this design:"),
-                                   p("Include information about the design, its requirements, and describe the input.")
+                                   p("Design C is a SMART in which re-randomization depends on both first-stage treatment and response 
+                                     to first-stage treatment. Only those individuals who did not respond to treatment A are re-randomized."),
+                                   p("Treatments C, F, and G need",em("not"),"be distinct, but it is necessary that D and E are not the same."),
+                                   p("There are",em("three"),"embedded adaptive interventions in this design."),
+                                   tags$hr(),
+                                   h4("Inputs:"),
+                                   tags$ul(
+                                     tags$li("We assume that the probability of response is equal for both first-stage treatments."),
+                                     tags$li("For binary outcomes, the default input is probabilities of success for an individual consistent with each of the selected AI's.
+                                     'Cell-specific probabilities' refer to the probability of success for an individual whose intervention ended with a particular cell."),
+                                     tags$li("For continuous outcomes, the default input is the standardized effect size for making comparisons between the two selected AI's.
+                                     Alterntively, you can provide mean outcomes for the two AI's of interest, along with the standard error of the difference between those means.")
+                                   ),
+                                   h5("Input Formatting Rules:"),
+                                   tags$blockquote("All inputs must be given in decimal form (with leading zero), and can be precise to two decimal places. Fractional input is
+                                                   disallowed. For example, '0.07' is valid input; both '.07' and '7/100' are invalid. Improperly-formatted input may result in 
+                                                   unpredictable behavior."),
+                                   tags$hr(),
+                                   h4("Example:"),
+                                   p("Consider a trial with a binary outcome in which the probability of response to first-stage treatment is 0.4, and that we are interested in comparing AI's ArCnrE to BrFnrG.
+                                     Suppose that the probability of success for ArCnrE is 0.75, and 0.60 for BrFnrG. At 80% power and 5% type-I error rate, the sample size for this trial
+                                     is 395.")
                       ),
                       mainPanel(
                         
@@ -424,7 +497,6 @@ shinyUI(
                         
                         ##### C DTR SELECTION #####
                         # Dropdown menus provide options to select DTRs for comparison.
-                        # Currently the menus are not reactively-repopulating (making it possible to select the same DTR twice). Possible future improvement.
                         
                         p("Which two adaptive interventions would you like to compare? Choose two from the menus below.",
                           "The image below will change to highlight the AIs you select."),
@@ -498,14 +570,9 @@ shinyUI(
                                                   br(),
                                                   helpText("If you prefer to provide different information, check the appropriate box below."),
                                                   conditionalPanel(condition="input.selectOutcomeC==1",
-                                                                   checkboxInput("cellOrConditionalC",label="Check this box to input cell-specific probabilities.",value=FALSE),
-                                                                   checkboxInput("targetDiffCheckC",label="Check this box to input a target difference in probabilities.",value=FALSE),
-                                                                   conditionalPanel(condition="input.targetDiffCheckC",
-                                                                                    column(1), 
-                                                                                    column(11,
-                                                                                           checkboxInput("targetOddsCheckC",label="Check this box to input a target odds-ratio instead of a target difference.",value=FALSE)
-                                                                                    )
-                                                                   )
+                                                                   checkboxInput("cellOrConditionalC",label="Cell-Specific Probabilities",value=FALSE),
+                                                                   checkboxInput("targetDiffCheckC",label="Target Difference in Success Probabilities",value=FALSE),
+                                                                   checkboxInput("targetOddsCheckC",label="Target Odds Ratio",value=FALSE)
                                                   ),
                                                   conditionalPanel(condition="input.selectOutcomeC==2",
                                                                    checkboxInput("meanSdCheckC",label="Check this box to input a difference in means and standard deviation.",value=FALSE)
@@ -523,7 +590,11 @@ shinyUI(
                         fluidRow(
                           column(6,radioButtons("selectResultsC",label="Are you interested in finding sample size or power?",
                                                 choices=list("Sample Size" = "sample", "Power" = "power"),
-                                                selected="sample")),
+                                                selected="sample"),
+                                 radioButtons("selectSidedC",label="Do you want to perform a one- or two-sided test?",
+                                              choices=list("One-Sided"="one.sided","Two-Sided"="two.sided"),
+                                              selected="two.sided")
+                                 ),
                           column(6,
                                  numericInput("alphaC",label="Type I Error (Alpha):",value=0.05,min=0,max=1,step=0.01),
                                  conditionalPanel(condition="input.selectResultsC=='sample'",
@@ -556,21 +627,41 @@ shinyUI(
              ),
              tabPanel("Design D",
                       sidebarPanel(h3("About this design:"),
-                                   p("Include information about the design, its requirements, and describe the input.")
+                                   p("Design D is a SMART in which all participants are re-randomized, and treatment options are",em("not"),"influenced by
+                                     a tailoring variable. The interventions embedded in this SMART are thus non-adaptive, since information observed
+                                     bfirst- and second-stage treatments do not impact decisions regarding subsequent treatments."),
+                                   p("There are",em("zero"),"embedded adaptive interventions in this design, and",em("four"),"embedded non-adaptive
+                                     'intervention paths'."),
+                                   tags$hr(),
+                                   h4("Inputs:"),
+                                   tags$ul(
+                                     tags$li("For binary outcomes, the default input is probabilities of success for an individual consistent with each of the selected intervention paths.
+                                             'Cell-specific probabilities' refer to the probability of success for an individual whose intervention ended with a particular cell."),
+                                     tags$li("For continuous outcomes, the default input is the standardized effect size for making comparisons between the two selected intervention paths.
+                                             Alterntively, you can provide mean outcomes for the two intervention paths of interest, along with the standard error of the difference between those means.")
+                                     ),
+                                   h5("Input Formatting Rules:"),
+                                   tags$blockquote("All inputs must be given in decimal form (with leading zero), and can be precise to two decimal places. Fractional input is
+                                                   disallowed. For example, '0.07' is valid input; both '.07' and '7/100' are invalid. Improperly-formatted input may result in 
+                                                   unpredictable behavior."),
+                                   tags$hr(),
+                                   h4("Example:"),
+                                   p("Consider a trial with a binary outcome in which the probability of response to first-stage treatment is 0.4, and that we are interested in comparing 
+                                     intervention paths AC to BE. Suppose that the probability of success for ArCnrE is 0.8, and 0.9 for BrFnrG. At 80% power and 5% type-I error rate, 
+                                     the sample size for this trial is 796.")
                       ),
                       mainPanel(
                         
-                        ##### A PAGE HEADER #####
+                        ##### D PAGE HEADER #####
                         
                         h1("Design D"),
                         tags$hr(),
                         
                         ##### D DTR SELECTION #####
                         # Dropdown menus provide options to select DTRs for comparison.
-                        # Currently the menus are not reactively-repopulating (making it possible to select the same DTR twice). Possible future improvement.
                         
-                        p("Which two adaptive interventions would you like to compare? Choose two from the menus below.",
-                          "The image below will change to highlight the AIs you select."),
+                        p("Which two intervention paths would you like to compare? Choose two from the menus below.",
+                          "The image below will change to highlight the intervention paths you select."),
                         
                         fluidRow(
                           column(6,
@@ -596,7 +687,7 @@ shinyUI(
                         
                         tags$hr(),
                         
-                        ##### A IMAGE AND PROBABILITY INPUTS #####
+                        ##### D IMAGE AND PROBABILITY INPUTS #####
                         # Call imageOutput, which reactively displays an image highlighting selected DTRs from image assets in /www/images (see /server.R)
                         # Call uiOutput, which reactively renders UI inputs according to selected DTRs and options selected below.
                         
@@ -604,7 +695,7 @@ shinyUI(
                           column(7, imageOutput("designDimg",height="100%")),
                           column(5, 
                                  conditionalPanel(condition="input.selectOutcomeD==1",
-                                                  p("Please provide the probability of success for each of the AI's of interest."),
+                                                  p("Please provide the probability of success for each of the interventions of interest."),
                                                   uiOutput("binaryDTR1probD"),
                                                   uiOutput("binaryDTR2probD")
                                  ),
@@ -627,12 +718,7 @@ shinyUI(
                                                   helpText("If you prefer to provide different information, check the appropriate box below."),
                                                   conditionalPanel(condition="input.selectOutcomeD==1",
                                                                    checkboxInput("targetDiffCheckD",label="Check this box to input a target difference in probabilities.",value=FALSE),
-                                                                   conditionalPanel(condition="input.targetDiffCheckD",
-                                                                                    column(1), 
-                                                                                    column(11,
-                                                                                           checkboxInput("targetOddsCheckD",label="Check this box to input a target odds-ratio instead of a target difference.",value=FALSE)
-                                                                                    )
-                                                                   )
+                                                                   checkboxInput("targetOddsCheckD",label="Check this box to input a target odds-ratio instead of a target difference.",value=FALSE)
                                                   ),
                                                   conditionalPanel(condition="input.selectOutcomeD==2",
                                                                    checkboxInput("meanSdCheckD",label="Check this box to input a difference in means and standard deviation.",value=FALSE)
@@ -650,7 +736,11 @@ shinyUI(
                         fluidRow(
                           column(6,radioButtons("selectResultsD",label="Are you interested in finding sample size or power?",
                                                 choices=list("Sample Size" = "sample", "Power" = "power"),
-                                                selected="sample")),
+                                                selected="sample"),
+                                 radioButtons("selectSidedD",label="Do you want to perform a one- or two-sided test?",
+                                              choices=list("One-Sided"="one.sided","Two-Sided"="two.sided"),
+                                              selected="two.sided")
+                                 ),
                           column(6,
                                  numericInput("alphaD",label="Type I Error (Alpha):",value=0.05,min=0,max=1,step=0.01),
                                  conditionalPanel(condition="input.selectResultsD=='sample'",
@@ -682,5 +772,4 @@ shinyUI(
                       )
              ),
 collapsable=TRUE,
-footer="Kidwell, Seewald, Almirall (2014)")
-)
+footer=HTML("<p> Kidwell, Seewald, Almirall (2014) </p>")))
