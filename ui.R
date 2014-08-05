@@ -24,10 +24,11 @@ shinyUI(
                       
                       sidebarPanel(h3("Introduction"),
                                    
+                                   
                                    h4("Objective"),
                                    p("The goal of this application is to compute sample size (or power) for sequential multiple assignment
                                      randomized trials (SMARTs) with binary or continouous outcomes in which the primary objective is to make
-                                     comparisons between two adaptive interventions (AIs, also known as dynamic treatment regimes or DTRs)."),
+                                     comparisons between two embedded adaptive interventions (AIs, also known as dynamic treatment regimes or DTRs)."),
                                    br(),
                                    h4("Methods"),
                                    p("The application is run on R, version 3.1.0, and written using Shiny, an open-source web application framework
@@ -48,8 +49,10 @@ shinyUI(
                                              that non-responders to first-stage treatment are randomized equally between two available second-stage treatments."
                                        ),
                                      tags$li("Adaptive Interventions (AI) are named by combining first stage treatment, then the second stage treatments for responders and non-responders,
-                                             respectively. The AI 'Give A; then, if response, give C; if no response, give E' is named 'ArCnrE'."
-                                       )
+                                             respectively. The AI ''Give A; then, if response, give C; if no response, give E'' is named ''ArCnrE''."
+                                       ),
+                                     tags$li("We say an adaptive intervention is",strong("embedded"),"in a SMART if it is possible for some participants to be consistent with that AI 
+                                             through a sequence of randomizations.")
                                    )
                       ),
                       
@@ -114,7 +117,17 @@ shinyUI(
                           These delayed effects may be synergistic or antagonistic, and cannot be detected by separate two-arm trials for each stage. Along these same lines, a SMART may decrease
                           the likelihood of participant drop-out (due to the promise of subsequent treatment regardless of response), and, because of this, may reduce selection bias found in
                           a standard non-responder trial. Additionally, a SMART allows for the same analyses as standard trial designs, with the extra advantage of the ability to compare sequences
-                          of treatments.")
+                          of treatments."),
+                        
+                        tags$hr(),
+                        h4("References"),
+                        tags$ol(
+                          tags$li("Oetting, A., Levy, J., Weiss, R. and Murphy, S. (2007),",
+                                  em("''Statistical methodology for a SMART design in the development of adaptive treatment strategies,'' in Causality and Psychopathology: Finding the Determinants of Disorders and their Cures,"),
+                                  "Arlington: American Psychiatric Publishing, Inc."),
+                          tags$li("Nahum-Shani, I., Qian, M., Almirall, D., Pelham, W. E., Gnagy, B., Fabiano, G. A., Waxmonsky, J. G., Yu, J. and Murphy, S. A. (2012), 
+                                  ''Experimental design and primary data analysis methods for comparing adaptive interventions.''",em("Psychological methods,"), "17, 457.")
+                        )
                       )
              ), 
              
@@ -258,8 +271,8 @@ shinyUI(
                                  radioButtons("selectResultsA",label="Are you interested in finding sample size or power?",
                                                 choices=list("Sample Size" = "sample", "Power" = "power"),
                                                 selected="sample"),
-                                 radioButtons("selectSidedA", label="Do you want to perform a one- or two-sided test?",
-                                              choices=list("One-Sided" = 'one.sided', "Two-Sided"='two.sided'),
+                                 radioButtons("selectAlternativeA",label="Do you want to perform a one- or two-sided test?",
+                                              choices=list("One-Sided"="one.sided","Two-Sided"="two.sided"),
                                               selected="two.sided")
                                  ),
                           column(6,
@@ -428,7 +441,7 @@ shinyUI(
                           column(6,radioButtons("selectResultsB",label="Are you interested in finding sample size or power?",
                                                 choices=list("Sample Size" = "sample", "Power" = "power"),
                                                 selected="sample"),
-                                 radioButtons("selectSidedB",label="Do you want to perform a one- or two-sided test?",
+                                 radioButtons("selectAlternativeB",label="Do you want to perform a one- or two-sided test?",
                                               choices=list("One-Sided"="one.sided","Two-Sided"="two.sided"),
                                               selected="two.sided")
                                  ),
@@ -591,7 +604,7 @@ shinyUI(
                           column(6,radioButtons("selectResultsC",label="Are you interested in finding sample size or power?",
                                                 choices=list("Sample Size" = "sample", "Power" = "power"),
                                                 selected="sample"),
-                                 radioButtons("selectSidedC",label="Do you want to perform a one- or two-sided test?",
+                                 radioButtons("selectAlternativeC",label="Do you want to perform a one- or two-sided test?",
                                               choices=list("One-Sided"="one.sided","Two-Sided"="two.sided"),
                                               selected="two.sided")
                                  ),
@@ -611,16 +624,16 @@ shinyUI(
                         # Choose which result to display based on binary/continuous outcome and selected result option
                         
                         h3("Results"),
-                        conditionalPanel(condition="input.selectOutcomeC==1 & input.selectResultsA=='sample'",
+                        conditionalPanel(condition="input.selectOutcomeC==1 & input.selectResultsC=='sample'",
                                          htmlOutput("binarySampleSizeC")
                         ),
-                        conditionalPanel(condition="input.selectOutcomeC==1 & input.selectResultsA=='power'",
+                        conditionalPanel(condition="input.selectOutcomeC==1 & input.selectResultsC=='power'",
                                          htmlOutput("binaryPowerC")
                         ),
-                        conditionalPanel(condition="input.selectOutcomeC==2 & input.selectResultsA=='sample'",
+                        conditionalPanel(condition="input.selectOutcomeC==2 & input.selectResultsC=='sample'",
                                          htmlOutput("continuousSampleSizeC")
                         ),
-                        conditionalPanel(condition="input.selectOutcomeC==2 & input.selectResultsA=='power'",
+                        conditionalPanel(condition="input.selectOutcomeC==2 & input.selectResultsC=='power'",
                                          htmlOutput("continuousPowerC")
                         )
                       )
@@ -737,7 +750,7 @@ shinyUI(
                           column(6,radioButtons("selectResultsD",label="Are you interested in finding sample size or power?",
                                                 choices=list("Sample Size" = "sample", "Power" = "power"),
                                                 selected="sample"),
-                                 radioButtons("selectSidedD",label="Do you want to perform a one- or two-sided test?",
+                                 radioButtons("selectAlternativeD",label="Do you want to perform a one- or two-sided test?",
                                               choices=list("One-Sided"="one.sided","Two-Sided"="two.sided"),
                                               selected="two.sided")
                                  ),

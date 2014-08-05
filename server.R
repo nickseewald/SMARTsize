@@ -16,6 +16,8 @@ disable <- function(x) {
   x
 }
 
+
+
 ### Create vectors of all embedded DTRs for each design
 designA.DTRs <- c("ArCnrE", "ArCnrF", "ArDnrE", "ArDnrF", "BrGnrI", "BrGnrJ", "BrHnrI", "BrHnrJ")
 designB.DTRs <- c("ArCnrD", "ArCnrE", "BrFnrG", "BrFnrH")
@@ -211,10 +213,10 @@ shinyServer(function(input,output,session){
       need(input$secondDTRcompareA, "Please select a second AI.")
     )
     if(input$meanSdCheckA==TRUE && substringDTR1A()[1] != substringDTR2A()[1]){
-      return(disable(numericInput("effectSizeAdisable",label="Standardized Effect Size",value=0,min=0,max=1,step=0.01)))
+      return(disable(numericInput("effectSizeAdisable",label="Standardized Effect Size",value=0,min=0,max=10,step=0.01)))
     }
     else {
-      return(numericInput("effectSizeA",label="Standardized Effect Size",value=generateProbsA()[3],min=0,max=1,step=0.01))
+      return(numericInput("effectSizeA",label="Standardized Effect Size",value=0,min=0,max=10,step=0.01))
     }
   })
   
@@ -223,7 +225,7 @@ shinyServer(function(input,output,session){
   })
   
   output$meanEstA <- renderUI({
-    contInput<-c(numericInput("meanDiffA",label="Difference in mean outcomes between the two selected DTRs:",value=0,min=0,step=0.01),
+    contInput<-c(numericInput("meanDiffA",label="Difference in mean outcomes between the two selected AIs (absolute value):",value=0,min=0,step=0.01),
                  numericInput("sdDiffA",label="Standard deviation of the above difference in means:", value=0, min=0, step=0.01))
     contInput
   })
@@ -302,7 +304,8 @@ shinyServer(function(input,output,session){
   # Based on provided input probabilities and selected options, compute appropriate arguments to pass to power.prop.test or pwr.norm.test
   
   checkDTRinputsA <- reactive({
-    if ((0<=input$DTRsuccA1 & input$DTRsuccA1 <=1) & (0<=input$DTRsuccA2 & input$DTRsuccA2<=1))
+    test<-findInterval(c(input$DTRsuccA1, input$DTRsuccA2),c(0,1))
+    if (test[1]==1 && test[2]==1)
       return(TRUE)
     else
       return(FALSE)
@@ -315,10 +318,11 @@ shinyServer(function(input,output,session){
         need(0<=input$respA && input$respA<=1, "The provided response probability is not a valid probability. Please enter a value between 0 and 1.")
     )
     
-    if(input$selectOutcomeA==1 && input$cellOrConditionalA==FALSE && input$targetDiffCheckA==FALSE){
+    if(input$selectOutcomeA==1 && input$cellOrConditionalA==FALSE && input$targetDiffCheckA==FALSE && input$targetOddsCheckA==FALSE){
       validate(
-        need(input$firstDTRcompareA, "Select a first AI above."),
-        need(input$secondDTRcompareA, "Select a second AI above.") %then%
+        need(!is.null(input$DTRsuccA1), "Select a first AI above."),
+        need(!is.null(input$DTRsuccA2), "Select a second AI above.") %then%
+          need(!is.na(input$DTRsuccA1) && !is.na(input$DTRsuccA2), "The success probability is missing for at least one AI. Please provide a numeric input.") %then%
           need(input$DTRsuccA1 != input$DTRsuccA2, "Please provide unique success probabilities for each AI. Sample size is indeterminate for equal AI probabilities.") %then%
           need(checkDTRinputsA(), "The provided success probability for at least one AI is not a valid probability. Please enter a value between 0 and 1.")
       )
@@ -335,7 +339,7 @@ shinyServer(function(input,output,session){
       return(c(generateProbsA()[1],generateProbsA()[2]))
     }
     
-    if(input$selectOutcomeA==1 && input$cellOrConditionalA==FALSE && input$targetDiffCheckA==TRUE && input$targetOddsCheckA==FALSE){
+    if(input$selectOutcomeA==1 && input$targetDiffCheckA==TRUE){
       validate(
         need(input$targetDiffA <= 0.5, "Target difference must be less than 0.5 to be valid input"),
         need(input$targetDiffA > 0, "Target difference must be greater than 0. Sample size is indeterminate for equal AI probabilities.
@@ -344,9 +348,10 @@ shinyServer(function(input,output,session){
       return(c(0.5,0.5+input$targetDiffA))
     }
     
-    if(input$selectOutcomeA==1 && input$targetOddsCheckA==TRUE && input$targetDiffCheckA==TRUE){
+    if(input$selectOutcomeA==1 && input$targetOddsCheckA==TRUE){
       validate(
-        need(input$targetORA != 1, "Sample size is indeterminate for an odds ratio of 1. Please enter a different target odds ratio."),
+        need(is.numeric(input$targetORA),"Please enter an odds ratio.") %then%
+        need(input$targetORA != 1, "Sample size is indeterminate for an odds ratio of 1. Please enter a different target odds ratio.") %then%
         need(input$targetORA != 0, "Sample size is indeterminate for an odds ratio of 0. Please enter a different target odds ratio.")
       )
       return(c(0.5,input$targetORA/(1+input$targetORA)))
@@ -426,15 +431,17 @@ shinyServer(function(input,output,session){
   # Pass arguments from dataCompilerB() to appropriate R function; extract and render relevant output
   
   output$binarySampleSizeA <- renderUI({
-    validate(
-      need(input$inputPowerA > 0, "Sample size is indeterminate for 0% power. Please specify a power greater than zero."),
-      need(input$inputPowerA < 1, "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1.")
-    )
     designEffect<-selectEffectA()
-    rawSampleSize<-power.prop.test(p1=dataCompilerA()[1],p2=dataCompilerA()[2],power=input$inputPowerA,sig.level=input$alphaA,alternative=c(input$selectSidedA))$n
+    rawSampleSize<-power.prop.test(p1=dataCompilerA()[1],p2=dataCompilerA()[2],power=input$inputPowerA,sig.level=input$alphaA,alternative=c(input$selectBinaryAlternativeA))$n
     finalSampleSize<-ceiling(designEffect * rawSampleSize)
     formatPower<-paste(input$inputPowerA*100,"%",sep="")
     formatAlpha<-paste(input$alphaA*100,"%",sep="")
+    
+    validate(
+      need(input$inputPowerA > 0, "Sample size is indeterminate for 0% power. Please specify a power greater than zero."),
+      need(input$inputPowerA < 1, "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1."),
+      need(finalSampleSize >= designEffect, "hey!")
+    )
     
     HTML("<h4> <font color='blue'> N=",paste(finalSampleSize),"</font> </h4>
          <p><em> We require a sample size of",finalSampleSize,"to compare adaptive interventions",input$firstDTRcompareA, "and",
@@ -447,42 +454,57 @@ shinyServer(function(input,output,session){
     )
     designEffect<-selectEffectA()
     size<-(input$inputSampleSizeA/designEffect)
-    finalPower<-round(power.prop.test(p1=dataCompilerA()[1],p2=dataCompilerA()[2],n=size,sig.level=input$alphaA,alternative=c(input$selectSidedA))$power,digits=3)
+    finalPower<-round(power.prop.test(p1=dataCompilerA()[1],p2=dataCompilerA()[2],n=size,sig.level=input$alphaA,alternative=c(input$selectAlternativeA))$power,digits=3)
     formatPower<-paste(finalPower*100,"%",sep="")
     formatAlpha<-paste(input$alphaA*100,"%",sep="")
     
-    HTML("<h4> <font color='blue'> power=",paste(finalPower),"</font> </h4>
+    validate(
+      need(size >= 1, paste("The provided sample size is not large enough to yield a trial in which at least one person is consistent with each DTR.", 
+                            "Sample size must be at least",ceiling(2*designEffect),"to proceed."))
+    )
+    
+    HTML("<h4> <font color='blue'> power=",paste(formatPower),"</font> </h4>
          <p><em> Given a sample size of",input$inputSampleSizeA,"a comparison of adaptive interventions",input$firstDTRcompareA, "and",
          input$secondDTRcompareA,sentenceCompilerA(), "can be made with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
   })
   
   output$continuousSampleSizeA <- renderUI({
+    alt.hyp<-switch(input$selectAlternativeA,"one.sided"="greater")
+    designEffect<-selectEffectA()
+    rawSampleSize<-try(pwr.norm.test(d=dataCompilerA(),sig.level=input$alphaA,power=input$inputPowerA,alternative=alt.hyp)$n,silent=T)
+    
     validate(
       need(input$inputPowerA > 0, "Sample size is indeterminate for 0% power. Please specify a power greater than zero."),
-      need(input$inputPowerA < 1, "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1.")
+      need(input$inputPowerA < 1, "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1."),
+      need(dataCompilerA()>0,"Sample size is indeterminate for an effect size of 0. Please specify a different effect size.") %then%
+        need(is.numeric(rawSampleSize),paste("Given the provided effect size, fewer than",2*designEffect,"individuals are required to achieve the desired power.",
+                                             "This is not enough individuals to run a SMART. You can test for a smaller effect size, or increase the desired power."))
     )
-    designEffect<-selectEffectA()
-    rawSampleSize<-pwr.norm.test(d=dataCompilerA(),sig.level=input$alphaA,power=input$inputPowerA,alternative=c(input$selectSidedA))
-    finalSampleSize<-ceiling(2*designEffect*rawSampleSize$n)
+    
+    finalSampleSize<-ceiling(2*designEffect*rawSampleSize)
     formatPower<-paste(input$inputPowerA*100,"%",sep="")
     formatAlpha<-paste(input$alphaA*100,"%",sep="")
-    
+        
     HTML("<h4> <font color='blue'> N=",paste(finalSampleSize),"</font> </h4>
          <p><em> We require a sample size of",finalSampleSize,"to compare adaptive interventions",input$firstDTRcompareA, "and",
          input$secondDTRcompareA,sentenceCompilerA(), "with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
   })
   
   output$continuousPowerA <- renderUI({
-    validate(
-      need(input$inputSampleSizeA!=0, "Power is indeterminate for a sample size of 0. Please provide a valid sample size.")  
-    )
+    alt.hyp<-switch(input$selectAlternativeA, 'one.sided'='greater')
     designEffect<-selectEffectA()
-    size<-(input$inputSampleSizeA/(2*designEffect))
-    finalPower<-round(pwr.norm.test(d=dataCompilerA(),sig.level=input$alphaA,n=size,alternative=c(input$selectSidedA))$power,digits=3)
+    
+    size<-(input$inputSampleSizeA/(2*designEffect)) 
+    finalPower<-round(pwr.norm.test(d=dataCompilerA(),sig.level=input$alphaA,n=size,alternative=alt.hyp)$power,digits=3)
     formatPower<-paste(finalPower*100,"%",sep="")
     formatAlpha<-paste(input$alphaA*100,"%",sep="")
     
-    HTML("<h4> <font color='blue'> power=",paste(finalPower),"</font> </h4>
+    validate(
+      need(size >= 1, paste("The provided sample size is not large enough to yield a trial in which at least one person is consistent with each DTR.", 
+                            "Sample size must be at least",ceiling(2*designEffect),"to proceed."))
+    )
+        
+    HTML("<h4> <font color='blue'>",paste(formatPower)," power </font> </h4>
          <p><em> Given a sample size of",input$inputSampleSizeA,"a comparison of adaptive interventions",input$firstDTRcompareA, "and",
          input$secondDTRcompareA,sentenceCompilerA(), "can be made with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
   })
@@ -662,10 +684,10 @@ shinyServer(function(input,output,session){
       need(input$secondDTRcompareB, "Please select a second AI.")
     )
     if(input$meanSdCheckB==TRUE && substringDTR1B()[1] != substringDTR2B()[1]){
-      return(disable(numericInput("effectSizeBdisable",label="Standardized Effect Size",value=0,min=0,max=1,step=0.01)))
+      return(disable(numericInput("effectSizeBdisable",label="Standardized Effect Size",value=0,min=0,max=10,step=0.01)))
     }
     else {
-      return(numericInput("effectSizeB",label="Standardized Effect Size",value=generateProbsB()[3],min=0,max=1,step=0.01))
+      return(numericInput("effectSizeB",label="Standardized Effect Size",value=0,min=0,max=10,step=0.01))
     }
   })
   
@@ -674,7 +696,7 @@ shinyServer(function(input,output,session){
   })
   
   output$meanEstB <- renderUI({
-    contInput<-c(numericInput("meanDiffB",label="Difference in mean outcomes between the two selected DTRs:",value=0,min=0,step=0.01),
+    contInput<-c(numericInput("meanDiffB",label="Difference in mean outcomes between the two selected AIs (absolute value):",value=0,min=0,step=0.01),
                  numericInput("sdDiffB",label="Standard deviation of the above difference in means:", value=0, min=0, step=0.01))
     contInput
   })
@@ -755,7 +777,8 @@ shinyServer(function(input,output,session){
   # Based on provided input probabilities and selected options, compute appropriate arguments to pass to power.prop.test or pwr.norm.test
   
   checkDTRinputsB <- reactive({
-    if ((0<=input$DTRsuccB1 & input$DTRsuccB1 <=1) & (0<=input$DTRsuccB2 & input$DTRsuccB2<=1))
+    test<-findInterval(c(input$DTRsuccB1, input$DTRsuccB2),c(0,1))
+    if (test[1]==1 && test[2]==1)
       return(TRUE)
     else
       return(FALSE)
@@ -768,12 +791,13 @@ shinyServer(function(input,output,session){
       need(0<=input$respB && input$respB<=1, "The provided response probability is not a valid probability. Please enter a value between 0 and 1.")
     )
     
-    if(input$selectOutcomeB==1 && input$cellOrConditionalB==FALSE && input$targetDiffCheckB==FALSE){
+    if(input$selectOutcomeB==1 && input$cellOrConditionalB==FALSE && input$targetDiffCheckB==FALSE && input$targetOddsCheckB==FALSE){
       validate(
-        need(input$firstDTRcompareB, "Select a first AI above."),
-        need(input$secondDTRcompareB, "Select a second AI above.") %then%
-        need(input$DTRsuccB1 != input$DTRsuccB2, "Please provide unique success probabilities for each AI. Sample size is indeterminate for equal AI probabilities.") %then%
-        need(checkDTRinputsB(), "The provided success probability for at least one AI is not a valid probability. Please enter a value between 0 and 1.")
+        need(!is.null(input$DTRsuccB1), "Select a first AI above."),
+        need(!is.null(input$DTRsuccB2), "Select a second AI above.") %then%
+          need(!is.na(input$DTRsuccB1) && !is.na(input$DTRsuccB2), "The success probability is missing for at least one AI. Please provide a numeric input.") %then%
+          need(input$DTRsuccB1 != input$DTRsuccB2, "Please provide unique success probabilities for each AI. Sample size is indeterminate for equal AI probabilities.") %then%
+          need(checkDTRinputsB(), "The provided success probability for at least one AI is not a valid probability. Please enter a value between 0 and 1.")
       )
       return(c(input$DTRsuccB1,input$DTRsuccB2))
     }
@@ -788,7 +812,7 @@ shinyServer(function(input,output,session){
       return(c(generateProbsB()[1],generateProbsB()[2]))
      }
     
-    if(input$selectOutcomeB==1 && input$cellOrConditionalB==FALSE && input$targetDiffCheckB==TRUE && input$targetOddsCheckB==FALSE){
+    if(input$selectOutcomeB==1 && input$targetDiffCheckB==TRUE){
       validate(
         need(input$targetDiffB <= 0.5, "Target difference must be less than 0.5 to be valid input"),
         need(input$targetDiffB > 0, "Target difference must be greater than 0. Sample size is indeterminate for equal AI probabilities.
@@ -797,10 +821,11 @@ shinyServer(function(input,output,session){
       return(c(0.5,0.5+input$targetDiffB))
     }
     
-    if(input$selectOutcomeB==1 && input$targetOddsCheckB==TRUE && input$targetDiffCheckB==TRUE){
+    if(input$selectOutcomeB==1 && input$targetOddsCheckB==TRUE){
       validate(
-        need(input$targetORB != 1, "Sample size is indeterminate for an odds ratio of 1. Please enter a different target odds ratio."),
-        need(input$targetORB != 0, "Sample size is indeterminate for an odds ratio of 0. Please enter a different target odds ratio.")
+        need(is.numeric(input$targetORB),"Please enter an odds ratio.") %then%
+          need(input$targetORB != 1, "Sample size is indeterminate for an odds ratio of 1. Please enter a different target odds ratio.") %then%
+          need(input$targetORB != 0, "Sample size is indeterminate for an odds ratio of 0. Please enter a different target odds ratio.")
       )
       return(c(0.5,input$targetORB/(1+input$targetORB)))
     }
@@ -876,7 +901,7 @@ shinyServer(function(input,output,session){
       need(input$inputPowerB < 1, "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1.")
     )
     designEffect<-selectEffectB()
-    rawSampleSize<-power.prop.test(p1=dataCompilerB()[1],p2=dataCompilerB()[2],power=input$inputPowerB,sig.level=input$alphaB,alternative=c(input$selectSidedB))$n
+    rawSampleSize<-power.prop.test(p1=dataCompilerB()[1],p2=dataCompilerB()[2],power=input$inputPowerB,sig.level=input$alphaB,alternative=c(input$selectAlternativeB))$n
     finalSampleSize<-ceiling(designEffect * rawSampleSize)
     formatPower<-paste(input$inputPowerB*100,"%",sep="")
     formatAlpha<-paste(input$alphaB*100,"%",sep="")
@@ -892,7 +917,7 @@ shinyServer(function(input,output,session){
     )
     designEffect<-selectEffectB()
     size<-(input$inputSampleSizeB/designEffect)
-    finalPower<-round(power.prop.test(p1=dataCompilerB()[1],p2=dataCompilerB()[2],n=size,sig.level=input$alphaB,alternative=c(input$selectSidedB))$power,digits=3)
+    finalPower<-round(power.prop.test(p1=dataCompilerB()[1],p2=dataCompilerB()[2],n=size,sig.level=input$alphaB,alternative=c(input$selectAlternativeB))$power,digits=3)
     formatPower<-paste(finalPower*100,"%",sep="")
     formatAlpha<-paste(input$alphaB*100,"%",sep="")
     
@@ -902,13 +927,19 @@ shinyServer(function(input,output,session){
   })
   
   output$continuousSampleSizeB <- renderUI({
+    alt.hyp<-switch(input$selectAlternativeB,"one.sided"="greater")
+    designEffect<-selectEffectB()
+    rawSampleSize<-try(pwr.norm.test(d=dataCompilerB(),sig.level=input$alphaB,power=input$inputPowerB,alternative=alt.hyp)$n,silent=T)
+    
     validate(
       need(input$inputPowerB > 0, "Sample size is indeterminate for 0% power. Please specify a power greater than zero."),
-      need(input$inputPowerB < 1, "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1.")
+      need(input$inputPowerB < 1, "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1."),
+      need(dataCompilerB()>0,"Sample size is indeterminate for an effect size of 0. Please specify a different effect size.") %then%
+      need(is.numeric(rawSampleSize),paste("Given the provided effect size, fewer than",2*designEffect,"individuals are required to achieve the desired power.",
+                                           "This is not enough individuals to run a SMART. You can test for a smaller effect size, or increase the desired power."))
     )
-    designEffect<-selectEffectB()
-    rawSampleSize<-pwr.norm.test(d=dataCompilerB(),sig.level=input$alphaB,power=input$inputPowerB,alternative=c(input$selectSidedB))
-    finalSampleSize<-ceiling(2*designEffect*rawSampleSize$n)
+    
+    finalSampleSize<-ceiling(2*designEffect*rawSampleSize)
     formatPower<-paste(input$inputPowerB*100,"%",sep="")
     formatAlpha<-paste(input$alphaB*100,"%",sep="")
     
@@ -918,12 +949,13 @@ shinyServer(function(input,output,session){
   })
   
   output$continuousPowerB <- renderUI({
+    alt.hyp<-switch(input$selectAlternativeB,"one.sided"="greater")
     validate(
       need(input$inputSampleSizeB!=0, "Power is indeterminate for a sample size of 0. Please provide a valid sample size.")  
     )
     designEffect<-selectEffectB()
     size<-(input$inputSampleSizeB/(2*designEffect))
-    finalPower<-round(pwr.norm.test(d=dataCompilerB(),sig.level=input$alphaB,n=size,alternative=c(input$selectSidedB))$power,digits=3)
+    finalPower<-round(pwr.norm.test(d=dataCompilerB(),sig.level=input$alphaB,n=size,alternative=alt.hyp)$power,digits=3)
     formatPower<-paste(finalPower*100,"%",sep="")
     formatAlpha<-paste(input$alphaB*100,"%",sep="")
     
@@ -1097,10 +1129,10 @@ shinyServer(function(input,output,session){
      need(input$secondDTRcompareC, "Please select a second AI.")
    )
    if(input$meanSdCheckC==TRUE && substringDTR1C()[1] != substringDTR2C()[1]){
-     return(disable(numericInput("effectSizeCdisable",label="Standardized Effect Size",value=0,min=0,max=1,step=0.01)))
+     return(disable(numericInput("effectSizeCdisable",label="Standardized Effect Size",value=0,min=0,max=10,step=0.01)))
    }
    else {
-     return(numericInput("effectSizeC",label="Standardized Effect Size",value=generateProbsC()[3],min=0,max=1,step=0.01))
+     return(numericInput("effectSizeC",label="Standardized Effect Size",value=0,min=0,max=10,step=0.01))
    }
  })
  
@@ -1109,7 +1141,7 @@ shinyServer(function(input,output,session){
  })
  
  output$meanEstC <- renderUI({
-   contInput<-c(numericInput("meanDiffC",label="Difference in mean outcomes between the two selected DTRs:",value=0,min=0,step=0.01),
+   contInput<-c(numericInput("meanDiffC",label="Difference in mean outcomes between the two selected AIs (absolute value):",value=0,min=0,step=0.01),
                 numericInput("sdDiffC",label="Standard deviation of the above difference in means:", value=0, min=0, step=0.01))
    contInput
  })
@@ -1150,7 +1182,7 @@ shinyServer(function(input,output,session){
  ### Compute full DTR probabilities or effect size when providing cell-specific probabilities or mean/SD 
  
  generateProbsC <- reactive({
-   if(input$selectOutcomeC==1 && substringDTR1C()[2]==substringDTR2C()[2] && substringDTR1C()[3]==substringDTR2C()[3] && input$cellOrConditionalC==TRUE){
+  if(input$selectOutcomeC==1 && substringDTR1C()[2]==substringDTR2C()[2] && substringDTR1C()[3]==substringDTR2C()[3] && input$cellOrConditionalC==TRUE){
      pDTR1 <- fullDTRprob(input$marginalFirstStageC1,input$respC,input$marginalSecondStageNRC1)
      pDTR2 <- fullDTRprob(input$marginalFirstStageC1,input$respC,input$marginalSecondStageNRC2)
      effectSize <- 0
@@ -1188,7 +1220,8 @@ shinyServer(function(input,output,session){
  # Based on provided input probabilities and selected options, compute appropriate arguments to pass to power.prop.test or pwr.norm.test
  
  checkDTRinputsC <- reactive({
-   if ((0<=input$DTRsuccC1 & input$DTRsuccC1 <=1) & (0<=input$DTRsuccC2 & input$DTRsuccC2<=1))
+   test<-findInterval(c(input$DTRsuccC1, input$DTRsuccC2),c(0,1))
+   if (test[1]==1 && test[2]==1)
      return(TRUE)
    else
      return(FALSE)
@@ -1197,14 +1230,15 @@ shinyServer(function(input,output,session){
  dataCompilerC <- reactive({
    
    validate(
-     need(!(is.na(input$respC)), "Please provide a response probability. If unknown, enter 0 for a conservative estimate of power or sample size.") %then%
+     need(!(is.null(input$respC)), "Please provide a response probability. If unknown, enter 0 for a conservative estimate of power or sample size.") %then%
        need(0<=input$respC && input$respC<=1, "The provided response probability is not a valid probability. Please enter a value between 0 and 1.")
    )
    
-   if(input$selectOutcomeC==1 && input$cellOrConditionalC==FALSE && input$targetDiffCheckC==FALSE){
+   if(input$selectOutcomeC==1 && input$cellOrConditionalC==FALSE && input$targetDiffCheckC==FALSE && input$targetOddsCheckC==FALSE){
      validate(
-       need(input$firstDTRcompareC, "Select a first AI above."),
-       need(input$secondDTRcompareC, "Select a second AI above.") %then%
+       need(!is.null(input$DTRsuccC1), "Select a first AI above."),
+       need(!is.null(input$DTRsuccC2), "Select a second AI above.") %then%
+         need(!is.na(input$DTRsuccC1) && !is.na(input$DTRsuccC2), "The success probability is missing for at least one AI. Please provide a numeric input.") %then%
          need(input$DTRsuccC1 != input$DTRsuccC2, "Please provide unique success probabilities for each AI. Sample size is indeterminate for equal AI probabilities.") %then%
          need(checkDTRinputsC(), "The provided success probability for at least one AI is not a valid probability. Please enter a value between 0 and 1.")
      )
@@ -1213,15 +1247,13 @@ shinyServer(function(input,output,session){
    
    if(input$selectOutcomeC==1 && input$cellOrConditionalC==TRUE){  
      validate(
-       need(input$firstDTRcompareC, "Select a first AI above."),
-       need(input$firstDTRcompareC, "select a second AI above."),
        need(generateProbsC()[1] != generateProbsC()[2], "The provided marginal probabilities yield identical overall AI success probabilities. Sample size is indeterminate for equal AI probabilities. Please adjust your inputs.")
      )
      
      return(c(generateProbsC()[1],generateProbsC()[2]))
    }
    
-   if(input$selectOutcomeC==1 && input$cellOrConditionalC==FALSE && input$targetDiffCheckC==TRUE && input$targetOddsCheckC==FALSE){
+   if(input$selectOutcomeC==1 && input$targetDiffCheckC==TRUE){
      validate(
        need(input$targetDiffC <= 0.5, "Target difference must be less than 0.5 to be valid input"),
        need(input$targetDiffC > 0, "Target difference must be greater than 0. Sample size is indeterminate for equal AI probabilities.
@@ -1230,10 +1262,11 @@ shinyServer(function(input,output,session){
      return(c(0.5,0.5+input$targetDiffC))
    }
    
-   if(input$selectOutcomeC==1 && input$targetOddsCheckC==TRUE && input$targetDiffCheckC==TRUE){
+   if(input$selectOutcomeC==1 && input$targetOddsCheckC==TRUE){
      validate(
-       need(input$targetORC != 1, "Sample size is indeterminate for an odds ratio of 1. Please enter a different target odds ratio."),
-       need(input$targetORC != 0, "Sample size is indeterminate for an odds ratio of 0. Please enter a different target odds ratio.")
+       need(is.numeric(input$targetORC),"Please enter an odds ratio.") %then%
+         need(input$targetORC != 1, "Sample size is indeterminate for an odds ratio of 1. Please enter a different target odds ratio.") %then%
+         need(input$targetORC != 0, "Sample size is indeterminate for an odds ratio of 0. Please enter a different target odds ratio.")
      )
      return(c(0.5,input$targetORC/(1+input$targetORC)))
    }
@@ -1241,8 +1274,7 @@ shinyServer(function(input,output,session){
    if(input$selectOutcomeC==2 && input$meanSdCheckC==FALSE){
      validate(
        need(input$firstDTRcompareC, "Select a first AI above."),
-       need(input$secondDTRcompareC, "Select a second AI above.") %then%
-         need(input$effectSizeC != 0, "Sample size is indeterminate for an effect size of 0. Please enter a different target effect size.")
+       need(input$secondDTRcompareC, "Select a second AI above.")
      )
      
      return(input$effectSizeC)
@@ -1310,7 +1342,7 @@ shinyServer(function(input,output,session){
      need(input$inputPowerC < 1, "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1.")
    )
    designEffect<-selectEffectC()
-   rawSampleSize<-power.prop.test(p1=dataCompilerC()[1],p2=dataCompilerC()[2],power=input$inputPowerC,sig.level=input$alphaC,alternative=c(input$selectSidedC))$n
+   rawSampleSize<-power.prop.test(p1=dataCompilerC()[1],p2=dataCompilerC()[2],power=input$inputPowerC,sig.level=input$alphaC,alternative=c(input$selectAlternativeC))$n
    finalSampleSize<-ceiling(designEffect * rawSampleSize)
    formatPower<-paste(input$inputPowerC*100,"%",sep="")
    formatAlpha<-paste(input$alphaC*100,"%",sep="")
@@ -1326,7 +1358,7 @@ shinyServer(function(input,output,session){
    )
    designEffect<-selectEffectC()
    size<-(input$inputSampleSizeC/designEffect)
-   finalPower<-round(power.prop.test(p1=dataCompilerC()[1],p2=dataCompilerC()[2],n=size,sig.level=input$alphaC,alternative=c(input$selectSidedC))$power,digits=3)
+   finalPower<-round(power.prop.test(p1=dataCompilerC()[1],p2=dataCompilerC()[2],n=size,sig.level=input$alphaC,alternative=c(input$selectAlternativeC))$power,digits=3)
    formatPower<-paste(finalPower*100,"%",sep="")
    formatAlpha<-paste(input$alphaC*100,"%",sep="")
    
@@ -1336,13 +1368,19 @@ shinyServer(function(input,output,session){
  })
  
  output$continuousSampleSizeC <- renderUI({
+   alt.hyp<-switch(input$selectAlternativeC,"one.sided"="greater")
+   designEffect<-selectEffectC()
+   rawSampleSize<-try(pwr.norm.test(d=dataCompilerC(),sig.level=input$alphaC,power=input$inputPowerC,alternative=alt.hyp)$n,silent=T)
+   
    validate(
      need(input$inputPowerC > 0, "Sample size is indeterminate for 0% power. Please specify a power greater than zero."),
-     need(input$inputPowerC < 1, "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1.")
+     need(input$inputPowerC < 1, "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1."),
+     need(dataCompilerC()>0,"Sample size is indeterminate for an effect size of 0. Please specify a different effect size.") %then%
+       need(is.numeric(rawSampleSize),paste("Given the provided effect size, fewer than",2*designEffect,"individuals are required to achieve the desired power.",
+                                            "This is not enough individuals to run a SMART. You can test for a smaller effect size, or increase the desired power."))
    )
-   designEffect<-selectEffectC()
-   rawSampleSize<-pwr.norm.test(d=dataCompilerC(),sig.level=input$alphaC,power=input$inputPowerC,alternative=c(input$selectSidedC))
-   finalSampleSize<-ceiling(2*designEffect*rawSampleSize$n)
+   
+   finalSampleSize<-ceiling(2*designEffect*rawSampleSize)
    formatPower<-paste(input$inputPowerC*100,"%",sep="")
    formatAlpha<-paste(input$alphaC*100,"%",sep="")
    
@@ -1352,12 +1390,13 @@ shinyServer(function(input,output,session){
  })
  
  output$continuousPowerC <- renderUI({
+   alt.hyp<-switch(input$selectAlternativeC,"one.sided"="greater")
    validate(
      need(input$inputSampleSizeC!=0, "Power is indeterminate for a sample size of 0. Please provide a valid sample size.")  
    )
    designEffect<-selectEffectC()
    size<-(input$inputSampleSizeC/(2*designEffect))
-   finalPower<-round(pwr.norm.test(d=dataCompilerC(),sig.level=input$alphaC,n=size,alternative=c(input$selectSidedC))$power,digits=3)
+   finalPower<-round(pwr.norm.test(d=dataCompilerC(),sig.level=input$alphaC,n=size,alternative=alt.hyp)$power,digits=3)
    formatPower<-paste(finalPower*100,"%",sep="")
    formatAlpha<-paste(input$alphaC*100,"%",sep="")
    
@@ -1518,10 +1557,10 @@ shinyServer(function(input,output,session){
      need(input$secondDTRcompareD, "Please select a second intervention path.")
    )
    if(input$meanSdCheckD==TRUE && substringDTR1D()[1] != substringDTR2D()[1]){
-     return(disable(numericInput("effectSizeDdisable",label="Standardized Effect Size",value=0,min=0,max=1,step=0.01)))
+     return(disable(numericInput("effectSizeDdisable",label="Standardized Effect Size",value=0,min=0,max=10,step=0.01)))
    }
    else {
-     return(numericInput("effectSizeD",label="Standardized Effect Size",value=generateProbsC()[3],min=0,max=1,step=0.01))
+     return(numericInput("effectSizeD",label="Standardized Effect Size",value=0,min=0,max=10,step=0.01))
    }
  })
  
@@ -1530,7 +1569,7 @@ shinyServer(function(input,output,session){
  })
  
  output$meanEstD <- renderUI({
-   contInput<-c(numericInput("meanDiffD",label="Difference in mean outcomes between the two selected DTRs:",value=0,min=0,step=0.01),
+   contInput<-c(numericInput("meanDiffD",label="Difference in mean outcomes between the two selected intervention paths (absolute value):",value=0,min=0,step=0.01),
                 numericInput("sdDiffD",label="Standard deviation of the above difference in means:", value=0, min=0, step=0.01))
    contInput
  })
@@ -1572,7 +1611,8 @@ shinyServer(function(input,output,session){
  # Based on provided input probabilities and selected options, compute appropriate arguments to pass to power.prop.test or pwr.norm.test
  
  checkDTRinputsD <- reactive({
-   if ((0<=input$DTRsuccD1 & input$DTRsuccD1 <=1) & (0<=input$DTRsuccD2 & input$DTRsuccD2<=1))
+   test<-findInterval(c(input$DTRsuccD1, input$DTRsuccD2),c(0,1))
+   if (test[1]==1 && test[2]==1)
      return(TRUE)
    else
      return(FALSE)
@@ -1582,8 +1622,9 @@ shinyServer(function(input,output,session){
      
    if(input$selectOutcomeD==1 && input$targetDiffCheckD==FALSE && input$targetOddsCheckD==FALSE){
      validate(
-       need(input$firstDTRcompareD, "Select a first intervention path above."),
-       need(input$secondDTRcompareD, "Select a second intervention path above.") %then%
+       need(!is.null(input$DTRsuccD1), "Select a first intervention path above."),
+       need(!is.null(input$DTRsuccD2), "Select a second intervention path above.") %then%
+         need(!is.na(input$DTRsuccD1) && !is.na(input$DTRsuccD2), "The success probability is missing for at least one intervention path. Please provide a numeric input.") %then%
          need(input$DTRsuccD1 != input$DTRsuccD2, "Please provide unique success probabilities for each intervention path. Sample size is indeterminate for equal intervention path probabilities.") %then%
          need(checkDTRinputsD(), "The provided success probability for at least one intervention path is not a valid probability. Please enter a value between 0 and 1.")
      )
@@ -1601,8 +1642,9 @@ shinyServer(function(input,output,session){
    
    if(input$selectOutcomeD==1 && input$targetOddsCheckD==TRUE){
      validate(
-       need(input$targetORD != 1, "Sample size is indeterminate for an odds ratio of 1. Please enter a different target odds ratio."),
-       need(input$targetORD != 0, "Sample size is indeterminate for an odds ratio of 0. Please enter a different target odds ratio.")
+       need(is.numeric(input$targetORD),"Please enter an odds ratio.") %then%
+         need(input$targetORD != 1, "Sample size is indeterminate for an odds ratio of 1. Please enter a different target odds ratio.") %then%
+         need(input$targetORD != 0, "Sample size is indeterminate for an odds ratio of 0. Please enter a different target odds ratio.")
      )
      return(c(0.5,input$targetORD/(1+input$targetORD)))
    }
@@ -1610,8 +1652,7 @@ shinyServer(function(input,output,session){
    if(input$selectOutcomeD==2 && input$meanSdCheckD==FALSE){
      validate(
        need(input$firstDTRcompareD, "Select a first intervention path above."),
-       need(input$secondDTRcompareD, "Select a second intervention path above.") %then%
-         need(input$effectSizeD != 0, "Sample size is indeterminate for an effect size of 0. Please enter a different target effect size.")
+       need(input$secondDTRcompareD, "Select a second intervention path above.")
      )
      
      return(input$effectSizeD)
@@ -1668,7 +1709,7 @@ shinyServer(function(input,output,session){
      need(input$inputPowerD < 1, "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1.")
    )
    designEffect<-selectEffectD()
-   rawSampleSize<-power.prop.test(p1=dataCompilerD()[1],p2=dataCompilerD()[2],power=input$inputPowerD,sig.level=input$alphaD,,alternative=c(input$selectSidedD))$n
+   rawSampleSize<-power.prop.test(p1=dataCompilerD()[1],p2=dataCompilerD()[2],power=input$inputPowerD,sig.level=input$alphaD,alternative=c(input$selectAlternativeD),n=NULL)$n
    finalSampleSize<-ceiling(designEffect * rawSampleSize)
    formatPower<-paste(input$inputPowerD*100,"%",sep="")
    formatAlpha<-paste(input$alphaD*100,"%",sep="")
@@ -1684,7 +1725,7 @@ shinyServer(function(input,output,session){
    )
    designEffect<-selectEffectD()
    size<-(input$inputSampleSizeD/designEffect)
-   finalPower<-round(power.prop.test(p1=dataCompilerD()[1],p2=dataCompilerD()[2],n=size,sig.level=input$alphaD,,alternative=c(input$selectSidedD))$power,digits=3)
+   finalPower<-round(power.prop.test(p1=dataCompilerD()[1],p2=dataCompilerD()[2],n=size,sig.level=input$alphaD,alternative=c(input$selectAlternativeD),power=NULL)$power,digits=3)
    formatPower<-paste(finalPower*100,"%",sep="")
    formatAlpha<-paste(input$alphaD*100,"%",sep="")
    
@@ -1692,15 +1733,21 @@ shinyServer(function(input,output,session){
         <p><em> Given a sample size of",input$inputSampleSizeD,"a comparison of intervention paths",input$firstDTRcompareD, "and",
         input$secondDTRcompareA,sentenceCompilerD(), "can be made with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
  })
- 
+
  output$continuousSampleSizeD <- renderUI({
+   alt.hyp<-switch(input$selectAlternativeD,"one.sided"="greater")
+   designEffect<-selectEffectD()
+   rawSampleSize<-try(pwr.norm.test(d=dataCompilerD(),sig.level=input$alphaD,power=input$inputPowerD,alternative=alt.hyp)$n,silent=T)
+   
    validate(
      need(input$inputPowerD > 0, "Sample size is indeterminate for 0% power. Please specify a power greater than zero."),
-     need(input$inputPowerD < 1, "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1.")
+     need(input$inputPowerD < 1, "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1."),
+     need(dataCompilerD()>0,"Sample size is indeterminate for an effect size of 0. Please specify a different effect size.") %then%
+     need(is.numeric(rawSampleSize),paste("Given the provided effect size, fewer than",2*designEffect,"individuals are required to achieve the desired power.",
+                                          "This is not enough individuals to run a SMART. You can test for a smaller effect size, or increase the desired power."))
    )
-   designEffect<-selectEffectD()
-   rawSampleSize<-pwr.norm.test(d=dataCompilerD(),sig.level=input$alphaD,power=input$inputPowerD,alternative=c(input$selectSidedD))
-   finalSampleSize<-ceiling(2*designEffect*rawSampleSize$n)
+   
+   finalSampleSize<-ceiling(2*designEffect*rawSampleSize)
    formatPower<-paste(input$inputPowerD*100,"%",sep="")
    formatAlpha<-paste(input$alphaD*100,"%",sep="")
    
@@ -1710,12 +1757,13 @@ shinyServer(function(input,output,session){
  })
  
  output$continuousPowerD <- renderUI({
+   alt.hyp<-switch(input$selectAlternativeD,"one.sided"="greater")
    validate(
      need(input$inputSampleSizeD!=0, "Power is indeterminate for a sample size of 0. Please provide a valid sample size.")  
    )
    designEffect<-selectEffectD()
    size<-(input$inputSampleSizeD/(2*designEffect))
-   finalPower<-round(pwr.norm.test(d=dataCompilerD(),sig.level=input$alphaD,n=size,alternative=c(input$selectSidedD))$power,digits=3)
+   finalPower<-round(pwr.norm.test(d=dataCompilerD(),sig.level=input$alphaD,n=size,alternative=alt.hyp)$power,digits=3)
    formatPower<-paste(finalPower*100,"%",sep="")
    formatAlpha<-paste(input$alphaD*100,"%",sep="")
    
