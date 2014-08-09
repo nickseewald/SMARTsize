@@ -16,8 +16,6 @@ disable <- function(x) {
   x
 }
 
-
-
 ### Create vectors of all embedded DTRs for each design
 designA.DTRs <- c("ArCnrE", "ArCnrF", "ArDnrE", "ArDnrF", "BrGnrI", "BrGnrJ", "BrHnrI", "BrHnrJ")
 designB.DTRs <- c("ArCnrD", "ArCnrE", "BrFnrG", "BrFnrH")
@@ -266,18 +264,18 @@ shinyServer(function(input,output,session){
   ### Compute full DTR probabilities or effect size when providing cell-specific probabilities or mean/SD 
   
   generateProbsA <- reactive({
-    if(input$selectOutcomeA==1 && substringDTR1A()[2]==substringDTR2A()[2] && substringDTR1A()[3]==substringDTR2A()[3] && input$cellOrConditionalA==TRUE){
+    if(substringDTR1A()[2]==substringDTR2A()[2] && substringDTR1A()[3]==substringDTR2A()[3] && input$cellOrConditionalA==TRUE){
       pDTR1 <- fullDTRprob(input$marginalFirstStageA1,input$respA,input$marginalSecondStageNRA1)
       pDTR2 <- fullDTRprob(input$marginalFirstStageA1,input$respA,input$marginalSecondStageNRA2)
       effectSize <- 0
     }
     
-    else if (input$selectOutcomeA==1 && substringDTR1A()[2]!=substringDTR2A()[2] && substringDTR1A()[3]!=substringDTR2A()[3] && input$cellOrConditionalA==TRUE){
+    else if (substringDTR1A()[2]!=substringDTR2A()[2] && substringDTR1A()[3]!=substringDTR2A()[3] && input$cellOrConditionalA==TRUE){
       pDTR1 <- fullDTRprob(input$marginalFirstStageA1,input$respA,input$marginalSecondStageNRA1)
       pDTR2 <- fullDTRprob(input$marginalFirstStageA2,input$respA,input$marginalSecondStageNRA2)
       effectSize <- 0
     }
-    else if (input$selectOutcomeA==1 && input$cellOrConditionalA==FALSE){
+    else if (input$cellOrConditionalA==FALSE){
       pDTR1 <- input$DTRsuccA1
       pDTR2 <- input$DTRsuccA2
       effectSize <- 0
@@ -299,7 +297,7 @@ shinyServer(function(input,output,session){
     }
   })  
   
-  ##### DESIGN A RESULT #####
+  ##### DESIGN A RESULT BACKEND #####
   
   # Based on provided input probabilities and selected options, compute appropriate arguments to pass to power.prop.test or pwr.norm.test
   
@@ -399,73 +397,83 @@ shinyServer(function(input,output,session){
   
   sentenceCompilerA <- reactive({
     if(input$selectOutcomeA==1 && input$cellOrConditionalA==FALSE && input$targetDiffCheckA==FALSE){
-      str <- paste("with success probabilities of",input$DTRsuccA1,"and",input$DTRsuccA2,"respectively,")
+      str <- paste(" and the overall probabilities of success in the two AIs of interest, ",input$firstDTRcompareA," and ",input$secondDTRcompareA,
+                   ", are ",input$DTRsuccA1," and ",input$DTRsuccA2,", respectively", sep="")
       return(str)
     }
     if(input$selectOutcomeA==1 && input$cellOrConditionalA==TRUE){
-      str <- paste("with success probabilities of",generateProbsA()[1],"and",generateProbsA()[2],"respectively,")
+      str <- paste(" and the overall probabilities of success in the two AIs of interest, ",input$firstDTRcompareA," and ",input$secondDTRcompareA,
+                   ", are ",generateProbsA()[1]," and ",generateProbsA()[2],", respectively", sep="")
       return(str)
     }
     
     if(input$selectOutcomeA==1 && input$cellOrConditionalA==FALSE && input$targetDiffCheckA==TRUE && input$targetOddsCheckA==FALSE){
-      str <- paste("with a difference in success probabilities of",input$targetDiffA)
+      str <- paste(" and the difference in overall probabilities of success in the two AIs of interest, ",input$firstDTRcompareA," and ",input$secondDTRcompareA,
+                   ", is ",input$targetDiffA, sep="")
       return(str)
     }
     
     if(input$selectOutcomeA==1 && input$targetOddsCheckA==TRUE && input$targetDiffCheckA==TRUE){
-      str <- paste("with an odds ratio of",input$targetORA)
+      str <- paste("and the odds ratio of success for the two AIs of interest, ",input$firstDTRcompareA," and ",input$secondDTRcompareA,
+                   ", is ",input$targetORA, sep="")
       return(str)
     }
     
     if(input$selectOutcomeA==2 && input$meanSdCheckA==FALSE){
-      str <- paste("with a standardized effect size of", input$effectSizeA)
+      str <- paste(" and the standardized effect size between the two AIs of interest, ",input$firstDTRcompareA," and ",input$secondDTRcompareA,
+                   ", is ", input$effectSizeA, sep="")
       return(str)
     }
     
     if(input$selectOutcomeA==2 && input$meanSdCheckA==TRUE){
-      str <- paste("(with a standardized effect size of ", generateProbsA()[3],")",sep="")
+      str <- paste(" and the standardized effect size between the two AIs of interest, ",input$firstDTRcompareA," and ",input$secondDTRcompareA,
+                   " is ", generateProbsA()[3],sep="")
       return(str)
     }  
   })
+  
+  ##### DESIGN A RESULTS #####
   
   # Pass arguments from dataCompilerB() to appropriate R function; extract and render relevant output
   
   output$binarySampleSizeA <- renderUI({
     designEffect<-selectEffectA()
-    rawSampleSize<-power.prop.test(p1=dataCompilerA()[1],p2=dataCompilerA()[2],power=input$inputPowerA,sig.level=input$alphaA,alternative=c(input$selectBinaryAlternativeA))$n
+    rawSampleSize<-power.prop.test(p1=dataCompilerA()[1],p2=dataCompilerA()[2],power=input$inputPowerA,sig.level=input$alphaA,alternative=c(input$selectAlternativeA))$n
     finalSampleSize<-ceiling(designEffect * rawSampleSize)
     formatPower<-paste(input$inputPowerA*100,"%",sep="")
     formatAlpha<-paste(input$alphaA*100,"%",sep="")
     
     validate(
       need(input$inputPowerA > 0, "Sample size is indeterminate for 0% power. Please specify a power greater than zero."),
-      need(input$inputPowerA < 1, "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1."),
-      need(finalSampleSize >= designEffect, "hey!")
+      need(input$inputPowerA < 1, "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1.")
     )
     
-    HTML("<h4> <font color='blue'> N=",paste(finalSampleSize),"</font> </h4>
-         <p><em> We require a sample size of",finalSampleSize,"to compare adaptive interventions",input$firstDTRcompareA, "and",
-         input$secondDTRcompareA,sentenceCompilerA(), "with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
+    HTML(paste("<h4> <font color='blue'> N=",paste(finalSampleSize),"</font> </h4>
+         <p> We wish to find the sample size for a trial with a binary outcome where the probability of response to first-stage interventions is ", input$respA, sentenceCompilerA(),
+         ". Given a ", switch(input$selectAlternativeA, "one.sided"="one-sided ", "two.sided"="two-sided "), " test with ", formatAlpha, " type-I error, we require a sample size of ",
+         finalSampleSize, " to make this comparison with ",formatPower," power. </p>",sep=""))
   })
   
   output$binaryPowerA <- renderUI({
     validate(
       need(input$inputSampleSizeA != 0, "Power is indeterminate for a sample size of 0. Please provide a valid sample size.")  
     )
+    
     designEffect<-selectEffectA()
     size<-(input$inputSampleSizeA/designEffect)
+    
+    validate(
+      need(size >= 1, paste("The provided sample size is not large enough to yield a trial in which at least one person is consistent with each DTR.", 
+                            "Sample size must be at least",ceiling(designEffect),"to proceed."))
+    )
+    
     finalPower<-round(power.prop.test(p1=dataCompilerA()[1],p2=dataCompilerA()[2],n=size,sig.level=input$alphaA,alternative=c(input$selectAlternativeA))$power,digits=3)
     formatPower<-paste(finalPower*100,"%",sep="")
     formatAlpha<-paste(input$alphaA*100,"%",sep="")
     
-    validate(
-      need(size >= 1, paste("The provided sample size is not large enough to yield a trial in which at least one person is consistent with each DTR.", 
-                            "Sample size must be at least",ceiling(2*designEffect),"to proceed."))
-    )
-    
-    HTML("<h4> <font color='blue'> power=",paste(formatPower),"</font> </h4>
-         <p><em> Given a sample size of",input$inputSampleSizeA,"a comparison of adaptive interventions",input$firstDTRcompareA, "and",
-         input$secondDTRcompareA,sentenceCompilerA(), "can be made with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
+    HTML(paste("<h4> <font color='blue'> (1-&beta;)=",paste(formatPower),"</font> </h4>
+         <p> For a trial of size N=",input$inputSampleSizeA," with a binary outcome where the probability of response to first-stage interventions is ",input$respA,
+               sentenceCompilerA(),", we have ",formatPower," power. </p>",sep=""))
   })
   
   output$continuousSampleSizeA <- renderUI({
@@ -485,28 +493,35 @@ shinyServer(function(input,output,session){
     formatPower<-paste(input$inputPowerA*100,"%",sep="")
     formatAlpha<-paste(input$alphaA*100,"%",sep="")
         
-    HTML("<h4> <font color='blue'> N=",paste(finalSampleSize),"</font> </h4>
-         <p><em> We require a sample size of",finalSampleSize,"to compare adaptive interventions",input$firstDTRcompareA, "and",
-         input$secondDTRcompareA,sentenceCompilerA(), "with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
+    HTML(paste("<h4> <font color='blue'> N=",paste(finalSampleSize),"</font> </h4>
+         <p> We wish to find the sample size for a trial with a continuous outcome where the probability of response to first-stage interventions is ", input$respA, sentenceCompilerA(),
+               ". Given a ", switch(input$selectAlternativeA, "one.sided"="one-sided ", "two.sided"="two-sided "), " test with ", formatAlpha, " type-I error, we require a sample size of ",
+               finalSampleSize, " to make this comparison with ",formatPower," power. </p>",sep=""))
   })
   
   output$continuousPowerA <- renderUI({
+    validate(
+      need(input$inputSampleSizeA != 0, "Power is indeterminate for a sample size of 0. Please provide a valid sample size.")  
+    )
+    
     alt.hyp<-switch(input$selectAlternativeA, 'one.sided'='greater')
     designEffect<-selectEffectA()
-    
     size<-(input$inputSampleSizeA/(2*designEffect)) 
-    finalPower<-round(pwr.norm.test(d=dataCompilerA(),sig.level=input$alphaA,n=size,alternative=alt.hyp)$power,digits=3)
-    formatPower<-paste(finalPower*100,"%",sep="")
-    formatAlpha<-paste(input$alphaA*100,"%",sep="")
     
     validate(
       need(size >= 1, paste("The provided sample size is not large enough to yield a trial in which at least one person is consistent with each DTR.", 
                             "Sample size must be at least",ceiling(2*designEffect),"to proceed."))
     )
+    
+    finalPower<-round(pwr.norm.test(d=dataCompilerA(),sig.level=input$alphaA,n=size,alternative=alt.hyp)$power,digits=3)
+    formatPower<-paste(finalPower*100,"%",sep="")
+    formatAlpha<-paste(input$alphaA*100,"%",sep="")
+    
+    
         
-    HTML("<h4> <font color='blue'>",paste(formatPower)," power </font> </h4>
-         <p><em> Given a sample size of",input$inputSampleSizeA,"a comparison of adaptive interventions",input$firstDTRcompareA, "and",
-         input$secondDTRcompareA,sentenceCompilerA(), "can be made with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
+    HTML(paste("<h4> <font color='blue'> (1-&beta;)=",paste(formatPower),"</font> </h4>
+         <p> For a trial of size N=",input$inputSampleSizeA," with a continuous outcome where the probability of response to first-stage interventions is ",input$respA,
+               sentenceCompilerA(),", we have ",formatPower," power. </p>",sep=""))
   })
   
   
@@ -772,7 +787,7 @@ shinyServer(function(input,output,session){
   })
   
 
-  ##### DESIGN B RESULT #####
+  ##### DESIGN B RESULT BACKEND #####
   
   # Based on provided input probabilities and selected options, compute appropriate arguments to pass to power.prop.test or pwr.norm.test
   
@@ -862,36 +877,44 @@ shinyServer(function(input,output,session){
     return(designEffect)
   })
   
-  sentenceCompilerB <- reactive({
-    if(input$selectOutcomeB==1 && input$cellOrConditionalB==FALSE && input$targetDiffCheckB==FALSE){
-      str <- paste("with success probabilities of",input$DTRsuccB1,"and",input$DTRsuccB2,"respectively,")
-      return(str)
-    }
-    if(input$selectOutcomeB==1 && input$cellOrConditionalB==TRUE){
-      str <- paste("with success probabilities of",generateProbsB()[1],"and",generateProbsB()[2],"respectively,")
-      return(str)
-    }
-    
-    if(input$selectOutcomeB==1 && input$cellOrConditionalB==FALSE && input$targetDiffCheckB==TRUE && input$targetOddsCheckB==FALSE){
-      str <- paste("with a difference in success probabilities of",input$targetDiffB)
-      return(str)
-    }
-    
-    if(input$selectOutcomeB==1 && input$targetOddsCheckB==TRUE && input$targetDiffCheckB==TRUE){
-      str <- paste("with an odds ratio of",input$targetORB)
-      return(str)
-    }
-    
-    if(input$selectOutcomeB==2 && input$meanSdCheckB==FALSE){
-      str <- paste("with a standardized effect size of", input$effectSizeB)
-      return(str)
-    }
-    
-    if(input$selectOutcomeB==2 && input$meanSdCheckB==TRUE){
-      str <- paste("(with a standardized effect size of ", generateProbsB()[3],")",sep="")
-      return(str)
-    }  
-  })
+ sentenceCompilerB <- reactive({
+   if(input$selectOutcomeB==1 && input$cellOrConditionalB==FALSE && input$targetDiffCheckB==FALSE){
+     str <- paste(" and the overall probabilities of success in the two AIs of interest, ",input$firstDTRcompareB," and ",input$secondDTRcompareB,
+                  ", are ",input$DTRsuccB1," and ",input$DTRsuccB2,", respectively", sep="")
+     return(str)
+   }
+   if(input$selectOutcomeB==1 && input$cellOrConditionalB==TRUE){
+     str <- paste(" and the overall probabilities of success in the two AIs of interest, ",input$firstDTRcompareB," and ",input$secondDTRcompareB,
+                  ", are ",generateProbsB()[1]," and ",generateProbsB()[2],", respectively", sep="")
+     return(str)
+   }
+   
+   if(input$selectOutcomeB==1 && input$cellOrConditionalB==FALSE && input$targetDiffCheckB==TRUE && input$targetOddsCheckB==FALSE){
+     str <- paste(" and the difference in overall probabilities of success in the two AIs of interest, ",input$firstDTRcompareB," and ",input$secondDTRcompareB,
+                  ", is ",input$targetDiffB, sep="")
+     return(str)
+   }
+   
+   if(input$selectOutcomeB==1 && input$targetOddsCheckB==TRUE && input$targetDiffCheckB==TRUE){
+     str <- paste("and the odds ratio of success for the two AIs of interest, ",input$firstDTRcompareB," and ",input$secondDTRcompareB,
+                  ", is ",input$targetORB, sep="")
+     return(str)
+   }
+   
+   if(input$selectOutcomeB==2 && input$meanSdCheckB==FALSE){
+     str <- paste(" and the standardized effect size between the two AIs of interest, ",input$firstDTRcompareB," and ",input$secondDTRcompareB,
+                  ", is ", input$effectSizeB, sep="")
+     return(str)
+   }
+   
+   if(input$selectOutcomeB==2 && input$meanSdCheckB==TRUE){
+     str <- paste(" and the standardized effect size between the two AIs of interest, ",input$firstDTRcompareB," and ",input$secondDTRcompareB,
+                  ", is ", generateProbsB()[3],sep="")
+     return(str)
+   }  
+ })
+ 
+ ##### DESIGN B RESULTS #####
   
   # Pass arguments from dataCompilerB() to appropriate R function; extract and render relevant output
   
@@ -906,9 +929,10 @@ shinyServer(function(input,output,session){
     formatPower<-paste(input$inputPowerB*100,"%",sep="")
     formatAlpha<-paste(input$alphaB*100,"%",sep="")
     
-    HTML("<h4> <font color='blue'> N=",paste(finalSampleSize),"</font> </h4>
-         <p><em> We require a sample size of",finalSampleSize,"to compare adaptive interventions",input$firstDTRcompareB, "and",
-         input$secondDTRcompareB,sentenceCompilerB(), "with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
+    HTML(paste("<h4> <font color='blue'> N=",paste(finalSampleSize),"</font> </h4>
+         <p> We wish to find the sample size for a trial with a binary outcome where the probability of response to first-stage interventions is ", input$respB, sentenceCompilerB(),
+               ". Given a ", switch(input$selectAlternativeB, "one.sided"="one-sided ", "two.sided"="two-sided "), " test with ", formatAlpha, " type-I error, we require a sample size of ",
+               finalSampleSize, " to make this comparison with ",formatPower," power. </p>",sep=""))
   })
 
   output$binaryPowerB <- renderUI({
@@ -917,13 +941,19 @@ shinyServer(function(input,output,session){
     )
     designEffect<-selectEffectB()
     size<-(input$inputSampleSizeB/designEffect)
+    
+    validate(
+      need(size >= 1, paste("The provided sample size is not large enough to yield a trial in which at least one person is consistent with each DTR.", 
+                            "Sample size must be at least",ceiling(2*designEffect),"to proceed."))
+    )
+    
     finalPower<-round(power.prop.test(p1=dataCompilerB()[1],p2=dataCompilerB()[2],n=size,sig.level=input$alphaB,alternative=c(input$selectAlternativeB))$power,digits=3)
     formatPower<-paste(finalPower*100,"%",sep="")
     formatAlpha<-paste(input$alphaB*100,"%",sep="")
     
-    HTML("<h4> <font color='blue'> power=",paste(finalPower),"</font> </h4>
-         <p><em> Given a sample size of",input$inputSampleSizeB,"a comparison of adaptive interventions",input$firstDTRcompareB, "and",
-         input$secondDTRcompareB,sentenceCompilerB(), "can be made with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
+    HTML(paste("<h4> <font color='blue'> (1-&beta;)=",paste(formatPower),"</font> </h4>
+         <p> For a trial of size N=",input$inputSampleSizeB," with a binary outcome where the probability of response to first-stage interventions is ",input$respB,
+               sentenceCompilerB(),", we have ",formatPower," power. "))
   })
   
   output$continuousSampleSizeB <- renderUI({
@@ -943,25 +973,32 @@ shinyServer(function(input,output,session){
     formatPower<-paste(input$inputPowerB*100,"%",sep="")
     formatAlpha<-paste(input$alphaB*100,"%",sep="")
     
-    HTML("<h4> <font color='blue'> N=",paste(finalSampleSize),"</font> </h4>
-         <p><em> We require a sample size of",finalSampleSize,"to compare adaptive interventions",input$firstDTRcompareB, "and",
-         input$secondDTRcompareB,sentenceCompilerB(), "with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
+    HTML(paste("<h4> <font color='blue'> N=",paste(finalSampleSize),"</font> </h4>
+         <p> We wish to find the sample size for a trial with a continuous outcome where the probability of response to first-stage interventions is ", input$respB, sentenceCompilerB(),
+               ". Given a ", switch(input$selectAlternativeB, "one.sided"="one-sided ", "two.sided"="two-sided "), " test with ", formatAlpha, " type-I error, we require a sample size of ",
+               finalSampleSize, " to make this comparison with ",formatPower," power. </p>",sep=""))
   })
   
   output$continuousPowerB <- renderUI({
     alt.hyp<-switch(input$selectAlternativeB,"one.sided"="greater")
     validate(
-      need(input$inputSampleSizeB!=0, "Power is indeterminate for a sample size of 0. Please provide a valid sample size.")  
+      need(input$inputSampleSizeB != 0, "Power is indeterminate for a sample size of 0. Please provide a valid sample size.")  
     )
     designEffect<-selectEffectB()
     size<-(input$inputSampleSizeB/(2*designEffect))
+    
+    validate(
+      need(size >= 1, paste("The provided sample size is not large enough to yield a trial in which at least one person is consistent with each DTR.", 
+                            "Sample size must be at least",ceiling(2*designEffect),"to proceed."))
+    )
+    
     finalPower<-round(pwr.norm.test(d=dataCompilerB(),sig.level=input$alphaB,n=size,alternative=alt.hyp)$power,digits=3)
     formatPower<-paste(finalPower*100,"%",sep="")
     formatAlpha<-paste(input$alphaB*100,"%",sep="")
     
-    HTML("<h4> <font color='blue'> power=",paste(finalPower),"</font> </h4>
-         <p><em> Given a sample size of",input$inputSampleSizeB,"a comparison of adaptive interventions",input$firstDTRcompareB, "and",
-         input$secondDTRcompareB,sentenceCompilerB(), "can be made with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
+    HTML(paste("<h4> <font color='blue'> (1-&beta;)=",paste(formatPower),"</font> </h4>
+         <p> For a trial of size N=",input$inputSampleSizeC," with a continuous outcome where the probability of response to first-stage interventions is ",input$respC,
+               sentenceCompilerC(),", we have ",formatPower," power.</p>",sep=""))
   })
  
  ##### DESIGN C #####
@@ -971,7 +1008,7 @@ shinyServer(function(input,output,session){
  ### Render the design image which highlights selected DTRs
  ### Takes the names of selected DTRs, generates a filepath, and renders the image in the UI
  ### Note that this requires a very specific naming convention for image assets
- ### 'SMARTdesignX_DTR1_DTR2.gif'; if DTRX is unselected, DTR name is 0. 
+ ### 'SMARTdesignX_DTR1_DTR2.gif'; if DTRX is unselected, DTR name is empty. 
  
  output$designCimg <- renderImage({
    filename<-filename<-normalizePath(file.path('./www/images',paste('SMARTdesignC_',input$firstDTRcompareC,'_',input$secondDTRcompareC,'.gif',sep='')))
@@ -1215,7 +1252,7 @@ shinyServer(function(input,output,session){
    }
  })  
  
- ##### DESIGN C RESULT #####
+ ##### DESIGN C RESULT BACKEND #####
  
  # Based on provided input probabilities and selected options, compute appropriate arguments to pass to power.prop.test or pwr.norm.test
  
@@ -1305,34 +1342,43 @@ shinyServer(function(input,output,session){
  
  sentenceCompilerC <- reactive({
    if(input$selectOutcomeC==1 && input$cellOrConditionalC==FALSE && input$targetDiffCheckC==FALSE){
-     str <- paste("with success probabilities of",input$DTRsuccC1,"and",input$DTRsuccC2,"respectively,")
+     str <- paste(" and the overall probabilities of success in the two AIs of interest, ",input$firstDTRcompareC," and ",input$secondDTRcompareC,
+                  ", are ",input$DTRsuccC1," and ",input$DTRsuccC2,", respectively", sep="")
      return(str)
    }
    if(input$selectOutcomeC==1 && input$cellOrConditionalC==TRUE){
-     str <- paste("with success probabilities of",generateProbsC()[1],"and",generateProbsC()[2],"respectively,")
+     str <- paste(" and the overall probabilities of success in the two AIs of interest, ",input$firstDTRcompareC," and ",input$secondDTRcompareC,
+                  ", are ",generateProbsC()[1]," and ",generateProbsC()[2],", respectively", sep="")
      return(str)
    }
    
    if(input$selectOutcomeC==1 && input$cellOrConditionalC==FALSE && input$targetDiffCheckC==TRUE && input$targetOddsCheckC==FALSE){
-     str <- paste("with a difference in success probabilities of",input$targetDiffC)
+     str <- paste(" and the difference in overall probabilities of success in the two AIs of interest, ",input$firstDTRcompareC," and ",input$secondDTRcompareC,
+                  ", is ",input$targetDiffC,, sep="")
      return(str)
    }
    
    if(input$selectOutcomeC==1 && input$targetOddsCheckC==TRUE && input$targetDiffCheckC==TRUE){
-     str <- paste("with an odds ratio of",input$targetORC)
+     str <- paste("and the odds ratio of success for the two AIs of interest, ",input$firstDTRcompareC," and ",input$secondDTRcompareC,
+                  ", is ",input$targetORC, sep="")
      return(str)
    }
    
    if(input$selectOutcomeC==2 && input$meanSdCheckC==FALSE){
-     str <- paste("with a standardized effect size of", input$effectSizeC)
+     str <- paste(" and the standardized effect size between the two AIs of interest, ",input$firstDTRcompareC," and ",input$secondDTRcompareC,
+                  ", is ", input$effectSizeC, sep="")
      return(str)
    }
    
    if(input$selectOutcomeC==2 && input$meanSdCheckC==TRUE){
-     str <- paste("(with a standardized effect size of ", generateProbsC()[3],")",sep="")
+     str <- paste(" and the standardized effect size between the two AIs of interest, ",input$firstDTRcompareC," and ",input$secondDTRcompareC,
+                  ", is ", generateProbsC()[3],sep="")
      return(str)
    }  
  })
+ 
+ 
+ ##### DESIGN C RESULTS #####
  
  # Pass arguments from dataCompilerB() to appropriate R function; extract and render relevant output
  
@@ -1347,9 +1393,10 @@ shinyServer(function(input,output,session){
    formatPower<-paste(input$inputPowerC*100,"%",sep="")
    formatAlpha<-paste(input$alphaC*100,"%",sep="")
    
-   HTML("<h4> <font color='blue'> N=",paste(finalSampleSize),"</font> </h4>
-        <p><em> We require a sample size of",finalSampleSize,"to compare adaptive interventions",input$firstDTRcompareC, "and",
-        input$secondDTRcompareC,sentenceCompilerC(), "with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
+   HTML(paste("<h4> <font color='blue'> N=",paste(finalSampleSize),"</font> </h4>
+          <p> We wish to find the sample size for a trial with a binary outcome where the probability of response to first-stage interventions is ", input$respC, sentenceCompilerC(),
+              ". Given a ", switch(input$selectAlternativeC, "one.sided"="one-sided ", "two.sided"="two-sided "), " test with ", formatAlpha, " type-I error, we require a sample size of ",
+              finalSampleSize, " to make this comparison with ",formatPower," power. </p>",sep=""))
  })
  
  output$binaryPowerC <- renderUI({
@@ -1362,9 +1409,9 @@ shinyServer(function(input,output,session){
    formatPower<-paste(finalPower*100,"%",sep="")
    formatAlpha<-paste(input$alphaC*100,"%",sep="")
    
-   HTML("<h4> <font color='blue'> power=",paste(finalPower),"</font> </h4>
-        <p><em> Given a sample size of",input$inputSampleSizeC,"a comparison of adaptive interventions",input$firstDTRcompareC, "and",
-        input$secondDTRcompareA,sentenceCompilerC(), "can be made with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
+   HTML(paste("<h4> <font color='blue'> (1-&beta;)=",paste(formatPower),"</font> </h4>
+              <p> For a trial of size N=",input$inputSampleSizeC," with a binary outcome where the probability of response to first-stage interventions is ",input$respC,
+              sentenceCompilerC(),", we have ",formatPower," power. </p>",sep=""))
  })
  
  output$continuousSampleSizeC <- renderUI({
@@ -1384,9 +1431,10 @@ shinyServer(function(input,output,session){
    formatPower<-paste(input$inputPowerC*100,"%",sep="")
    formatAlpha<-paste(input$alphaC*100,"%",sep="")
    
-   HTML("<h4> <font color='blue'> N=",paste(finalSampleSize),"</font> </h4>
-        <p><em> We require a sample size of",finalSampleSize,"to compare adaptive interventions",input$firstDTRcompareC, "and",
-        input$secondDTRcompareC,sentenceCompilerC(), "with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
+   HTML(paste("<h4> <font color='blue'> N=",paste(finalSampleSize),"</font> </h4>
+         <p> We wish to find the sample size for a trial with a continuous outcome where the probability of response to first-stage interventions is ", input$respC, sentenceCompilerC(),
+              "Given a ", switch(input$selectAlternativeC, "one.sided"="one-sided ", "two.sided"="two-sided "), " test with ", formatAlpha, " type-I error, we require a sample size of ",
+              finalSampleSize, " to make this comparison with ",formatPower," power. </p>",sep=""))
  })
  
  output$continuousPowerC <- renderUI({
@@ -1400,9 +1448,9 @@ shinyServer(function(input,output,session){
    formatPower<-paste(finalPower*100,"%",sep="")
    formatAlpha<-paste(input$alphaC*100,"%",sep="")
    
-   HTML("<h4> <font color='blue'> power=",paste(finalPower),"</font> </h4>
-        <p><em> Given a sample size of",input$inputSampleSizeC,"a comparison of adaptive interventions",input$firstDTRcompareC, "and",
-        input$secondDTRcompareC,sentenceCompilerC(), "can be made with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
+   HTML(paste("<h4> <font color='blue'> (1-&beta;)=",paste(formatPower),"</font> </h4>
+              <p> For a trial of size N=",input$inputSampleSizeC," with a continuous outcome where the probability of response to first-stage interventions is ",input$respC,
+              sentenceCompilerC(),", we have ",formatPower," power. </p>",sep=""))
  })
 
  
@@ -1606,7 +1654,7 @@ shinyServer(function(input,output,session){
    }
  })  
  
- ##### DESIGN D RESULT #####
+ ##### DESIGN D RESULT BACKEND#####
  
  # Based on provided input probabilities and selected options, compute appropriate arguments to pass to power.prop.test or pwr.norm.test
  
@@ -1676,30 +1724,37 @@ shinyServer(function(input,output,session){
  
  sentenceCompilerD <- reactive({
    if(input$selectOutcomeD==1 && input$targetDiffCheckD==FALSE && input$targetOddsCheckD==FALSE){
-     str <- paste("with success probabilities of",input$DTRsuccD1,"and",input$DTRsuccD2,"respectively,")
+     str <- paste(" the overall probabilities of success in the two intervention paths of interest, ",input$firstDTRcompareD," and ",input$secondDTRcompareD,
+                  ", are ",input$DTRsuccD1," and ",input$DTRsuccD2,", respectively", sep="")
      return(str)
    }
    
-   if(input$selectOutcomeD==1 && input$targetDiffCheckD==TRUE){
-     str <- paste("with a difference in success probabilities of",input$targetDiffD)
+   if(input$selectOutcomeD==1 && input$targetDiffCheckD==TRUE && input$targetOddsCheckD==FALSE){
+     str <- paste(" the difference in overall probabilities of success in the two intervention paths of interest, ",input$firstDTRcompareD," and ",input$secondDTRcompareD,
+                  ", is ",input$targetDiffD, sep="")
      return(str)
    }
    
-   if(input$selectOutcomeD==1 && input$targetOddsCheckD==TRUE){
-     str <- paste("with an odds ratio of",input$targetORD)
+   if(input$selectOutcomeD==1 && input$targetOddsCheckD==TRUE && input$targetDiffCheckD==TRUE){
+     str <- paste(" the odds ratio of success for the two intervention paths of interest, ",input$firstDTRcompareD," and ",input$secondDTRcompareD,
+                  ", is ",input$targetORD, sep="")
      return(str)
    }
    
-   if(input$selectOutcomeD==2 && input$meanSdCheckD==FALSE){
-     str <- paste("with a standardized effect size of", input$effectSizeD)
+   if(input$selectOutcomeC==D && input$meanSdCheckD==FALSE){
+     str <- paste(" the standardized effect size between the two intervention paths of interest, ",input$firstDTRcompareD," and ",input$secondDTRcompareD,
+                  ", is ", input$effectSizeD, sep="")
      return(str)
    }
    
    if(input$selectOutcomeD==2 && input$meanSdCheckD==TRUE){
-     str <- paste("(with a standardized effect size of ", generateProbsD()[3],")",sep="")
+     str <- paste(" the standardized effect size between the two intervention paths of interest, ",input$firstDTRcompareD," and ",input$secondDTRcompareD,
+                  ", is ", generateProbsD()[3],sep="")
      return(str)
    }  
  })
+ 
+ ##### DESIGN D RESULTS #####
  
  # Pass arguments from dataCompilerB() to appropriate R function; extract and render relevant output
  
@@ -1714,9 +1769,10 @@ shinyServer(function(input,output,session){
    formatPower<-paste(input$inputPowerD*100,"%",sep="")
    formatAlpha<-paste(input$alphaD*100,"%",sep="")
    
-   HTML("<h4> <font color='blue'> N=",paste(finalSampleSize),"</font> </h4>
-        <p><em> We require a sample size of",finalSampleSize,"to compare intervention paths",input$firstDTRcompareD, "and",
-        input$secondDTRcompareD,sentenceCompilerD(), "with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
+   HTML(paste("<h4> <font color='blue'> N=",paste(finalSampleSize),"</font> </h4>
+         <p> We wish to find the sample size for a trial with a binary outcome where ",sentenceCompilerD(), ". 
+              Given a ", switch(input$selectAlternativeD, "one.sided"="one-sided ", "two.sided"="two-sided "), " test with ", formatAlpha, " type-I error, we require a sample size of ",
+              finalSampleSize, " to make this comparison with ",formatPower," power. </p>",sep=""))
  })
  
  output$binaryPowerD <- renderUI({
@@ -1729,9 +1785,9 @@ shinyServer(function(input,output,session){
    formatPower<-paste(finalPower*100,"%",sep="")
    formatAlpha<-paste(input$alphaD*100,"%",sep="")
    
-   HTML("<h4> <font color='blue'> power=",paste(finalPower),"</font> </h4>
-        <p><em> Given a sample size of",input$inputSampleSizeD,"a comparison of intervention paths",input$firstDTRcompareD, "and",
-        input$secondDTRcompareA,sentenceCompilerD(), "can be made with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
+   HTML(paste("<h4> <font color='blue'> (1-&beta;)=",paste(formatPower),"</font> </h4>
+         <p> For a trial of size N=",input$inputSampleSizeD," with a binary outcome where ",sentenceCompilerD(),
+              ", we have ",formatPower," power. </p>",sep=""))
  })
 
  output$continuousSampleSizeD <- renderUI({
@@ -1751,9 +1807,10 @@ shinyServer(function(input,output,session){
    formatPower<-paste(input$inputPowerD*100,"%",sep="")
    formatAlpha<-paste(input$alphaD*100,"%",sep="")
    
-   HTML("<h4> <font color='blue'> N=",paste(finalSampleSize),"</font> </h4>
-        <p><em> We require a sample size of",finalSampleSize,"to compare intervention paths",input$firstDTRcompareD, "and",
-        input$secondDTRcompareD,sentenceCompilerD(), "with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
+   HTML(paste("<h4> <font color='blue'> N=",paste(finalSampleSize),"</font> </h4>
+         <p> We wish to find the sample size for a trial with a continuous outcome where the probability of response to first-stage interventions is ", input$respD, sentenceCompilerD(),
+              "Given a ", switch(input$selectAlternativeD, "one.sided"="one-sided ", "two.sided"="two-sided "), " test with ", formatAlpha, " type-I error, we require a sample size of ",
+              finalSampleSize, " to make this comparison with ",formatPower," power. </p>",sep=""))
  })
  
  output$continuousPowerD <- renderUI({
@@ -1767,9 +1824,9 @@ shinyServer(function(input,output,session){
    formatPower<-paste(finalPower*100,"%",sep="")
    formatAlpha<-paste(input$alphaD*100,"%",sep="")
    
-   HTML("<h4> <font color='blue'> power=",paste(finalPower),"</font> </h4>
-        <p><em> Given a sample size of",input$inputSampleSizeD,"a comparison of intervention paths",input$firstDTRcompareD, "and",
-        input$secondDTRcompareD,sentenceCompilerD(), "can be made with", formatPower,"power and",formatAlpha,"type-I error. </em></p>")
+   HTML(paste("<h4> <font color='blue'> (1-&beta;)=",paste(formatPower),"</font> </h4>
+         <p> For a trial of size N=",input$inputSampleSizeD," with a continuous outcome where ",sentenceCompilerD(),
+              ", we have ",formatPower," power. </p>",sep=""))
  })
   
 })
