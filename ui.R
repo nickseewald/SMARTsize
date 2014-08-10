@@ -282,7 +282,15 @@ shinyUI(
                         conditionalPanel(condition="input.selectOutcomeA==2 & input.selectResultsA=='power'",
                                          htmlOutput("continuousPowerA")
                         )
-                      )
+                      ),
+                      
+                      ##### A TOOLTIPS #####
+                      bsTooltip(id="respA",title="Input must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus")
+                      
+#                       bsTooltip(id="DTRsuccA2",title="Input must be in decimal form with a leading zero, up to two places.",placement="right",trigger="click")
+#                       bsTooltip(id="targetDiffA",title="hey!")
+                      
+                      
              ),
              
              

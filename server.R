@@ -157,8 +157,11 @@ shinyServer(function(input,output,session){
       if(input$cellOrConditionalA==TRUE){
         return(disable(numericInput("DTRsuccA1disable",label="Probability of Success for First AI",value=0,min=0,max=1,step=0.01)))
       }
-      else
-        return(numericInput("DTRsuccA1",label="Probability of Success for First AI",value=0,min=0,max=1,step=0.01))
+      else {
+        output <- c(numericInput("DTRsuccA1",label="Probability of Success for First AI",value=0,min=0,max=1,step=0.01),
+                    bsTooltip(id="DTRsuccA1",title="Input must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"))
+        return(output)
+      }
     }
     
     if(input$targetDiffCheckA==TRUE && input$targetOddsCheckA==FALSE && substringDTR2A()[1] != 0){
@@ -186,8 +189,11 @@ shinyServer(function(input,output,session){
       if(input$cellOrConditionalA==TRUE){
         return(disable(numericInput("DTRsuccA2disable",label="Probability of Success for Second AI",value=0,min=0,max=1,step=0.01)))
       }
-      else
-        return(numericInput("DTRsuccA2",label="Probability of Success for Second AI",value=0,min=0,max=1,step=0.01))
+      else{
+        output <- c(numericInput("DTRsuccA2",label="Probability of Success for Second AI",value=0,min=0,max=1,step=0.01), 
+                    bsTooltip(id="DTRsuccA2",title="Input must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"))
+        return(output)
+      }
     }
   })
   
@@ -284,6 +290,23 @@ shinyServer(function(input,output,session){
     }
   },priority=2) 
   
+  ### If providing mean difference and SD, update disabled effect size input with computed value
+  
+  observe({
+    if(input$meanSdCheckA==TRUE){
+      updateNumericInput(session,"effectSizeAdisable",value=generateProbsA()[3])
+    }
+  })  
+  
+  ##### DESIGN A TOOLTIPS #####
+  addTooltip(session,id="respA",title="Input must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus")
+  addTooltip(session,id="DTRsuccA1",title="Input must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus")
+  addTooltip(session,id="DTRsuccA2",title="Input must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus")
+#   addTooltip(session,id="targetDiffA",title="hey!")
+
+  
+  ##### DESIGN A RESULT BACKEND #####
+  
   ### Compute full DTR probabilities or effect size when providing cell-specific probabilities or mean/SD 
   
   generateProbsA <- reactive({
@@ -310,17 +333,7 @@ shinyServer(function(input,output,session){
     }
     
     return(c(pDTR1,pDTR2,effectSize))
-  })
-  
-  ### If providing mean difference and SD, update disabled effect size input with computed value
-  
-  observe({
-    if(input$meanSdCheckA==TRUE){
-      updateNumericInput(session,"effectSizeAdisable",value=generateProbsA()[3])
-    }
   })  
-  
-  ##### DESIGN A RESULT BACKEND #####
   
   # Based on provided input probabilities and selected options, compute appropriate arguments to pass to power.prop.test or pwr.norm.test
   
