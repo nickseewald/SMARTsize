@@ -17,10 +17,12 @@ disable <- function(x) {
 
 shinyUI(
   navbarPage("SMART Sample Size Calculator", id="SMARTsize",
-
+             
              ##### HOME TAB#####
              
              tabPanel("Home",
+                      
+                      tags$style(type='text/css',"input[type='number'] {width:60px}"),
                       
                       sidebarPanel(h3("Methods"),
                                    p("For binary outcomes, sample size is computed according to the methods presented in Kidwell, et al (in preparation). "),
@@ -174,7 +176,7 @@ shinyUI(
                                  radioButtons("selectOutcomeA", label=HTML("Is the <strong> outcome </strong> of interest binary or continuous?"),
                                               choices=list("Binary"=1,"Continuous"=2),selected=1)
                           ),
-                          column(6,
+                          column(6,                              
                                  numericInput("respA",
                                               label=HTML("What is the <strong> probability of response </strong> to the first-stage intervention? 
                                                          If you are unsure, leave as 0 for a conservative estimate."), 
@@ -768,4 +770,5 @@ shinyUI(
                       )
              ),
 collapsable=TRUE,
-footer=HTML("<p> Kidwell, Seewald, Almirall (in preparation). </p>")))
+footer=HTML("<p> Kidwell, Seewald, Almirall (in preparation). </p>")
+))

@@ -1,5 +1,23 @@
-library(shiny)
-library(pwr)
+##### SERVER.R FOR SMART SAMPLE SIZE CALCULATOR #####
+### NICK SEEWALD, 2014
+### UNIVERSITY OF MICHIGAN
+### DEPARTMENT OF BIOSTATISTICS
+
+##### NON-REACTIVE FUNCTION DECLARATIONS #####
+
+### Force package installation/loading on running device
+force.package<-function(package){
+  #adapted from 
+  #http://r.789695.n4.nabble.com/Install-package-automatically-if-not-there-tp2267532p2267659.html
+  package<-as.character(substitute(package))
+  if (package %in% .packages(all.available=TRUE)){
+    eval(parse(text=paste("require(",package,")", sep="")))
+  }
+  else {
+    eval(parse(text=paste("install.packages('",package,"')",sep="")))
+    eval(parse(text=paste("require(",package,")", sep="")))
+  }
+}
 
 ### Function creates disabled (greyed-out) inputs
 ### Taken from https://groups.google.com/d/msg/shiny-discuss/uSetp4TtW-s/Jktu3fS60RAJ
@@ -16,12 +34,6 @@ disable <- function(x) {
   x
 }
 
-### Create vectors of all embedded DTRs for each design
-designA.DTRs <- c("ArCnrE", "ArCnrF", "ArDnrE", "ArDnrF", "BrGnrI", "BrGnrJ", "BrHnrI", "BrHnrJ")
-designB.DTRs <- c("ArCnrD", "ArCnrE", "BrFnrG", "BrFnrH")
-designC.DTRs <- c("ArCnrD", "ArCnrE", "BrFnrG")
-designD.DTRs <- c("AC", "AD", "BE", "BF")
-
 ### Function evaluates full-DTR probabilities; not reactive
 fullDTRprob <- function(cell1, resp, cell2){
   pDTR <- cell1 * resp + cell2 * (1-resp)
@@ -31,7 +43,19 @@ fullDTRprob <- function(cell1, resp, cell2){
 ### Create operator to sequentially evaluate need() statements
 `%then%` <- shiny:::`%OR%`
 
-### BEGIN SERVER OPERATIONS ###
+##### NON-REACTIVE INITIALIZATIONS ######
+
+force.package(shiny)
+force.package(pwr)
+force.package(shinyBS)
+
+### Create vectors of all embedded DTRs for each design
+designA.DTRs <- c("ArCnrE", "ArCnrF", "ArDnrE", "ArDnrF", "BrGnrI", "BrGnrJ", "BrHnrI", "BrHnrJ")
+designB.DTRs <- c("ArCnrD", "ArCnrE", "BrFnrG", "BrFnrH")
+designC.DTRs <- c("ArCnrD", "ArCnrE", "BrFnrG")
+designD.DTRs <- c("AC", "AD", "BE", "BF")
+
+### Start server operation
 
 shinyServer(function(input,output,session){
   
@@ -258,8 +282,7 @@ shinyServer(function(input,output,session){
       updateNumericInput(session,"DTRsuccA1disable",value=generateProbsA()[1])
       updateNumericInput(session,"DTRsuccA2disable",value=generateProbsA()[2])
     }
-  },priority=2)
-  
+  },priority=2) 
   
   ### Compute full DTR probabilities or effect size when providing cell-specific probabilities or mean/SD 
   
