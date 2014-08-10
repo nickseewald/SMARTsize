@@ -15,6 +15,21 @@ disable <- function(x) {
   x
 }
 
+### Force package installation/loading on running device
+force.package<-function(package){
+  #adapted from 
+  #http://r.789695.n4.nabble.com/Install-package-automatically-if-not-there-tp2267532p2267659.html
+  package<-as.character(substitute(package))
+  if (package %in% .packages(all.available=TRUE)){
+    eval(parse(text=paste("require(",package,")", sep="")))
+  }
+  else {
+    eval(parse(text=paste("install.packages('",package,"')",sep="")))
+    eval(parse(text=paste("require(",package,")", sep="")))
+  }
+}
+force.package(shinyBS)
+
 shinyUI(
   navbarPage("SMART Sample Size Calculator", id="SMARTsize",
              
