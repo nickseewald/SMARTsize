@@ -35,7 +35,8 @@ shinyUI(
                       sidebarPanel(
                         h3("Purpose"),
                         p("The purpose of this applet is to provide the minimum required sample size or power of a SMART (Sequential Multiple 
-                          Assignment Randomized Trial) with the goal of comparing two embedded adaptive interventions."),
+                          Assignment Randomized Trial) with the goal of comparing two embedded adaptive interventions with continuous or binary outcomes.
+"),
                         
                         h3("Notation and Assumptions"),
                         tags$ul(
@@ -94,10 +95,9 @@ shinyUI(
                         h2("Background"),
                         
                         p("An",strong("adaptive intervention"), "(AI, also known as a dynamic treatment regime, treatment algorithm, adaptive treatment strategy) leads to a sequence of treatments
-                          or interventions tailored to an individual. For example, an AI in the treatment of autism may be ''First treat the child using joint attention symbolic play engagement and 
-                          regulation therapy along with enhanced milieu training for 12 weeks with two one-hour sessions per week. If the child has 25% or more improvement on 7 or more of 14 measures 
-                          of communication then continue the same treatment for an additional 12 weeks. If the child has not improved by this measure, then continue the same treatment with the addition
-                          of a speech generating device.''"),
+                          or interventions tailored to an individual. For example, an AI in the treatment of autism may be '''First treat the child using joint attention symbolic play engagement and 
+                          regulation therapy along with enhanced milieu training for 12 weeks. If the child responds (25% or more improvement on 7 or more of 14 measures of communication) then continue
+                          the same treatment for an additional 12 weeks. If the child does not respond at the end of 12 weeks, then continue the same treatment with the addition of a speech generating device.''"),
                         
                         p("AIs contain three pieces: critical decisions which include treatment options, tailoring variables to decide how to adapt the treatments, and decision rules which input
                           previous treatments and tailoring variables and output recommended subsequent treatment. The example AI in the treatment of autism includes decisions as to the best initial
@@ -109,9 +109,9 @@ shinyUI(
                           engage/non-engage). Also note that in Designs B and C, non-responders are re-randomized, while responders are not. It is possible to switch this notation so that only responders
                           would be randomized and non-responders would not. If this is the case, please provide the ''non-response probability'' when prompted for ''response probability''."),
                         
-                        p("A ",strong("Sequential Multiple Assignment Randomized Trial (SMART)"), "is used to develop effective AIs. A SMART is an experimental design in which individuals may be randomized
-                          multiple times and follow specific intervention sequences. We depict the four most common SMART designs above. Note that in these depictions, we denote each treatment at each stage
-                          by a unique letter. It is not, however, necessary for all treatments to be unique. For example, in Design A, treatments C and G may be the same and D and H may be the same."),
+                        p("A ",strong("Sequential Multiple Assignment Randomized Trial (SMART)"), "is used to develop effective AIs. A SMART is an experimental design in which some or all individuals are randomized
+                          multiple times to follow specific intervention sequences. We depict the four most common SMART designs above. In the depictions above, each treatment at each stage is assigned a unique letter.
+                          It is not, however, necessary for all treatments to be unique. For example, in Design A, treatments C and G may be the same and/or D and H may be the same."),
                         
                         p("The primary aim of a SMART may be the comparison of main effects (first or second-stage treatments), comparison of AIs, or further tailoring of AIs. This applet is designed with
                           the primary aim of comparing AIs. Specifically, this applet calculates the minimum required sample size or power for a SMART where the primary interest is in comparing two AIs 
@@ -155,6 +155,7 @@ shinyUI(
                                                              </I>, 1, 447-464.
                                                         <li> Chakraborty, B. (2011), &quot;Dynamic Treatment Regimes for Managing Chronic Health Conditions: A Statistical Perspective,&quot;
                                                              <I> Am J Public Health </I>, 101, 40-45.
+                                                        <li> Cohen, J. (2013), <I> Statistical Power Analysis for the Behavioral Sciences,</I> 2nd ed., Hillsdale, NJ: Lawrence Erlbaum Associates, Inc.
                                                         <li> Dawson, R. and Lavori, P. W. (2004), &quot;Placebo-free designs for evaluating new mental health treatments: the use of adaptive treatment
                                                              strategies,&quot;<I> Statistics in medicine </I>, 23, 3249-3262.
                                                         <li> Dawson, R. and Lavori, P. W. (2010), &quot;Sample size calculations for evaluating treatment policies in multi-stage designs,&quot;<I>
@@ -338,12 +339,9 @@ shinyUI(
                                                   )
                                  ),
                                  conditionalPanel(condition="input.selectOutcomeA==2",
-                                                  uiOutput("continuousProbA"),
-                                                  conditionalPanel(condition="input.meanSdCheckA",
-                                                                   fluidRow(column(11,offset=1,
-                                                                                   uiOutput("meanEstA"))
-                                                                   )
-                                                  )
+                                                  p("Concerning the primary outcome, please provide the", strong("standardized effect size"), "between the
+                                                    AIs of interest."),
+                                                  uiOutput("continuousProbA")
                                  ),
                                  
                                  ##### A INPUT OPTIONS #####
@@ -353,14 +351,11 @@ shinyUI(
                                  
                                  conditionalPanel(condition="input.firstDTRcompareA != 0 && input.secondDTRcompareA != 0",
                                                   br(),
-                                                  helpText("If you prefer to provide different information, check the appropriate box below."),
                                                   conditionalPanel(condition="input.selectOutcomeA==1",
+                                                                   helpText("If you prefer to provide different information, check the appropriate box below."),
                                                                    checkboxInput("cellOrConditionalA",label="Cell-Specific Success Probabilities",value=FALSE),
                                                                    checkboxInput("targetDiffCheckA",label="Target Difference in Success Probabilities",value=FALSE),
                                                                    checkboxInput("targetOddsCheckA",label="Target Odds Ratio",value=FALSE)
-                                                  ),
-                                                  conditionalPanel(condition="input.selectOutcomeA==2",
-                                                                   checkboxInput("meanSdCheckA",label="Check this box to input a difference in means and standard deviation.",value=FALSE)
                                                   )
                                  )
                           )
@@ -412,11 +407,14 @@ shinyUI(
                       ),
                       
                       ##### A TOOLTIPS #####
-                      bsTooltip(id="respA",title="Input must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus")
+                      ### Add bootstrap-style tooltips to inputs coaching proper formatting
+                      ### Below are tooltips for inputs rendered statically in ui.R
+                      ### For inputs rendered dynamically, see the appropriate renderUI() in server.R
                       
-#                       bsTooltip(id="DTRsuccA2",title="Input must be in decimal form with a leading zero, up to two places.",placement="right",trigger="click")
-#                       bsTooltip(id="targetDiffA",title="hey!")
-                      
+                      bsTooltip(id="respA",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"),      
+                      bsTooltip(id="alphaA",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"),
+                      bsTooltip(id="inputPowerA",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"),
+                      bsTooltip(id="inputSampleSizeA",title="Input must be an integer greater than zero.",placement="right",trigger="focus")                    
                       
              ),
              
@@ -530,12 +528,9 @@ shinyUI(
                                                   )
                                  ),
                                  conditionalPanel(condition="input.selectOutcomeB==2",
-                                                  uiOutput("continuousProbB"),
-                                                  conditionalPanel(condition="input.meanSdCheckB",
-                                                                   fluidRow(column(1),
-                                                                            column(11,uiOutput("meanEstB"))
-                                                                   )
-                                                  )
+                                                  p("Concerning the primary outcome, please provide the", strong("standardized effect size"), "between the
+                                                    AIs of interest."),
+                                                  uiOutput("continuousProbB")
                                  ),
                                  
                                  ##### B INPUT OPTIONS #####
@@ -545,14 +540,11 @@ shinyUI(
                                  
                                  conditionalPanel(condition="input.firstDTRcompareB != 0 && input.secondDTRcompareB != 0",
                                                   br(),
-                                                  helpText("If you prefer to provide different information, check the appropriate box below."),
                                                   conditionalPanel(condition="input.selectOutcomeB==1",
+                                                                   helpText("If you prefer to provide different information, check the appropriate box below."),
                                                                    checkboxInput("cellOrConditionalB",label="Cell-Specific Success Probabilities",value=FALSE),
                                                                    checkboxInput("targetDiffCheckB",label="Target Difference in Success Probabilities",value=FALSE),
                                                                    checkboxInput("targetOddsCheckB",label="Target Odds Ratio",value=FALSE)
-                                                  ),
-                                                  conditionalPanel(condition="input.selectOutcomeB==2",
-                                                                   checkboxInput("meanSdCheckB",label="Check this box to input a difference in means and standard deviation.",value=FALSE)
                                                   )
                                  )
                           )
@@ -599,7 +591,17 @@ shinyUI(
                           conditionalPanel(condition="input.selectOutcomeB==2 & input.selectResultsB=='power'",
                                            htmlOutput("continuousPowerB")
                           )
-                    )
+                    ),
+                    
+                    ##### B TOOLTIPS #####
+                    ### Add bootstrap-style tooltips to inputs coaching proper formatting
+                    ### Below are tooltips for inputs rendered statically in ui.R
+                    ### For inputs rendered dynamically, see the appropriate renderUI() in server.R
+                    
+                    bsTooltip(id="respB",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"),      
+                    bsTooltip(id="alphaB",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"),
+                    bsTooltip(id="inputPowerB",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"),
+                    bsTooltip(id="inputSampleSizeB",title="Input must be an integer greater than zero.",placement="right",trigger="focus")                   
              ),
              
              ########### DESIGN C ##########
@@ -710,12 +712,9 @@ shinyUI(
                                                   )
                                  ),
                                  conditionalPanel(condition="input.selectOutcomeC==2",
-                                                  uiOutput("continuousProbC"),
-                                                  conditionalPanel(condition="input.meanSdCheckC",
-                                                                   fluidRow(column(1),
-                                                                            column(11,uiOutput("meanEstC"))
-                                                                   )
-                                                  )
+                                                  p("Concerning the primary outcome, please provide the", strong("standardized effect size"), "between the
+                                                    AIs of interest."),
+                                                  uiOutput("continuousProbC")
                                  ),
                                  
                                  ##### C INPUT OPTIONS #####
@@ -725,14 +724,11 @@ shinyUI(
                                  
                                  conditionalPanel(condition="input.firstDTRcompareC != 0 && input.secondDTRcompareC != 0",
                                                   br(),
-                                                  helpText("If you prefer to provide different information, check the appropriate box below."),
                                                   conditionalPanel(condition="input.selectOutcomeC==1",
+                                                                   helpText("If you prefer to provide different information, check the appropriate box below."),
                                                                    checkboxInput("cellOrConditionalC",label="Cell-Specific Probabilities",value=FALSE),
                                                                    checkboxInput("targetDiffCheckC",label="Target Difference in Success Probabilities",value=FALSE),
                                                                    checkboxInput("targetOddsCheckC",label="Target Odds Ratio",value=FALSE)
-                                                  ),
-                                                  conditionalPanel(condition="input.selectOutcomeC==2",
-                                                                   checkboxInput("meanSdCheckC",label="Check this box to input a difference in means and standard deviation.",value=FALSE)
                                                   )
                                  )
                           )
@@ -780,7 +776,17 @@ shinyUI(
                         conditionalPanel(condition="input.selectOutcomeC==2 & input.selectResultsC=='power'",
                                          htmlOutput("continuousPowerC")
                         )
-                      )
+                      ),
+                      
+                      ##### C TOOLTIPS #####
+                      ### Add bootstrap-style tooltips to inputs coaching proper formatting
+                      ### Below are tooltips for inputs rendered statically in ui.R
+                      ### For inputs rendered dynamically, see the appropriate renderUI() in server.R
+                      
+                      bsTooltip(id="respC",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"),      
+                      bsTooltip(id="alphaC",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"),
+                      bsTooltip(id="inputPowerC",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"),
+                      bsTooltip(id="inputSampleSizeC",title="Input must be an integer greater than zero.",placement="right",trigger="focus")
              ),
              
              ########### DESIGN D ##########
@@ -801,18 +807,16 @@ shinyUI(
                                              If interest is in power, specify the sample size of the study. This must be input as an integer greater than zero."),
                                            tags$li("For binary outcomes:",
                                                    tags$ul(
-                                                     tags$li("The default inputs are the probabilities of success for each of the selected AIs. These are the overall probabilities of success for those
-                                                       participants following each of the selected embedded AIs. For example, the probability of success for ArCnrE."),
-                                                     tags$li("Alternatively, if AI-specific probabilities cannot be specified, a target difference in probabilities (must be between 0 and 1)
+                                                     tags$li("The default inputs are the probabilities of success for each of the selected intervention paths. These are the overall probabilities of success for those
+                                                       participants following each of the selected embedded intervention paths. For example, the probability of success for AE."),
+                                                     tags$li("Alternatively, if intervention path-specific probabilities cannot be specified, a target difference in probabilities (must be between 0 and 1)
                                                        or a target odds-ratio (must be positive and not equal to 1), may be selected and provided. With both of these selections, we assume one
-                                                       of the AIs has probability of success equal to 0.5 to yield conservative results.")
+                                                       of the intervention paths has probability of success equal to 0.5 to yield conservative results.")
                                                    )),
                                            tags$li("For continuous outcomes:",
                                                    tags$ul(
-                                                     tags$li("The default input is the standardized effect size between the selected AIs. This is defined as the difference between the two selected AIs divided
-                                                       by the standard error of this difference. This may range between 0 and 10."),
-                                                     tags$li("Alternatively, the pieces of the effect size may be provided, including the mean outcomes for each of the selected AIs and the standard error
-                                                       of the difference between these means.")
+                                                     tags$li("The default input is the standardized effect size between the selected intervention paths. This is defined as the difference in the two means under the
+                                                       selected intervention paths divided by the standard error of this difference. This may range between 0 and 10.")
                                                    ))
                                    ),
                                    h5("Input Formatting Rules:"),
@@ -821,7 +825,7 @@ shinyUI(
                                                    unpredictable behavior."),
                                    tags$hr(),
                                    h4("Example:"),
-                                   p("We wish to find the sample size for a trial with a binary outcome where the probability of response to first stage interventions is 0.40. We estimate the overall
+                                   p("We wish to find the sample size for a trial with a binary outcome where the probability of response to first stage intervention is 0.40. We estimate the overall
                                      probabilities of success in the two intervention paths of interest, AC and BF to be 0.75 and 0.60, respectively. Given a two-sided 5% type-I error, we require a 
                                      sample size of 608 to make this comparison with 80% power.")
                       ),
@@ -869,12 +873,9 @@ shinyUI(
                                                   uiOutput("binaryDTR2probD")
                                  ),
                                  conditionalPanel(condition="input.selectOutcomeD==2",
-                                                  uiOutput("continuousProbD"),
-                                                  conditionalPanel(condition="input.meanSdCheckD",
-                                                                   fluidRow(column(1),
-                                                                            column(11,uiOutput("meanEstD"))
-                                                                   )
-                                                  )
+                                                  p("Concerning the primary outcome, please provide the", strong("standardized effect size"), "between the
+                                                    intervention paths of interest."),
+                                                  uiOutput("continuousProbD")
                                  ),
                                  
                                  ##### D INPUT OPTIONS #####
@@ -884,13 +885,10 @@ shinyUI(
                                  
                                  conditionalPanel(condition="input.firstDTRcompareD != 0 && input.secondDTRcompareD != 0",
                                                   br(),
-                                                  helpText("If you prefer to provide different information, check the appropriate box below."),
                                                   conditionalPanel(condition="input.selectOutcomeD==1",
+                                                                   helpText("If you prefer to provide different information, check the appropriate box below."),
                                                                    checkboxInput("targetDiffCheckD",label="Check this box to input a target difference in probabilities.",value=FALSE),
                                                                    checkboxInput("targetOddsCheckD",label="Check this box to input a target odds-ratio instead of a target difference.",value=FALSE)
-                                                  ),
-                                                  conditionalPanel(condition="input.selectOutcomeD==2",
-                                                                   checkboxInput("meanSdCheckD",label="Check this box to input a difference in means and standard deviation.",value=FALSE)
                                                   )
                                  )
                           )
@@ -938,8 +936,19 @@ shinyUI(
                         conditionalPanel(condition="input.selectOutcomeD==2 & input.selectResultsD=='power'",
                                          htmlOutput("continuousPowerD")
                         )
-                      )
+                      ),
+                      
+                      ##### D TOOLTIPS #####
+                      ### Add bootstrap-style tooltips to inputs coaching proper formatting
+                      ### Below are tooltips for inputs rendered statically in ui.R
+                      ### For inputs rendered dynamically, see the appropriate renderUI() in server.R
+                      
+                      bsTooltip(id="respD",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"),      
+                      bsTooltip(id="alphaD",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"),
+                      bsTooltip(id="inputPowerD",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"),
+                      bsTooltip(id="inputSampleSizeD",title="Input must be an integer greater than zero.",placement="right",trigger="focus")
              ),
 collapsable=TRUE,
-footer=HTML("<p> Kidwell, Seewald, Almirall (in preparation). </p>")
+footer=HTML("<p> Kidwell, Seewald, Almirall (in preparation). </p>
+            <div style='color:grey;font-size:8px'>  SMARTsize Application Version 0.7.3, last updated 20 August 2014 </div>")
 ))
