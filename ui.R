@@ -263,10 +263,9 @@ shinyUI(
                                      )),
                                      tags$li("For continuous outcomes:",
                                              tags$ul(
-                                               tags$li("The default input is the standardized effect size between the selected AIs. This is defined as the difference between the two selected AIs divided
-                                                       by the standard error of this difference. This may range between 0 and 10."),
-                                               tags$li("Alternatively, the pieces of the effect size may be provided, including the mean outcomes for each of the selected AIs and the standard error
-                                                       of the difference between these means.")
+                                               tags$li("Specify the standardized effect size between the selected AIs. We use Cohen's definition for standardized effect size such that for the two selected
+                                                       AIs it is the difference between the means of the two AIs divided by the square root of the pooled variance (square root of the average of the variances
+                                                       of the two groups). This may range between 0 and 10.")
                                      ))
                                    ),
                                    h5("Input Formatting Rules:"),
@@ -451,10 +450,9 @@ shinyUI(
                                              )),
                                      tags$li("For continuous outcomes:",
                                              tags$ul(
-                                               tags$li("The default input is the standardized effect size between the selected AIs. This is defined as the difference between the two selected AIs divided
-                                                       by the standard error of this difference. This may range between 0 and 10."),
-                                               tags$li("Alternatively, the pieces of the effect size may be provided, including the mean outcomes for each of the selected AIs and the standard error
-                                                       of the difference between these means.")
+                                               tags$li("Specify the standardized effect size between the selected AIs. We use Cohen's definition for standardized effect size
+                                                       such that for the two selected AIs it is the difference between the means of the two AIs divided by the square root of the pooled variance
+                                                       (square root of the average of the variances of the two groups). This may range between 0 and 10.")
                                              ))
                                       ),
                                    h5("Input Formatting Rules:"),
@@ -637,10 +635,9 @@ shinyUI(
                                              )),
                                      tags$li("For continuous outcomes:",
                                              tags$ul(
-                                               tags$li("The default input is the standardized effect size between the selected AIs. This is defined as the difference between the two selected AIs divided
-                                                       by the standard error of this difference. This may range between 0 and 10."),
-                                               tags$li("Alternatively, the pieces of the effect size may be provided, including the mean outcomes for each of the selected AIs and the standard error
-                                                       of the difference between these means.")
+                                               tags$li("Specify the standardized effect size between the selected AIs. We use Cohen's definition for standardized effect size such that for the two selected AIs
+                                                       it is the difference between the means of the two AIs divided by the square root of the pooled variance (square root of the average of the variances of
+                                                       the two groups). This may range between 0 and 10.")
                                              ))
                                      ),
                                    h5("Input Formatting Rules:"),
@@ -815,8 +812,9 @@ shinyUI(
                                                    )),
                                            tags$li("For continuous outcomes:",
                                                    tags$ul(
-                                                     tags$li("The default input is the standardized effect size between the selected intervention paths. This is defined as the difference in the two means under the
-                                                       selected intervention paths divided by the standard error of this difference. This may range between 0 and 10.")
+                                                     tags$li("Specify the standardized effect size between the selected AIs. We use Cohen's definition for standardized effect size such that
+                                                             for the two selected AIs it is the difference between the means of the two AIs divided by the square root of the pooled variance (square root of the 
+                                                             average of the variances of the two groups). This may range between 0 and 10.")
                                                    ))
                                    ),
                                    h5("Input Formatting Rules:"),
@@ -950,5 +948,5 @@ shinyUI(
              ),
 collapsable=TRUE,
 footer=HTML("<p> Kidwell, Seewald, Almirall (in preparation). </p>
-            <div style='color:grey;font-size:8px'>  SMARTsize Application Version 0.7.3, last updated 20 August 2014 </div>")
+            <div style='color:grey;font-size:8px'>  SMARTsize Application Version 0.7.3, last updated 22 August 2014 </div>")
 ))
