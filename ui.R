@@ -1,4 +1,12 @@
+##### UI.R FOR SMART SAMPLE SIZE CALCULATOR #####
+### NICK SEEWALD, 2014
+### UNIVERSITY OF MICHIGAN
+### DEPARTMENT OF BIOSTATISTICS
+
 library(shiny)
+library(pwr)
+library(shinyBS)
+options(encoding='UTF-8')
 
 ### Function creates disabled (greyed-out) inputs
 ### Taken from https://groups.google.com/d/msg/shiny-discuss/uSetp4TtW-s/Jktu3fS60RAJ
@@ -15,21 +23,6 @@ disable <- function(x) {
   x
 }
 
-### Force package installation/loading on running device
-force.package<-function(package){
-  #adapted from 
-  #http://r.789695.n4.nabble.com/Install-package-automatically-if-not-there-tp2267532p2267659.html
-  package<-as.character(substitute(package))
-  if (package %in% .packages(all.available=TRUE)){
-    eval(parse(text=paste("require(",package,")", sep="")))
-  }
-  else {
-    eval(parse(text=paste("install.packages('",package,"')",sep="")))
-    eval(parse(text=paste("require(",package,")", sep="")))
-  }
-}
-force.package(shinyBS)
-
 shinyUI(
   navbarPage("SMART Sample Size Calculator", id="SMARTsize",
              
@@ -37,31 +30,40 @@ shinyUI(
              
              tabPanel("Home",
                       
-                      tags$style(type='text/css',"input[type='number'] {width:60px}"),
+                      tags$style(type='text/css',"input[type='number'] {width:60px}"), #set width of numericInputs
                       
-                      sidebarPanel(h3("Methods"),
-                                   p("For binary outcomes, sample size is computed according to the methods presented in Kidwell, et al (in preparation). "),
-                                   p("For continuous outcomes, sample size is computed according to the methods in Oetting, et al (2007)."),
-                                   p("The application is run on", tags$a(href="http://www.r-project.org/", "R"), "version 3.1.0, and written using",
-                                     tags$a(href="http://shiny.rstudio.com/","Shiny,"), "an open-source web application framework for R produced by",
-                                     tags$a(href="http://www.rstudio.com", "RStudio.")),
-                                   br(),
-                                   h4("Notation and Assumptions"),
-                                   tags$ul(
-                                     tags$li(img(src="images/randomize.gif",width=25),"refers to randomization. We assume equal probability of randomization to two 
-                                             intervention options, R=0.5."),
-                                     tags$li("Adaptive interventions (AIs) are denoted by the combination of the letters of the interventions where the intervention
-                                             following ‘r’ indicates the option for those who respond and the intervention following ‘nr’ indicates the option for those
-                                             who do not respond. For example, ArCnrE denotes the AI which reads as ''First receive A and if there is response, receive C,
-                                             if there is no response, receive E.''")
-                                     )
+                      sidebarPanel(
+                        h3("Purpose"),
+                        p("The purpose of this applet is to provide the minimum required sample size or power of a SMART (Sequential Multiple 
+                          Assignment Randomized Trial) with the goal of comparing two embedded adaptive interventions with continuous or binary outcomes.
+"),
+                        
+                        h3("Notation and Assumptions"),
+                        tags$ul(
+                                tags$li(img(src="images/randomize.gif",width=25),"refers to randomization. We assume equal probability of randomization to two 
+                                        intervention options, R=0.5."),
+                                tags$li("Adaptive interventions (AIs) are denoted by the combination of the letters of the interventions where the intervention
+                                        following 'r' indicates the the option for those who respond, and the intervention following 'nr' indicates the option for
+                                        those who do not respond. For example, ArCnrE denotes the AI which reads as ''First receive A and if there is a response,
+                                        receive C; if there is no response, receive E.''"),
+                                tags$li("For more details on the assumptions behind the sample size calculations, please refer to Kidwell et al. (in preparation)
+                                        and Oetting et al. (2007).")
+                        ),
+                        
+                        h3("Methods"),
+                        p("For binary outcomes, sample size is computed according to the methods presented in Kidwell et al. (in preparation). "),
+                        p("For continuous outcomes, sample size is computed according to the methods in Oetting et al. (2007)."),
+                        p("The application is run on", tags$a(href="http://www.r-project.org/", "R"), "version 3.1.0, and written using",
+                          tags$a(href="http://shiny.rstudio.com/","Shiny,"), "an open-source web application framework for R produced by",
+                          tags$a(href="http://www.rstudio.com", "RStudio."))
+                        
                       ),
                       
                       mainPanel(
                         h1("Sample Size Calculator for SMARTs with Binary or Continuous Outcomes"),
                         br(),
-                        p("Choose a design by clicking the cooresponding tab at the top of the window, or the button below the corresponding diagram. 
-                          For more information about SMARTs, see below the diagrams. Notation is established in the sidebar."),
+                        p("Choose the SMART design of interest by clicking the corresponding tab at the top of the window, or the button below the corresponding diagram. 
+                          Notation is established in the sidebar. See below for more background on SMARTs."),
                         br(),
                         fluidRow(
                           column(6,
@@ -92,38 +94,142 @@ shinyUI(
                         
                         h2("Background"),
                         
-                        p("An",strong("adaptive intervention"), "AI, also known as a dynamic treatment regime, treatment algorithm, adaptive treatment strategy) is a sequence of treatments
-                          or interventions tailored to an individual. For example, an AI in the treatment of breast cancer may be ''Following surgery, treat with chemotherapy for six cycles.
-                          If there is no evidence of cancer and the lymph nodes are negative, treat with an aromatase inhibitor for five years. If there is evidence of cancer following chemotherapy,
-                          continue chemotherapy for another six cycles. If the patient experiences a grade III or higher toxicity on the prescribed chemotherapy, switch to another chemotherapy.'
-                          Note that this AI includes a decision point after six cycles of chemotherapy, at which point, depending on the patient's response thus far, a secondary treatment is recommended.
-                          This secondary treatment is different for responders and non-responders."),
+                        p("An",strong("adaptive intervention"), "(AI, also known as a dynamic treatment regime, treatment algorithm, adaptive treatment strategy) leads to a sequence of treatments
+                          or interventions tailored to an individual. For example, an AI in the treatment of autism may be '''First treat the child using joint attention symbolic play engagement and 
+                          regulation therapy along with enhanced milieu training for 12 weeks. If the child responds (25% or more improvement on 7 or more of 14 measures of communication) then continue
+                          the same treatment for an additional 12 weeks. If the child does not respond at the end of 12 weeks, then continue the same treatment with the addition of a speech generating device.''"),
                         
-                        p("The notion of a 'tailoring variable' which we evaluate at each decision point is critical for an adaptive intervention. In fact, this variable is what makes the 
-                          intervention",em("adaptive."), "Tailoring variables let us construct decision rules for assigning subsequent treatments, so they should be identified based solely
-                          on practical, ethical, or scientific reasoning, and produce clear, specific, and objective decision rules. In the above example, and throughout this application, 
-                          we use 'response to first-stage treatment' as the variable by which we determine the subsequent treatment an individual will receive. For more information about
-                          tailoring variables, see Nahum-Shani, et al. (2012). Depending on your area of research, 'response' may be classified differently than in the diagrams above. 
-                          For example, in Design B, if your trial stipulates that individuals who respond to first stage treatment are rerandomized and non-responders are not, the application
-                          can accommodate your needs.To make this change, simply provide 'non-response probability' when prompted for 'response probability'. "),
+                        p("AIs contain three pieces: critical decisions which include treatment options, tailoring variables to decide how to adapt the treatments, and decision rules which input
+                          previous treatments and tailoring variables and output recommended subsequent treatment. The example AI in the treatment of autism includes decisions as to the best initial
+                          and second-line therapy for children, with treatment options including types of therapy and a speech generating device, the tailoring variable includes response defined as 
+                          meeting a threshold on various communication tests, and, depending on response, subsequent treatment differs."),
                         
-                        p("A ",strong("Sequential Multiple Assignment Randomized Trial (SMART)"), " develops AIs. A SMART is an experimental design in which individuals are randomized multiple
-                          times and follow specific intervention sequences. There are several advantages to using a SMART. First, it allows investigators to detect 'delayed effects' in treatment;
-                          that is, the long-term effects of an intervention after subsequent treatment has been administered. These delayed effects may be synergistic or antagonistic, and cannot
-                          be detected by separate trials for each stage. Additionally, a SMART may decrease the likelihood of participant drop-out (due to the promise of subsequent treatment 
-                          regardless of response), and, because of this, may reduce selection bias found in a standard non-responder trial. Additionally, a SMART can address stage-specific research
-                          questions, similar to standard trials, but with the extra advantage of developing and comparing embedded AIs which may more closely mimic clinical practice."),
+                        p("A",strong("tailoring variable"), "is a personal characteristic (fixed or time-varying) that can be used to personalize treatment to an individual. For more information about tailoring
+                          variables, see Nahum-Shani et al. (2012). In the SMART designs above, we assume the tailoring variable is response, but your definition may vary (for example, adherent/non-adherent,
+                          engage/non-engage). Also note that in Designs B and C, non-responders are re-randomized, while responders are not. It is possible to switch this notation so that only responders
+                          would be randomized and non-responders would not. If this is the case, please provide the ''non-response probability'' when prompted for ''response probability''."),
+                        
+                        p("A ",strong("Sequential Multiple Assignment Randomized Trial (SMART)"), "is used to develop effective AIs. A SMART is an experimental design in which some or all individuals are randomized
+                          multiple times to follow specific intervention sequences. We depict the four most common SMART designs above. In the depictions above, each treatment at each stage is assigned a unique letter.
+                          It is not, however, necessary for all treatments to be unique. For example, in Design A, treatments C and G may be the same and/or D and H may be the same."),
+                        
+                        p("The primary aim of a SMART may be the comparison of main effects (first or second-stage treatments), comparison of AIs, or further tailoring of AIs. This applet is designed with
+                          the primary aim of comparing AIs. Specifically, this applet calculates the minimum required sample size or power for a SMART where the primary interest is in comparing two AIs 
+                          where the primary outcome of the trial is continuous or binary. If instead interest is in computing the sample size for a SMART with a survival outcome, please see",
+                          a(href="http://methodologymedia.psu.edu/logranktest/samplesize", "http://methodologymedia.psu.edu/logranktest/samplesize"),"or",
+                          a(href="http://www.pitt.edu/~wahed/Research/Resources/", "http://www.pitt.edu/~wahed/Research/Resources/"),". For continuous outcomes where the goal is to identify the best AI,
+                          please see", a(href="http://methodologymedia.psu.edu/smart/samplesize", "http://methodologymedia.psu.edu/smart/samplesize"), ". For pilot studies, please see",
+                          a(href="http://methodology.psu.edu/downloads/rcodesmart", "http://methodology.psu.edu/downloads/rcodesmart"),"."),
+                        
+                        p("For more information on SMARTs, please refer to additional selected reading references."),
+                        
+                        ##### REFERENCES #####
                         
                         tags$hr(),
                         h4("References"),
                         tags$ol(
-                          tags$li("Oetting, A., Levy, J., Weiss, R. and Murphy, S. (2007),",
-                                  em("''Statistical methodology for a SMART design in the development of adaptive treatment strategies,'' in Causality and Psychopathology: Finding the Determinants of Disorders and their Cures,"),
-                                  "Arlington: American Psychiatric Publishing, Inc."),
+                          tags$li(HTML("Oetting, A., Levy, J., Weiss, R. and Murphy, S. (2007)<I>, &quot;Statistical methodology for a SMART design in the development of adaptive treatment strategies
+                                       ,&quot;</I><I> in <I>Causality and Psychopathology: Finding the Determinants of Disorders and their Cures (American Psychopathological Association)</I></I>, 
+                                       Arlington, VA: American Psychiatric Publishing, Inc., pp. 179-205.")),
                           tags$li("Nahum-Shani, I., Qian, M., Almirall, D., Pelham, W. E., Gnagy, B., Fabiano, G. A., Waxmonsky, J. G., Yu, J. and Murphy, S. A. (2012), 
                                   ''Experimental design and primary data analysis methods for comparing adaptive interventions.''",em("Psychological methods,"), "17, 457.")
+                        ),
+                        
+                        bsCollapse(multiple = FALSE, id = "moreRefs",
+                                   bsCollapsePanel("Additional Selected Readings",
+                                                   HTML("<ol>
+                                                        <li> Almirall, D., Compton, S. N., Gunlicks-Stoessel, M., Duan, N. and Murphy, S. A. (2012), &quot;Designing a pilot sequential multiple
+                                                        assignment randomized trial for developing an adaptive treatment strategy,&quot;<I> Statistics in medicine </I>, 31, 1887-1902.
+                                                        <li> Auyeung, S. F., Long, Q., Royster, E. B., Murthy, S., McNutt, M. D., Lawson, D., Miller, A., Manatunga, A. and Musselman, D. L. (2009),
+                                                        &quot;Sequential multiple-assignment randomized trial design of neurobehavioral treatment for patients with metastatic malignant melanoma 
+                                                        undergoing high-dose interferon-alpha therapy,&quot;<I> Clinical trials (London, England) </I>, 6, 480-490. 
+                                                        <li> Bembom, O. and van der Laan, Mark J. (2008), &quot;Analyzing sequentially randomized trials based on causal effect models for realistic
+                                                        individualized treatment rules,&quot;<I> Statistics in medicine </I>, 27, 3689-3716.
+                                                        <li> Bembom, O. and van der Laan, M. J. (2007), &quot;Statistical methods for analyzing sequentially randomized trials,&quot;<I> Journal of
+                                                        the National Cancer Institute </I>, 99, 1577-1582. 
+                                                        <li> Buyze, J. and Goetghebeur, E. (2013), &quot;Evaluating dynamic treatment strategies: does it have to be more costly?&quot;<I> 
+                                                        Pharmaceutical statistics </I>, 12, 35-42.
+                                                        <li> Buyze, J., Van Rompaye, B. and Goetghebeur, E. (2010), &quot;Designing a sequentially randomized study with 
+                                                        adherence enhancing interventions for diabetes patients,&quot;<I> Statistics in medicine </I>, 29, 1114-1126.
+                                                        <li> Chakraborty, B. and Murphy, S. A. (2014), &quot;Dynamic treatment regimes,&quot;<I> Annual Review of Statistics and its Application
+                                                             </I>, 1, 447-464.
+                                                        <li> Chakraborty, B. (2011), &quot;Dynamic Treatment Regimes for Managing Chronic Health Conditions: A Statistical Perspective,&quot;
+                                                             <I> Am J Public Health </I>, 101, 40-45.
+                                                        <li> Cohen, J. (2013), <I> Statistical Power Analysis for the Behavioral Sciences,</I> 2nd ed., Hillsdale, NJ: Lawrence Erlbaum Associates, Inc.
+                                                        <li> Dawson, R. and Lavori, P. W. (2004), &quot;Placebo-free designs for evaluating new mental health treatments: the use of adaptive treatment
+                                                             strategies,&quot;<I> Statistics in medicine </I>, 23, 3249-3262.
+                                                        <li> Dawson, R. and Lavori, P. W. (2010), &quot;Sample size calculations for evaluating treatment policies in multi-stage designs,&quot;<I>
+                                                        Clinical trials (London, England) </I>, 7, 643-652.
+                                                        <li> Feng, W. and Wahed, A. S. (2009), &quot;Sample size for two-stage studies with maintenance therapy,&quot;<I> Statistics in medicine </I>,
+                                                        28, 2028-2041.
+                                                        <li> Feng, W. and Wahed, A. S. (2008), &quot;Supremum weighted log-rank test and sample size for comparing two-stage adaptive treatment strategies,
+                                                        &quot;<I> Biometrika </I>, 95, 695-707.
+                                                        <li> Goldberg, Y. and Kosorok, M. R. (2012), &quot;Q-Learning with Censored Data,&quot;<I> Annals of statistics </I>, 40, 529-560.
+                                                        <li> Guo, X. and Tsiatis, A. (2005), &quot;A weighted risk set estimator for survival distributions in two-stage randomization designs with censored
+                                                        survival data,&quot;<I> The International Journal of Biostatistics </I>, 1, 1-15.
+                                                        <li> Hern&#225;n, M. A., Lanoy, E., Costagliola, D. and Robins, J. M. (2006), &quot;Comparison of dynamic treatment regimes via inverse probability 
+                                                        weighting,&quot;<I> Basic &amp; clinical pharmacology &amp; toxicology </I>, 98, 237-242.
+                                                        <li> Kidwell, K. M. and Wahed, A. S. (2013), &quot;Weighted log-rank statistic to compare shared-path adaptive treatment strategies,&quot;
+                                                        <I> Biostatistics (Oxford, England) </I>, 14, 299-312.
+                                                        <li> Ko, J. H. and Wahed, A. S. (2012), &quot;Up-front versus sequential randomizations for inference on adaptive treatment strategies,&quot;
+                                                        <I> Statistics in medicine </I>, 31, 812-830.
+                                                        <li> Lavori, P. W., Dawson, R. and Rush, A. J. (2000), &quot;Flexible treatment strategies in chronic disease: clinical and research implications,
+                                                        &quot;<I> Biological psychiatry </I>, 48, 605-614.
+                                                        <li> Lavori, P. W. and Dawson, R. (2008), &quot;Adaptive treatment strategies in chronic disease,&quot;<I> Annual Review of Medicine </I>, 59, 443-453.
+                                                        <li> Lavori, P. W. and Dawson, R. (2004), &quot;Dynamic treatment regimes: practical design considerations,&quot;<I> Clinical trials 
+                                                        (London, England) </I>, 1, 9-20.
+                                                        <li> Lei, H., Nahum-Shani, I., Lynch, K., Oslin, D. and Murphy, S. A. (2012), &quot;A &quot;SMART&quot; design for building individualized treatment 
+                                                        sequences,&quot;<I> Annual review of clinical psychology </I>, 8, 21-48.
+                                                        <li> Li, Z. and Murphy, S. A. (2011), &quot;Sample size formulae for two-stage randomized trials with survival outcomes,&quot;<I> Biometrika </I>, 98, 503-518.
+                                                        <li> Li, Z., Valenstein, M., Pfeiffer, P. and Ganoczy, D. (2014), &quot;A global logrank test for adaptive treatment strategies based on observational studies,
+                                                        &quot;<I> Statistics in medicine </I>, 33, 760-771.
+                                                        <li> Lokhnygina, Y. and Helterbrand, J. D. (2007), &quot;Cox Regression Methods for Two-Stage Randomization Designs,&quot;<I> Biometrics </I>, 63, 422-428.
+                                                        <li> Lunceford, J. K., Davidian, M. and Tsiatis, A. A. (2002), &quot;Estimation of Survival Distributions of Treatment Policies in Two-Stage Randomization Designs
+                                                        in Clinical Trials,&quot;<I> Biometrics </I>, 58, 48-57.
+                                                        <li> Miyahara, S. and Wahed, A. S. (2010), &quot;Weighted Kaplan-Meier estimators for two-stage treatment regimes,&quot; <I> Statistics in medicine </I>, 29, 2581-2591.
+                                                        <li> Moodie, E. E., Richardson, T. S. and Stephens, D. A. (2007), &quot;Demystifying optimal dynamic treatment regimes,&quot;<I> Biometrics </I>, 63, 447-455.
+                                                        <li> Murphy, S. A., Lynch, K. G., Oslin, D., McKay, J. R. and TenHave, T. (2007), &quot;Developing adaptive treatment strategies in substance abuse research,&quot;
+                                                        <I> Drug and alcohol dependence </I>, 88, S24-S30.
+                                                        <li> Murphy, S. A., Oslin, D. W., Rush, A. J. and Zhu, J. (2007), &quot;Methodological challenges in constructing effective treatment sequences for chronic 
+                                                        psychiatric disorders,&quot;<I> Neuropsychopharmacology </I>, 32, 257-262.
+                                                        <li> Nahum-Shani, I., Qian, M., Almirall, D., Pelham, W. E., Gnagy, B., Fabiano, G. A., Waxmonsky, J. G., Yu, J. and Murphy, S. A. (2012), &quot;Experimental design
+                                                        and primary data analysis methods for comparing adaptive interventions.&quot;<I> Psychological methods </I>, 17, 457.
+                                                        <li> Nahum-Shani, I., Qian, M., Almirall, D., Pelham, W. E., Gnagy, B., Fabiano, G. A., Waxmonsky, J. G., Yu, J. and Murphy, S. A. (2012), &quot;Q-learning: A data
+                                                        analysis method for constructing adaptive interventions.&quot;<I> Psychological methods </I>, 17, 478.
+                                                        <li> Oetting, A., Levy, J., Weiss, R. and Murphy, S. (2007)<I>, &quot;Statistical methodology for a SMART design in the development of adaptive treatment strategies,
+                                                        &quot;</I><I> in <I>Causality and Psychopathology: Finding the Determinants of Disorders and their Cures (American Psychopathological Association)</I></I>, 
+                                                        Arlington, VA: American Psychiatric Publishing, Inc., pp. 179-205.
+                                                        <li> Orellana, L., Rotnitzky, A. and Robins, J. M. (2010), &quot;Dynamic regime marginal structural mean models for estimation of optimal dynamic treatment regimes, 
+                                                        part I: main content,&quot;<I> The International Journal of Biostatistics </I>, 6.
+                                                        <li> Robins, J. (1986), &quot;A new approach to causal inference in mortality studies with a sustained exposure period-application to control of the healthy worker 
+                                                        survivor effect,&quot;<I> Mathematical Modelling </I>, 7, 1393-1512.
+                                                        <li> Robins, J. M. (1997)<I>, &quot;Causal inference from complex longitudinal data,&quot;</I><I> in Latent variable modeling and applications to causality</I>, 
+                                                        New York: Springer, pp. 69-117.
+                                                        <li> Tang, X. and Wahed, A. S. (2011), &quot;Comparison of treatment regimes with adjustment for auxiliary variables,&quot;<I> Journal of Applied Statistics </I>,
+                                                        38, 2925-2938.
+                                                        <li> Thall, P. F. (2008), &quot;A review of phase 2-3 clinical trial designs,&quot;<I> Lifetime Data Analysis </I>, 14, 37-53.
+                                                        <li> Thall, P. F., Millikan, R. E. and Sung, H. (2000), &quot;Evaluating multiple treatment courses in clinical trials,&quot;<I> Statistics in medicine </I>, 19, 1011-1028.
+                                                        <li> Thall, P. F., Wooten, L. H., Logothetis, C. J., Millikan, R. E. and Tannir, N. M. (2007), &quot;Bayesian and frequentist two-stage treatment strategies based on
+                                                        sequential failure times subject to interval censoring,&quot;<I> Statistics in medicine </I>, 26, 4687-4702.
+                                                        <li> Thall, P. F., Logothetis, C., Pagliaro, L. C., Wen, S., Brown, M. A., Williams, D. and Millikan, R. E. (2007), &quot;Adaptive therapy for androgen-independent prostate
+                                                        cancer: a randomized selection trial of four regimens,&quot;<I> Journal of the National Cancer Institute </I>, 99, 1613-1622.
+                                                        <li> Wahed, A. S. and Thall, P. F. (2013), &quot;Evaluating joint effects of induction-salvage treatment regimes on overall survival in acute leukaemia,&quot;<I> Journal of 
+                                                        the Royal Statistical Society: Series C (Applied Statistics) </I>, 62, 67-83.
+                                                        <li> Wahed, A. S. and Tsiatis, A. A. (2006), &quot;Semiparametric efficient estimation of survival distributions in two-stage randomisation designs in clinical trials with 
+                                                        censored data,&quot;<I> Biometrika </I>, 93, 163-177.
+                                                        <li> Wahed, A. S. and Tsiatis, A. A. (2004), &quot;Optimal Estimator for the Survival Distribution and Related Quantities for Treatment Policies in Two-Stage Randomization 
+                                                        Designs in Clinical Trials,&quot;<I> Biometrics </I>, 60, 124-133.
+                                                        <li> Wang, L., Rotnitzky, A., Lin, X., Millikan, R. E. and Thall, P. F. (2012), &quot;Evaluation of viable dynamic treatment regimes in a sequentially randomized trial of
+                                                        advanced prostate cancer,&quot;<I> Journal of the American Statistical Association </I>, 107, 493-508.
+                                                        <li> Wolbers, M. and Helterbrand, J. D. (2008), &quot;Two-stage randomization designs in drug development,&quot;<I> Statistics in medicine </I>, 27, 4161-4174.
+                                                        <li> Zhao, Y., Zeng, D., Rush, A. J. and Kosorok, M. R. (2012), &quot;Estimating individualized treatment rules using outcome weighted learning,&quot;<I> Journal
+                                                        of the American Statistical Association </I>, 107, 1106-1118.
+                                                        <li> Zhao, Y., Zeng, D., Socinski, M. A. and Kosorok, M. R. (2011), &quot;Reinforcement learning strategies for clinical trials in nonsmall cell lung cancer,
+                                                        &quot;<I> Biometrics </I>, 67, 1422-1433.
+                                                        </ol>"),
+                                                   id="col1", value="test1")
+                                   )
                         )
-                      )
              ), 
              
              ##### DESIGN A #####
@@ -132,23 +238,38 @@ shinyUI(
              
              tabPanel("Design A",
                       sidebarPanel(h4("About this design:"),
-                                   p("This SMART design re-randomizes all patients, but second-stage interventions may be dependent on response status. For example, a participant 
-                                     in the trial who ''responds'' to treatment B is randomized to second-stage treatment G or H, whereas an individual who ''does not respond'' to
-                                     B is randomized to either I or J."),
-                                   p("It is", em("not"), "necessary that all second-stage treatment options be distinct. For example, treatments C and D may be the same as G and H."),
-                                   p("There are",em("eight"),"embedded AIs."),
+                                   p("In this design, all participants are randomized twice. Initially, all participants are randomized to A vs. B. Participants identified as responders to A (B) are
+                                     re-randomized to C vs. D (G vs. H). Participants identified as non-responders to A (B) are re-randomized to E vs. F (I vs. J). There are 8 embedded AIs in this
+                                     SMART. They are ArCnrE, ArCnrF, ArDnrE, ArDnrF, BrGnrI, BrGnrJ, BrHnrI, and BrHnrJ."),
                                    tags$hr(),
-                                   h4("Inputs and Assumptions:"),
+                                   h4("Inputs Required:"),
                                    tags$ul(
-                                     tags$li("The probability of response is equal for interventions A and B."),
-                                     tags$li("For binary outcomes, the default inputs are the probabilities of success for each of the selected AIs. 'Cell-specific probabilities'
-                                             refer to the probabilities of success for those consistent with a particular intervention pathway. Instead, a target difference in
-                                             probabilities or target odds-ratio may be selected."),
-                                     tags$li("For continuous outcomes, the default input is the standardized effect size for comparisons between the two selected AIs. 
-                                             Alternatively, inputs may include the mean outcomes for the two AIs of interest and the standard error of the difference between means.")
+                                     tags$li("Indication of continuous or binary outcome."),
+                                     tags$li("The probability of response to the first-stage treatment. We assume this probability is the same for both initial treatments. If you cannot provide an
+                                             estimate of this parameter, please indicate 0 to provide conservative output."),
+                                     tags$li("Indication of a one- or two-sided test."),
+                                     tags$li("Specification of a type-I error rate (level of significance). The default value is 0.05, but may range between 0 and 1."),
+                                     tags$li("If interest is in sample size, specify the power of the study. The default power is 0.80, but may range between 0 and 1.
+                                             If interest is in power, specify the sample size of the study. This must be input as an integer greater than zero."),
+                                     tags$li("For binary outcomes:",
+                                             tags$ul(
+                                               tags$li("The default inputs are the probabilities of success for each of the selected AIs. These are the overall probabilities of success for those
+                                                       participants following each of the selected embedded AIs. For example, the probability of success for ArCnrE."),
+                                               tags$li("Alternatively, cell-specific probabilities may be specified. These refer to the probabilities of success for those consistent with a particular
+                                                       intervention pathway. For example, the probability of success for ArC."),
+                                               tags$li("Alternatively, if cell-specific or AI-specific probabilities cannot be specified, a target difference in probabilities (must be between 0 and 1)
+                                                       or a target odds-ratio (must be positive and not equal to 1), may be selected and provided. With both of these selections, we assume one
+                                                       of the AIs has probability of success equal to 0.5 to yield conservative results.")
+                                     )),
+                                     tags$li("For continuous outcomes:",
+                                             tags$ul(
+                                               tags$li("Specify the standardized effect size between the selected AIs. We use Cohen's definition for standardized effect size such that for the two selected
+                                                       AIs it is the difference between the means of the two AIs divided by the square root of the pooled variance (square root of the average of the variances
+                                                       of the two groups). This may range between 0 and 10.")
+                                     ))
                                    ),
                                    h5("Input Formatting Rules:"),
-                                   tags$blockquote("All inputs must be given in decimal form with leading zero (no fractions, please) and may include up to two decimal places. For example,
+                                   p("All inputs must be given in decimal form with leading zero (no fractions, please) and may include up to two decimal places. For example,
                                                    ''0.07'' is valid input; both ''.07'' and ''7/100'' are invalid. Improperly-formatted input may result in unpredictable behavior or an error message."),
                                    tags$hr(),
                                    h4("Example:"),
@@ -164,10 +285,16 @@ shinyUI(
                         h1("Design A"),
                         tags$hr(),
                         
+                        ##### A OUTCOME SELECTION #####
+                        radioButtons("selectOutcomeA", label=HTML("Is the <strong> outcome </strong> of interest binary or continuous?"),
+                                     choices=list("Binary"=1,"Continuous"=2),selected=1),
+                        
+                        tags$hr(),
+                        
                         ##### A DTR SELECTION #####
                         # Dropdown menus provide options to select DTRs for comparison.
                         # Currently the menus are not reactively-repopulating (making it possible to select the same DTR twice). Possible future improvement.
-                        
+                                                
                         p("Which two", strong("adaptive interventions"), "would you like to compare? Choose two from the menus below.",
                           "The image below will change to highlight the AIs you select."),
                         
@@ -182,25 +309,6 @@ shinyUI(
                         
                         tags$hr(),
                         
-                        ##### A OUTCOME SELECT AND RESPONSE INPUT #####
-                        # Provide options to select binary/continuous outcome
-                        # User input to provide response probabilities
-                        
-                        fluidRow(
-                          column(6,
-                                 radioButtons("selectOutcomeA", label=HTML("Is the <strong> outcome </strong> of interest binary or continuous?"),
-                                              choices=list("Binary"=1,"Continuous"=2),selected=1)
-                          ),
-                          column(6,                              
-                                 numericInput("respA",
-                                              label=HTML("What is the <strong> probability of response </strong> to the first-stage intervention? 
-                                                         If you are unsure, leave as 0 for a conservative estimate."), 
-                                              value=0,min=0,max=1,step=0.01)
-                          )
-                        ),
-                        
-                        tags$hr(),
-                        
                         ##### A IMAGE AND PROBABILITY INPUTS #####
                         # Call imageOutput, which reactively displays an image highlighting selected DTRs from image assets in /www/images (see /server.R)
                         # Call uiOutput, which reactively renders UI inputs according to selected DTRs and options selected below.
@@ -208,30 +316,31 @@ shinyUI(
                         fluidRow(
                           column(7, imageOutput("designAimg",height="100%")),
                           column(5, 
+                                 numericInput("respA",
+                                              label=HTML("Concerning the tailoring variable, please provide the <strong> probability of response </strong> to the 
+                                                         first-stage intervention. If you are unsure, leave as 0 for a conservative estimate."), 
+                                              value=0,min=0,max=1,step=0.01),
                                  conditionalPanel(condition="input.selectOutcomeA==1",
-                                                  p("Please provide the", strong("probability of success"), "for each of the AI's of interest."),
+                                                  p("Concerning the primary outcome, please provide the", strong("probability of success"), "for each of the
+                                                    AIs of interest."),
                                                   uiOutput("binaryDTR1probA"),
                                                   conditionalPanel(condition="input.cellOrConditionalA",
-                                                                   fluidRow(column(1),
-                                                                            column(11,uiOutput("cellProbsDTR1A"))
+                                                                   fluidRow(column(11,offset=1,
+                                                                                   uiOutput("cellProbsDTR1A"))
                                                                    )
                                                   ),
                                                   uiOutput("binaryDTR2probA"),
                                                   
                                                   conditionalPanel(condition="input.cellOrConditionalA",
-                                                                   fluidRow(column(1),
-                                                                            column(11,
+                                                                   fluidRow(column(11,offset=1,
                                                                                    uiOutput("cellProbsDTR2A"))
                                                                    )
                                                   )
                                  ),
                                  conditionalPanel(condition="input.selectOutcomeA==2",
-                                                  uiOutput("continuousProbA"),
-                                                  conditionalPanel(condition="input.meanSdCheckA",
-                                                                   fluidRow(column(1),
-                                                                            column(11,uiOutput("meanEstA"))
-                                                                   )
-                                                  )
+                                                  p("Concerning the primary outcome, please provide the", strong("standardized effect size"), "between the
+                                                    AIs of interest."),
+                                                  uiOutput("continuousProbA")
                                  ),
                                  
                                  ##### A INPUT OPTIONS #####
@@ -241,14 +350,11 @@ shinyUI(
                                  
                                  conditionalPanel(condition="input.firstDTRcompareA != 0 && input.secondDTRcompareA != 0",
                                                   br(),
-                                                  helpText("If you prefer to provide different information, check the appropriate box below."),
                                                   conditionalPanel(condition="input.selectOutcomeA==1",
+                                                                   helpText("If you prefer to provide different information, check the appropriate box below."),
                                                                    checkboxInput("cellOrConditionalA",label="Cell-Specific Success Probabilities",value=FALSE),
                                                                    checkboxInput("targetDiffCheckA",label="Target Difference in Success Probabilities",value=FALSE),
                                                                    checkboxInput("targetOddsCheckA",label="Target Odds Ratio",value=FALSE)
-                                                  ),
-                                                  conditionalPanel(condition="input.selectOutcomeA==2",
-                                                                   checkboxInput("meanSdCheckA",label="Check this box to input a difference in means and standard deviation.",value=FALSE)
                                                   )
                                  )
                           )
@@ -300,11 +406,14 @@ shinyUI(
                       ),
                       
                       ##### A TOOLTIPS #####
-                      bsTooltip(id="respA",title="Input must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus")
+                      ### Add bootstrap-style tooltips to inputs coaching proper formatting
+                      ### Below are tooltips for inputs rendered statically in ui.R
+                      ### For inputs rendered dynamically, see the appropriate renderUI() in server.R
                       
-#                       bsTooltip(id="DTRsuccA2",title="Input must be in decimal form with a leading zero, up to two places.",placement="right",trigger="click")
-#                       bsTooltip(id="targetDiffA",title="hey!")
-                      
+                      bsTooltip(id="respA",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"),      
+                      bsTooltip(id="alphaA",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"),
+                      bsTooltip(id="inputPowerA",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"),
+                      bsTooltip(id="inputSampleSizeA",title="Input must be an integer greater than zero.",placement="right",trigger="focus")                    
                       
              ),
              
@@ -316,21 +425,38 @@ shinyUI(
                       ##### B SIDEBAR #####
                       
                       sidebarPanel(h4("About this design:"),
-                                   p("This SMART design re-randomizes only those who do not respond to the initial intervention. "),
-                                   p("It is",em("not"),"necessary that all possible second-stage treatments be distinct. For example, interventions D and E may be the same as
-                                     G and H or C may be the same as B."),
-                                   p("There are",em("four"),"embedded AIs."),
+                                   p("In this design, only participants who do not respond to first-stage treatment are randomized twice. Initially all participants are randomized to A vs. B. Participants
+                                     identified as responders to A (B) are not re-randomized, and assigned to treatment C (F). Participants identified as non-responders to A (B) are re-randomized to D vs.
+                                     E (G vs. H). There are 4 embedded AIs in this SMART. They are ArCnrD, ArCnrE, BrFnrG, and BrFnrH."),
                                    tags$hr(),
-                                   h4("Inputs and Assumptions:"),
+                                   h4("Inputs Required:"),
                                    tags$ul(
-                                     tags$li("The probability of response is equal for interventions A and B."),
-                                     tags$li("For binary outcomes, the default inputs are the probabilities of success for each of the selected AIs. 'Cell-specific probabilities' refer to the probabilities of
-                                             success for those consistent with a particular intervention pathway. Instead, a target difference in probabilities or target odds-ratio may be selected."),
-                                     tags$li("For continuous outcomes, the default input is the standardized effect size for comparisons between the two selected AIs. Alternatively, inputs may include the mean
-                                             outcomes for the two AIs of interest and the standard error of the difference between means.")
-                                   ),
+                                     tags$li("Indication of continuous or binary outcome."),
+                                     tags$li("The probability of response to the first-stage treatment. We assume this probability is the same for both initial treatments. If you cannot provide an
+                                             estimate of this parameter, please indicate 0 to provide conservative output."),
+                                     tags$li("Indication of a one- or two-sided test."),
+                                     tags$li("Specification of a type-I error rate (level of significance). The default value is 0.05, but may range between 0 and 1."),
+                                     tags$li("If interest is in sample size, specify the power of the study. The default power is 0.80, but may range between 0 and 1.
+                                             If interest is in power, specify the sample size of the study. This must be input as an integer greater than zero."),
+                                     tags$li("For binary outcomes:",
+                                             tags$ul(
+                                               tags$li("The default inputs are the probabilities of success for each of the selected AIs. These are the overall probabilities of success for those
+                                                       participants following each of the selected embedded AIs. For example, the probability of success for ArCnrE."),
+                                               tags$li("Alternatively, cell-specific probabilities may be specified. These refer to the probabilities of success for those consistent with a particular
+                                                       intervention pathway. For example, the probability of success for ArC."),
+                                               tags$li("Alternatively, if cell-specific or AI-specific probabilities cannot be specified, a target difference in probabilities (must be between 0 and 1)
+                                                       or a target odds-ratio (must be positive and not equal to 1), may be selected and provided. With both of these selections, we assume one
+                                                       of the AIs has probability of success equal to 0.5 to yield conservative results.")
+                                             )),
+                                     tags$li("For continuous outcomes:",
+                                             tags$ul(
+                                               tags$li("Specify the standardized effect size between the selected AIs. We use Cohen's definition for standardized effect size
+                                                       such that for the two selected AIs it is the difference between the means of the two AIs divided by the square root of the pooled variance
+                                                       (square root of the average of the variances of the two groups). This may range between 0 and 10.")
+                                             ))
+                                      ),
                                    h5("Input Formatting Rules:"),
-                                   tags$blockquote("All inputs must be given in decimal form with leading zero (no fractions, please), and can be precise to two decimal places.
+                                   p("All inputs must be given in decimal form with leading zero (no fractions, please), and can be precise to two decimal places.
                                                    For example, '0.07' is valid input; both '.07' and '7/100' are invalid. Improperly-formatted input may result in 
                                                    unpredictable behavior."),
                                    tags$hr(),
@@ -346,6 +472,13 @@ shinyUI(
                         
                         h1("Design B"),
                         tags$hr(),
+                        
+                        ##### B OUTCOME SELECTION #####
+                        
+                        radioButtons("selectOutcomeB", label=HTML("Is the <strong> outcome </strong> of interest binary or continuous?"),
+                                     choices=list("Binary"=1,"Continuous"=2),selected=1),
+                        
+                        tags$hr(),                        
                         
                         ##### B DTR SELECTION #####
                         # Dropdown menus provide options to select DTRs for comparison, rendered in server.R
@@ -364,34 +497,21 @@ shinyUI(
                         
                         tags$hr(),
                         
-                        ##### B OUTCOME SELECT AND RESPONSE INPUT #####
-                        # Provide options to select binary/continuous outcome
-                        # User input to provide response probabilities
-                        
-                        fluidRow(
-                          column(6,
-                                 radioButtons("selectOutcomeB", label=HTML("Is the <strong> outcome </strong> of interest binary or continuous?"),
-                                              choices=list("Binary"=1,"Continuous"=2),selected=1)
-                                 ),
-                          column(6,
-                                 numericInput("respB",
-                                              label=HTML("What is the <strong> probability of response </strong> to the first-stage intervention? 
-                                                         If you are unsure, leave as 0 for a conservative estimate."),
-                                              value=0,min=0,max=1,step=0.01)
-                                 )
-                          ),
-                        
-                        tags$hr(),
-
                         ##### B IMAGE AND PROBABILITY INPUTS #####
                         # Call imageOutput, which reactively displays an image highlighting selected DTRs from image assets in /www/images (see /server.R)
                         # Call uiOutput, which reactively renders UI inputs according to selected DTRs and options selected below.
                         
                         fluidRow(
                           column(7, imageOutput("designBimg",height="100%")),
-                          column(5, 
+                          column(5,
+                                 numericInput("respB",
+                                              label=HTML("Concerning the tailoring variable, please provide the <strong> probability of response
+                                                         </strong> to the first-stage intervention. If you are unsure, leave as 0 for a 
+                                                         conservative estimate."),
+                                              value=0,min=0,max=1,step=0.01),
                                  conditionalPanel(condition="input.selectOutcomeB==1",
-                                                  p("Please provide the", strong("probability of success"), "for each of the AI's of interest."),
+                                                  p("Concerning the primary outcome, please provide the", strong("probability of success"), 
+                                                    "for each of the AIs of interest."),
                                                   uiOutput("binaryDTR1probB"),
                                                   conditionalPanel(condition="input.cellOrConditionalB",
                                                                    fluidRow(column(1),
@@ -406,12 +526,9 @@ shinyUI(
                                                   )
                                  ),
                                  conditionalPanel(condition="input.selectOutcomeB==2",
-                                                  uiOutput("continuousProbB"),
-                                                  conditionalPanel(condition="input.meanSdCheckB",
-                                                                   fluidRow(column(1),
-                                                                            column(11,uiOutput("meanEstB"))
-                                                                   )
-                                                  )
+                                                  p("Concerning the primary outcome, please provide the", strong("standardized effect size"), "between the
+                                                    AIs of interest."),
+                                                  uiOutput("continuousProbB")
                                  ),
                                  
                                  ##### B INPUT OPTIONS #####
@@ -421,14 +538,11 @@ shinyUI(
                                  
                                  conditionalPanel(condition="input.firstDTRcompareB != 0 && input.secondDTRcompareB != 0",
                                                   br(),
-                                                  helpText("If you prefer to provide different information, check the appropriate box below."),
                                                   conditionalPanel(condition="input.selectOutcomeB==1",
+                                                                   helpText("If you prefer to provide different information, check the appropriate box below."),
                                                                    checkboxInput("cellOrConditionalB",label="Cell-Specific Success Probabilities",value=FALSE),
                                                                    checkboxInput("targetDiffCheckB",label="Target Difference in Success Probabilities",value=FALSE),
                                                                    checkboxInput("targetOddsCheckB",label="Target Odds Ratio",value=FALSE)
-                                                  ),
-                                                  conditionalPanel(condition="input.selectOutcomeB==2",
-                                                                   checkboxInput("meanSdCheckB",label="Check this box to input a difference in means and standard deviation.",value=FALSE)
                                                   )
                                  )
                           )
@@ -475,29 +589,59 @@ shinyUI(
                           conditionalPanel(condition="input.selectOutcomeB==2 & input.selectResultsB=='power'",
                                            htmlOutput("continuousPowerB")
                           )
-                    )
+                    ),
+                    
+                    ##### B TOOLTIPS #####
+                    ### Add bootstrap-style tooltips to inputs coaching proper formatting
+                    ### Below are tooltips for inputs rendered statically in ui.R
+                    ### For inputs rendered dynamically, see the appropriate renderUI() in server.R
+                    
+                    bsTooltip(id="respB",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"),      
+                    bsTooltip(id="alphaB",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"),
+                    bsTooltip(id="inputPowerB",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"),
+                    bsTooltip(id="inputSampleSizeB",title="Input must be an integer greater than zero.",placement="right",trigger="focus")                   
              ),
              
              ########### DESIGN C ##########
   
              tabPanel("Design C",
-                      sidebarPanel(h3("About this design:"),
-                                   p("In this SMART design, randomization at the second stage depends on the first-stage intervention and response this intervention.
-                                     Only those individuals who did not respond to intervention A are re-randomized. This trial may be necessary due to lack of 
-                                     second-stage options for particular interventions."),
-                                   p("Treatments C and F",em("not"),"be distinct, but D and E must be distinct."),
-                                   p("There are",em("three"),"embedded AIs."),
+                      
+                      ##### C SIDEBAR #####
+                      
+                      sidebarPanel(h4("About this design:"),
+                                   p("In this design, only participants who do not respond to a particular first-stage treatment are randomized twice. Initially all participants are randomized to A vs. B.
+                                     Participants identified as responders to A (B) are not re-randomized and are assigned to treatment C (F). Participants identified as non-responders to A are re-randomized 
+                                     to D vs. E; those identified as non-responders to B are not re-randomized and are assigned to treatment G. There are 3 embedded AIs in this SMART. They are ArCnrD, 
+                                     ArCnrE, and BrFnrG."),
                                    tags$hr(),
-                                   h4("Inputs and Assumptions:"),
+                                   h4("Inputs Required:"),
                                    tags$ul(
-                                     tags$li("The probability of response is equal for interventions A and B."),
-                                     tags$li("For binary outcomes, the default inputs are the probabilities of success for each of the selected AIs. 'Cell-specific probabilities' refer to the probabilities of
-                                             success for those consistent with a particular intervention pathway. Instead, a target difference in probabilities or target odds-ratio may be selected."),
-                                     tags$li("For continuous outcomes, the default input is the standardized effect size for comparisons between the two selected AIs. Alternatively, inputs may include the mean
-                                             outcomes for the two AIs of interest and the standard error of the difference between means.")
-                                   ),
+                                     tags$li("Indication of continuous or binary outcome."),
+                                     tags$li("The probability of response to the first-stage treatment. We assume this probability is the same for both initial treatments. If you cannot provide an
+                                             estimate of this parameter, please indicate 0 to provide conservative output."),
+                                     tags$li("Indication of a one- or two-sided test."),
+                                     tags$li("Specification of a type-I error rate (level of significance). The default value is 0.05, but may range between 0 and 1."),
+                                     tags$li("If interest is in sample size, specify the power of the study. The default power is 0.80, but may range between 0 and 1.
+                                             If interest is in power, specify the sample size of the study. This must be input as an integer greater than zero."),
+                                     tags$li("For binary outcomes:",
+                                             tags$ul(
+                                               tags$li("The default inputs are the probabilities of success for each of the selected AIs. These are the overall probabilities of success for those
+                                                       participants following each of the selected embedded AIs. For example, the probability of success for ArCnrE."),
+                                               tags$li("Alternatively, cell-specific probabilities may be specified. These refer to the probabilities of success for those consistent with a particular
+                                                       intervention pathway. For example, the probability of success for ArC."),
+                                               tags$li("Alternatively, if cell-specific or AI-specific probabilities cannot be specified, a target difference in probabilities (must be between 0 and 1)
+                                                       or a target odds-ratio (must be positive and not equal to 1), may be selected and provided. With both of these selections, we assume one
+                                                       of the AIs has probability of success equal to 0.5 to yield conservative results.")
+                                             )),
+                                     tags$li("For continuous outcomes:",
+                                             tags$ul(
+                                               tags$li("Specify the standardized effect size between the selected AIs. We use Cohen's definition for standardized effect size such that for the two selected AIs
+                                                       it is the difference between the means of the two AIs divided by the square root of the pooled variance (square root of the average of the variances of
+                                                       the two groups). This may range between 0 and 10.")
+                                             ))
+                                     ),
                                    h5("Input Formatting Rules:"),
-                                   tags$blockquote("All inputs must be given in decimal form with leading zero (no fractions, please), and can be precise to two decimal places.
+                                   p("All inputs must be given in decimal form with leading zero (no fractions, please), and can be precise to two decimal places.
                                                    For example, '0.07' is valid input; both '.07' and '7/100' are invalid. Improperly-formatted input may result in 
                                                    unpredictable behavior."),
                                    tags$hr(),
@@ -511,6 +655,12 @@ shinyUI(
                         ##### C PAGE HEADER #####
                         
                         h1("Design C"),
+                        tags$hr(),
+                        
+                        ##### C OUTCOME SELECTION #####
+                        
+                        radioButtons("selectOutcomeC", label=HTML("Is the <strong> outcome </strong> of interest binary or continuous?"),
+                                     choices=list("Binary"=1,"Continuous"=2),selected=1),
                         tags$hr(),
                         
                         ##### C DTR SELECTION #####
@@ -530,25 +680,6 @@ shinyUI(
                         
                         tags$hr(),
                         
-                        ##### C OUTCOME SELECT AND RESPONSE INPUT #####
-                        # Provide options to select binary/continuous outcome
-                        # User input to provide response probabilities
-                        
-                        fluidRow(
-                          column(6,
-                                 radioButtons("selectOutcomeC", label=HTML("Is the <strong> outcome </strong> of interest binary or continuous?"),
-                                              choices=list("Binary"=1,"Continuous"=2),selected=1)
-                          ),
-                          column(6,
-                                 numericInput("respC",
-                                              label=HTML("What is the <strong> probability of response </strong> to the first-stage intervention? 
-                                                         If you are unsure, leave as 0 for a conservative estimate."),
-                                              value=0,min=0,max=1,step=0.01)
-                          )
-                        ),
-                        
-                        tags$hr(),
-                        
                         ##### C IMAGE AND PROBABILITY INPUTS #####
                         # Call imageOutput, which reactively displays an image highlighting selected DTRs from image assets in /www/images (see /server.R)
                         # Call uiOutput, which reactively renders UI inputs according to selected DTRs and options selected below.
@@ -556,8 +687,14 @@ shinyUI(
                         fluidRow(
                           column(7, imageOutput("designCimg",height="100%")),
                           column(5, 
+                                 numericInput("respC",
+                                              label=HTML("Concerning the tailoring variable, please provide the <strong> probability of response
+                                                         </strong> to the first-stage intervention. If you are unsure, leave as 0 for a 
+                                                         conservative estimate."),
+                                              value=0,min=0,max=1,step=0.01),
                                  conditionalPanel(condition="input.selectOutcomeC==1",
-                                                  p("Please provide the", strong("probability of success"), "for each of the AI's of interest."),
+                                                  p("Concerning the primary outcome, please provide the", strong("probability of success"),
+                                                    "for each of the AIs of interest."),
                                                   uiOutput("binaryDTR1probC"),
                                                   conditionalPanel(condition="input.cellOrConditionalC",
                                                                    fluidRow(column(1),
@@ -572,12 +709,9 @@ shinyUI(
                                                   )
                                  ),
                                  conditionalPanel(condition="input.selectOutcomeC==2",
-                                                  uiOutput("continuousProbC"),
-                                                  conditionalPanel(condition="input.meanSdCheckC",
-                                                                   fluidRow(column(1),
-                                                                            column(11,uiOutput("meanEstC"))
-                                                                   )
-                                                  )
+                                                  p("Concerning the primary outcome, please provide the", strong("standardized effect size"), "between the
+                                                    AIs of interest."),
+                                                  uiOutput("continuousProbC")
                                  ),
                                  
                                  ##### C INPUT OPTIONS #####
@@ -587,14 +721,11 @@ shinyUI(
                                  
                                  conditionalPanel(condition="input.firstDTRcompareC != 0 && input.secondDTRcompareC != 0",
                                                   br(),
-                                                  helpText("If you prefer to provide different information, check the appropriate box below."),
                                                   conditionalPanel(condition="input.selectOutcomeC==1",
+                                                                   helpText("If you prefer to provide different information, check the appropriate box below."),
                                                                    checkboxInput("cellOrConditionalC",label="Cell-Specific Probabilities",value=FALSE),
                                                                    checkboxInput("targetDiffCheckC",label="Target Difference in Success Probabilities",value=FALSE),
                                                                    checkboxInput("targetOddsCheckC",label="Target Odds Ratio",value=FALSE)
-                                                  ),
-                                                  conditionalPanel(condition="input.selectOutcomeC==2",
-                                                                   checkboxInput("meanSdCheckC",label="Check this box to input a difference in means and standard deviation.",value=FALSE)
                                                   )
                                  )
                           )
@@ -642,32 +773,57 @@ shinyUI(
                         conditionalPanel(condition="input.selectOutcomeC==2 & input.selectResultsC=='power'",
                                          htmlOutput("continuousPowerC")
                         )
-                      )
+                      ),
+                      
+                      ##### C TOOLTIPS #####
+                      ### Add bootstrap-style tooltips to inputs coaching proper formatting
+                      ### Below are tooltips for inputs rendered statically in ui.R
+                      ### For inputs rendered dynamically, see the appropriate renderUI() in server.R
+                      
+                      bsTooltip(id="respC",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"),      
+                      bsTooltip(id="alphaC",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"),
+                      bsTooltip(id="inputPowerC",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"),
+                      bsTooltip(id="inputSampleSizeC",title="Input must be an integer greater than zero.",placement="right",trigger="focus")
              ),
              
              ########### DESIGN D ##########
              
              tabPanel("Design D",
-                      sidebarPanel(h3("About this design:"),
-                                   p("In this design, all participants are re-randomized at the second-stage and treatment options are",em("not"),"influenced by
-                                     a tailoring variable."),
-                                   p("Second-stage interventions need", em("not"), "be distinct. For example, C and E may be the same or D and F may be the same."),
-                                   p("The interventions embedded in this SMART are non-adaptive. There are four non-adaptive intervention paths."),
+                      
+                      ##### D SIDEBAR #####
+                      
+                      sidebarPanel(h4("About this design:"),
+                                   p("In this design, all participants are randomized twice, and treatment options are not influenced by a tailoring variable. There are 4 embedded non-adaptive intervention
+                                     paths in this SMART. They are AC, AD, BE, and BF."),
                                    tags$hr(),
-                                   h4("Inputs:"),
-                                   tags$ul(
-                                     tags$li("For binary outcomes, the default input is probabilities of success for an individual consistent with each of the selected intervention paths. Instead, a target
-                                             difference in probabilities or target odds-ratio may be selected."),
-                                     tags$li("For continuous outcomes, the default input is the standardized effect size for making comparisons between the two selected intervention paths. Alternatively,
-                                             you can provide mean outcomes for the two intervention paths of interest, along with the standard error of the difference between means.")
+                                   h4("Inputs Required:"),
+                                   tags$ul(tags$li("Indication of continuous or binary outcome."),
+                                           tags$li("Indication of a one- or two-sided test."),
+                                           tags$li("Specification of a type-I error rate (level of significance). The default value is 0.05, but may range between 0 and 1."),
+                                           tags$li("If interest is in sample size, specify the power of the study. The default power is 0.80, but may range between 0 and 1.
+                                             If interest is in power, specify the sample size of the study. This must be input as an integer greater than zero."),
+                                           tags$li("For binary outcomes:",
+                                                   tags$ul(
+                                                     tags$li("The default inputs are the probabilities of success for each of the selected intervention paths. These are the overall probabilities of success for those
+                                                       participants following each of the selected embedded intervention paths. For example, the probability of success for AE."),
+                                                     tags$li("Alternatively, if intervention path-specific probabilities cannot be specified, a target difference in probabilities (must be between 0 and 1)
+                                                       or a target odds-ratio (must be positive and not equal to 1), may be selected and provided. With both of these selections, we assume one
+                                                       of the intervention paths has probability of success equal to 0.5 to yield conservative results.")
+                                                   )),
+                                           tags$li("For continuous outcomes:",
+                                                   tags$ul(
+                                                     tags$li("Specify the standardized effect size between the selected AIs. We use Cohen's definition for standardized effect size such that
+                                                             for the two selected AIs it is the difference between the means of the two AIs divided by the square root of the pooled variance (square root of the 
+                                                             average of the variances of the two groups). This may range between 0 and 10.")
+                                                   ))
                                    ),
                                    h5("Input Formatting Rules:"),
-                                   tags$blockquote("All inputs must be given in decimal form with leading zero (no fractions, please), and can be precise to two decimal places.
+                                   p("All inputs must be given in decimal form with leading zero (no fractions, please), and can be precise to two decimal places.
                                                    For example, '0.07' is valid input; both '.07' and '7/100' are invalid. Improperly-formatted input may result in 
                                                    unpredictable behavior."),
                                    tags$hr(),
                                    h4("Example:"),
-                                   p("We wish to find the sample size for a trial with a binary outcome where the probability of response to first stage interventions is 0.40. We estimate the overall
+                                   p("We wish to find the sample size for a trial with a binary outcome where the probability of response to first stage intervention is 0.40. We estimate the overall
                                      probabilities of success in the two intervention paths of interest, AC and BF to be 0.75 and 0.60, respectively. Given a two-sided 5% type-I error, we require a 
                                      sample size of 608 to make this comparison with 80% power.")
                       ),
@@ -676,6 +832,12 @@ shinyUI(
                         ##### D PAGE HEADER #####
                         
                         h1("Design D"),
+                        tags$hr(),
+                        
+                        ##### D OUTCOME SELECTION #####
+                        
+                        radioButtons("selectOutcomeD", label=HTML("Is the <strong> outcome </strong> of interest binary or continuous?"),
+                                     choices=list("Binary"=1,"Continuous"=2),selected=1),
                         tags$hr(),
                         
                         ##### D DTR SELECTION #####
@@ -695,19 +857,6 @@ shinyUI(
                         
                         tags$hr(),
                         
-                        ##### D OUTCOME SELECT AND RESPONSE INPUT #####
-                        # Provide options to select binary/continuous outcome
-                        # User input to provide response probabilities
-                        
-                        fluidRow(
-                          column(6,
-                                 radioButtons("selectOutcomeD", label=HTML("Is the <strong> outcome </strong> of interest binary or continuous?"),
-                                              choices=list("Binary"=1,"Continuous"=2),selected=1)
-                          )
-                        ),
-                        
-                        tags$hr(),
-                        
                         ##### D IMAGE AND PROBABILITY INPUTS #####
                         # Call imageOutput, which reactively displays an image highlighting selected DTRs from image assets in /www/images (see /server.R)
                         # Call uiOutput, which reactively renders UI inputs according to selected DTRs and options selected below.
@@ -716,17 +865,15 @@ shinyUI(
                           column(7, imageOutput("designDimg",height="100%")),
                           column(5, 
                                  conditionalPanel(condition="input.selectOutcomeD==1",
-                                                  p("Please provide the", strong("probability of success"), "for each of the intervention paths of interest."),
+                                                  p("Concerning the primary outcome, please provide the", strong("probability of success"),
+                                                    "for each of the intervention paths of interest."),
                                                   uiOutput("binaryDTR1probD"),
                                                   uiOutput("binaryDTR2probD")
                                  ),
                                  conditionalPanel(condition="input.selectOutcomeD==2",
-                                                  uiOutput("continuousProbD"),
-                                                  conditionalPanel(condition="input.meanSdCheckD",
-                                                                   fluidRow(column(1),
-                                                                            column(11,uiOutput("meanEstD"))
-                                                                   )
-                                                  )
+                                                  p("Concerning the primary outcome, please provide the", strong("standardized effect size"), "between the
+                                                    intervention paths of interest."),
+                                                  uiOutput("continuousProbD")
                                  ),
                                  
                                  ##### D INPUT OPTIONS #####
@@ -736,13 +883,10 @@ shinyUI(
                                  
                                  conditionalPanel(condition="input.firstDTRcompareD != 0 && input.secondDTRcompareD != 0",
                                                   br(),
-                                                  helpText("If you prefer to provide different information, check the appropriate box below."),
                                                   conditionalPanel(condition="input.selectOutcomeD==1",
+                                                                   helpText("If you prefer to provide different information, check the appropriate box below."),
                                                                    checkboxInput("targetDiffCheckD",label="Check this box to input a target difference in probabilities.",value=FALSE),
                                                                    checkboxInput("targetOddsCheckD",label="Check this box to input a target odds-ratio instead of a target difference.",value=FALSE)
-                                                  ),
-                                                  conditionalPanel(condition="input.selectOutcomeD==2",
-                                                                   checkboxInput("meanSdCheckD",label="Check this box to input a difference in means and standard deviation.",value=FALSE)
                                                   )
                                  )
                           )
@@ -790,8 +934,19 @@ shinyUI(
                         conditionalPanel(condition="input.selectOutcomeD==2 & input.selectResultsD=='power'",
                                          htmlOutput("continuousPowerD")
                         )
-                      )
+                      ),
+                      
+                      ##### D TOOLTIPS #####
+                      ### Add bootstrap-style tooltips to inputs coaching proper formatting
+                      ### Below are tooltips for inputs rendered statically in ui.R
+                      ### For inputs rendered dynamically, see the appropriate renderUI() in server.R
+                      
+                      bsTooltip(id="respD",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"),      
+                      bsTooltip(id="alphaD",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"),
+                      bsTooltip(id="inputPowerD",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"),
+                      bsTooltip(id="inputSampleSizeD",title="Input must be an integer greater than zero.",placement="right",trigger="focus")
              ),
 collapsable=TRUE,
-footer=HTML("<p> Kidwell, Seewald, Almirall (in preparation). </p>")
+footer=HTML("<p> Kidwell, Seewald, Almirall (in preparation). </p>
+            <div style='color:grey;font-size:8px'>  SMARTsize Application Version 0.7.3, last updated 22 August 2014 </div>")
 ))
