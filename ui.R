@@ -34,16 +34,15 @@ shinyUI(
                       ### Apply style attributes across the application
                       tags$head(
                         tags$style(type='text/css',"input[type='number'] {width:60px}"), #set width of numericInputs
-                        tags$style(type='text/css',includeHTML("www/css/bootstrap-modal.css")), #responsive modals                                           
-                        tags$style(HTML("@import url(http://fonts.googleapis.com/css?family=Roboto|Roboto+Condensed);
-                                        body {font-family: 'Roboto', sans-serif;} 
-                                        h1 {font-family: 'Roboto Condensed', sans-serif;} 
-                                        h2 {font-family: 'Roboto Condensed', sans-serif;} 
-                                        h3 {font-family: 'Roboto Condensed', sans-serif;} 
-                                        h4 {font-family: 'Roboto Condensed', sans-serif;} 
-                                        h5 {font-family: 'Roboto Condensed', sans-serif;} 
-                                        h6 {font-family: 'Roboto Condensed', sans-serif;}") #apply font styles
-                                   )
+                        tags$style(type='text/css',includeHTML("www/css/bootstrap-modal.css")), #responsive modals  
+                        tags$link(rel="stylesheet", href="//fonts.googleapis.com/css?family=Roboto|Roboto+Condensed"),
+                        tags$style("body {font-family: 'Roboto', sans-serif;} 
+                                    h1 {font-family: 'Roboto Condensed', sans-serif;} 
+                                    h2 {font-family: 'Roboto Condensed', sans-serif;}
+                                    h3 {font-family: 'Roboto Condensed', sans-serif;} 
+                                    h4 {font-family: 'Roboto Condensed', sans-serif;} 
+                                    h5 {font-family: 'Roboto Condensed', sans-serif;} 
+                                    h6 {font-family: 'Roboto Condensed', sans-serif;}") #apply font styles
                         ),
                      
                       sidebarPanel(
