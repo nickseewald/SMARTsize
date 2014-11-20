@@ -490,7 +490,7 @@ shinyUI(
                                      comparison with 80% power.")
                       ),
                       
-                      mainPanel(
+                      mainPanel( div( tabPanel(
                         
                         ##### B PAGE HEADER #####
                         
@@ -613,7 +613,8 @@ shinyUI(
                           conditionalPanel(condition="input.selectOutcomeB==2 & input.selectResultsB=='power'",
                                            htmlOutput("continuousPowerB")
                           )
-                    ),
+                    ),style='width:800px;'),
+                    tags$head(tags$style(type="text/css", ".container-fluid {  max-width: 12600px; /* or 950px */}"))),
                     
                     ##### B TOOLTIPS #####
                     ### Add bootstrap-style tooltips to inputs coaching proper formatting
@@ -972,5 +973,6 @@ shinyUI(
              ),
 collapsable=TRUE,
 footer=HTML("<p> Kidwell, Seewald, Almirall (in preparation). </p>
-            <div style='color:grey;font-size:8px'>  SMARTsize Application Version 0.8.1, last updated 8 November 2014 </div>")
+            <p> Address correspondence to <a href='nseewald@umich.edu';>nseewald@umich.edu>nseewald@umich.edu</a></p>
+            <div style='color:grey;font-size:8px'>  SMARTsize Application Version 1.0.0, last updated 19 November 2014 </div>")
 ))
