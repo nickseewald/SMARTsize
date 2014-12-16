@@ -23,20 +23,32 @@ disable <- function(x) {
   x
 }
 
-shinyUI(
+shinyUI( 
   navbarPage("SMART Sample Size Calculator", id="SMARTsize",
              
              ##### HOME TAB#####
              
              tabPanel("Home",
                       
-                      tags$style(type='text/css',"input[type='number'] {width:60px}"), #set width of numericInputs
-                      
+                     ### CSS HEADER ###
+                      ### Apply style attributes across the application
+                      tags$head(
+                        tags$style(type='text/css',"input[type='number'] {width:60px}"), #set width of numericInputs
+                        tags$style(type='text/css',includeHTML("www/css/bootstrap-modal.css")), #responsive modals  
+                        tags$link(rel="stylesheet", href="//fonts.googleapis.com/css?family=Roboto|Roboto+Condensed"),
+                        tags$style("body {font-family: 'Roboto', sans-serif;} 
+                                    h1 {font-family: 'Roboto Condensed', sans-serif;} 
+                                    h2 {font-family: 'Roboto Condensed', sans-serif;}
+                                    h3 {font-family: 'Roboto Condensed', sans-serif;} 
+                                    h4 {font-family: 'Roboto Condensed', sans-serif;} 
+                                    h5 {font-family: 'Roboto Condensed', sans-serif;} 
+                                    h6 {font-family: 'Roboto Condensed', sans-serif;}") #apply font styles
+                        ),
+                     
                       sidebarPanel(
                         h3("Purpose"),
                         p("The purpose of this applet is to provide the minimum required sample size or power of a SMART (Sequential Multiple 
-                          Assignment Randomized Trial) with the goal of comparing two embedded adaptive interventions with continuous or binary outcomes.
-"),
+                          Assignment Randomized Trial) with the goal of comparing two embedded adaptive interventions with continuous or binary outcomes."),
                         
                         h3("Notation and Assumptions"),
                         tags$ul(
@@ -59,7 +71,7 @@ shinyUI(
                         
                       ),
                       
-                      mainPanel(
+                      mainPanel(                        
                         h1("Sample Size Calculator for SMARTs with Binary or Continuous Outcomes"),
                         br(),
                         p("Choose the SMART design of interest by clicking the corresponding tab at the top of the window, or the button below the corresponding diagram. 
@@ -69,12 +81,18 @@ shinyUI(
                           column(6,
                                  img(src="images/SMARTdesignA__.gif"),
                                  actionButton("pickTabA","Design A"),
-                                 helpText("8 embedded adaptive interventions: ArCnrE, ArCnrF, ArDnrE, ArDnrF, BrGnrI, BrGnrJ, BrHnrI, BrHnrJ")
+                                 HTML("<p> 8 embedded adaptive interventions: ArCnrE, ArCnrF, ArDnrE, ArDnrF, BrGnrI, BrGnrJ, BrHnrI, BrHnrJ.
+                                      <a data-toggle='modal' data-target='#exampleAmodal' style='color:#6b6b6b'>
+                                      Click here for an example. </a> </p>"),
+                                 includeHTML("www/html/exampleAmodal.html")
                           ),
                           column(6,
                                  img(src="images/SMARTdesignB__.gif"),
                                  actionButton("pickTabB","Design B"),
-                                 helpText("4 embedded adaptive interventions: ArCnrD, ArCnrE, BrFnrG, BrFnrH")
+                                 HTML("<p> 4 embedded adaptive interventions: ArCnrD, ArCnrE, BrFnrG, BrFnrH.
+                                      <a data-toggle='modal' data-target='#exampleBmodal' style='color:#6b6b6b'>
+                                      Click here for an example. </a> </p>"),
+                                 includeHTML("www/html/exampleBmodal.html")
                           )
                         ),
                         br(),
@@ -82,12 +100,18 @@ shinyUI(
                           column(6,
                                  img(src="images/SMARTdesignC__.gif"),
                                  actionButton("pickTabC","Design C"),
-                                 helpText("3 embedded adaptive interventions: ArCnrD, ArCnrE, BrFnrG")
+                                 HTML("<p> 3 embedded adaptive interventions: ArCnrD, ArCnrE, BrFnrG.
+                                      <a data-toggle='modal' data-target='#exampleCmodal' style='color:#6b6b6b'>
+                                      Click here for an example. </a> </p>"),
+                                 includeHTML("www/html/exampleCmodal.html")
                           ),
                           column(6,
                                  img(src="images/SMARTdesignD__.gif"),
                                  actionButton("pickTabD","Design D"),
-                                 helpText("4 embedded non-adaptive interventions: AC, AD, BE, BF")
+                                 HTML("<p> 4 embedded non-adaptive interventions: AC, AD, BE, BF.
+                                      <a data-toggle='modal' data-target='#exampleDmodal' style='color:#6b6b6b'>
+                                      Click here for an example. </a> </p>"),
+                                 includeHTML("www/html/exampleDmodal.html")
                           )
                         ),
                         br(),
@@ -462,11 +486,11 @@ shinyUI(
                                    tags$hr(),
                                    h4("Example:"),
                                    p("We wish to find the sample size for a SMART with a binary outcome where the probability of response to first stage interventions is 0.60. We estimate the overall probabilities
-                                     of success in the two AIs of interest, ArCnrD and BrFnrG, to be 0.70 and 0.50, respectively. Given a two-sided 5% type-I error, we require a sample size of 600 to make this
+                                     of success in the two AIs of interest, ArCnrD and BrFnrG, to be 0.70 and 0.57, respectively. Given a two-sided 5% type-I error, we require a sample size of 600 to make this
                                      comparison with 80% power.")
                       ),
                       
-                      mainPanel(
+                      mainPanel( div( tabPanel(
                         
                         ##### B PAGE HEADER #####
                         
@@ -589,7 +613,8 @@ shinyUI(
                           conditionalPanel(condition="input.selectOutcomeB==2 & input.selectResultsB=='power'",
                                            htmlOutput("continuousPowerB")
                           )
-                    ),
+                    ),style='width:800px;'),
+                    tags$head(tags$style(type="text/css", ".container-fluid {  max-width: 12600px; /* or 950px */}"))),
                     
                     ##### B TOOLTIPS #####
                     ### Add bootstrap-style tooltips to inputs coaching proper formatting
@@ -948,5 +973,6 @@ shinyUI(
              ),
 collapsable=TRUE,
 footer=HTML("<p> Kidwell, Seewald, Almirall (in preparation). </p>
-            <div style='color:grey;font-size:8px'>  SMARTsize Application Version 0.7.3, last updated 22 August 2014 </div>")
+            <p> Address correspondence to <a href='nseewald@umich.edu';>nseewald@umich.edu>nseewald@umich.edu</a></p>
+            <div style='color:grey;font-size:8px'>  SMARTsize Application Version 1.0.0, last updated 19 November 2014 </div>")
 ))
