@@ -3,23 +3,12 @@
 ### UNIVERSITY OF MICHIGAN
 ### DEPARTMENT OF BIOSTATISTICS
 
+library(shiny)
+library(pwr)
+library(shinyBS)
 options(encoding='UTF-8')
 
 ##### NON-REACTIVE FUNCTION DECLARATIONS #####
-
-### Force package installation/loading on running device
-force.package<-function(package){
-  #adapted from 
-  #http://r.789695.n4.nabble.com/Install-package-automatically-if-not-there-tp2267532p2267659.html
-  package<-as.character(substitute(package))
-  if (package %in% .packages(all.available=TRUE)){
-    eval(parse(text=paste("require(",package,")", sep="")))
-  }
-  else {
-    eval(parse(text=paste("install.packages('",package,"')",sep="")))
-    eval(parse(text=paste("require(",package,")", sep="")))
-  }
-}
 
 ### Function creates disabled (greyed-out) inputs
 ### Taken from https://groups.google.com/d/msg/shiny-discuss/uSetp4TtW-s/Jktu3fS60RAJ
@@ -45,12 +34,6 @@ fullDTRprob <- function(cell1, resp, cell2){
 ### Create operator to sequentially evaluate need() statements
 `%then%` <- shiny:::`%OR%`
 
-##### NON-REACTIVE INITIALIZATIONS ######
-
-force.package(shiny)
-force.package(pwr)
-force.package(shinyBS)
-
 ### Create vectors of all embedded DTRs for each design
 designA.DTRs <- c("ArCnrE", "ArCnrF", "ArDnrE", "ArDnrF", "BrGnrI", "BrGnrJ", "BrHnrI", "BrHnrJ")
 designB.DTRs <- c("ArCnrD", "ArCnrE", "BrFnrG", "BrFnrH")
@@ -59,7 +42,9 @@ designD.DTRs <- c("AC", "AD", "BE", "BF")
 
 ### Start server operation
 
-shinyServer(function(input,output,session){
+shinyServer(
+  shinybootstrap2::withBootstrap2({
+  function(input,output,session){
   
   ##### HOME #####
   ### Watch for clicks on pickTab actionButtons rendered under design diagrams
@@ -1841,5 +1826,4 @@ shinyServer(function(input,output,session){
          <p> For a trial of size N=",formatSize," with a continuous outcome where ",sentenceCompilerD(),
               ", we have at least ",formatPower," power. </p>",sep=""))
  })
-  
-})
+} }))
