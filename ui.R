@@ -6,6 +6,7 @@
 library(shiny)
 library(pwr)
 library(shinyBS)
+# library(shinybootstrap2)
 options(encoding='UTF-8')
 
 ### Function creates disabled (greyed-out) inputs
@@ -23,7 +24,8 @@ disable <- function(x) {
   x
 }
 
-shinyUI( 
+shinyUI(
+  shinybootstrap2::withBootstrap2({
   navbarPage("SMART Sample Size Calculator", id="SMARTsize",
              
              ##### HOME TAB#####
@@ -490,7 +492,7 @@ shinyUI(
                                      comparison with 80% power.")
                       ),
                       
-                      mainPanel( div( tabPanel(
+                      mainPanel(
                         
                         ##### B PAGE HEADER #####
                         
@@ -613,8 +615,7 @@ shinyUI(
                           conditionalPanel(condition="input.selectOutcomeB==2 & input.selectResultsB=='power'",
                                            htmlOutput("continuousPowerB")
                           )
-                    ),style='width:800px;'),
-                    tags$head(tags$style(type="text/css", ".container-fluid {  max-width: 12600px; /* or 950px */}"))),
+                    ),
                     
                     ##### B TOOLTIPS #####
                     ### Add bootstrap-style tooltips to inputs coaching proper formatting
@@ -972,7 +973,7 @@ shinyUI(
                       bsTooltip(id="inputSampleSizeD",title="Input must be an integer greater than zero.",placement="right",trigger="focus")
              ),
 collapsable=TRUE,
-footer=HTML("<p> Kidwell, Seewald, Almirall (in preparation). </p>
-            <p> Address correspondence to <a href='nseewald@umich.edu';>nseewald@umich.edu>nseewald@umich.edu</a></p>
+footer=HTML("<p> Kidwell et al (in preparation). </p>
+            <p style='font-size:12px'> Please direct correspondence to <a href='mailto:nseewald@umich.edu'>nseewald@umich.edu</a></p>
             <div style='color:grey;font-size:8px'>  SMARTsize Application Version 1.0.0, last updated 19 November 2014 </div>")
-))
+)}))
