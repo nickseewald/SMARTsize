@@ -1,0 +1,14 @@
+<h3> Purpose </h3>
+	<p> The purpose of this applet is to provide the minimum required sample size or power of a SMART (Sequential Multiple Assignment Randomized Trial) with the goal of comparing two embedded adaptive interventions with continuous or binary outcomes. </p>
+
+<h3> Notation and Assumptions </h3>
+	<ul>
+		<li> <img src="images/randomize.gif" width=25> refers to randomization. We assume equal probability of randomization to two intervention options, R=0.5. </li>
+		<li> Adaptive interventions (AIs) are denoted by the combination of the letters of the interventions where the intervention following 'r' indicates the the option for those who respond, and the intervention following 'nr' indicates the option for those who do not respond. For example, ArCnrE denotes the AI which reads as ''First receive A and if there is a response, receive C; if there is no response, receive E. </li>
+		<li> For more details on the assumptions behind the sample size calculations, please refer to Kidwell et al. (in preparation) and Oetting et al. (2007). </li>
+	</ul>
+
+<h3> Methods </h3>
+	<p> For binary outcomes, sample size is computed according to the methods presented in Kidwell et al. (in preparation). </p>
+    <p> For continuous outcomes, sample size is computed according to the methods in Oetting et al. (2007). </p>
+    <p> The application is run on <a href="http://www.r-project.org/">R</a> version 3.1, and written using <a href="http://shiny.rstudio.com/">Shiny</a>, an open-source web application framework for R produced by <a href="http://www.rstudio.com">RStudio</a>. </p>

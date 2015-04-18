@@ -43,9 +43,8 @@ designD.DTRs <- c("AC", "AD", "BE", "BF")
 ### Start server operation
 
 shinyServer(
-  shinybootstrap2::withBootstrap2({
   function(input,output,session){
-  
+    
   ##### HOME #####
   ### Watch for clicks on pickTab actionButtons rendered under design diagrams
   ### On click, redirect to appropriate tab. (More intuitive navigation structure)
@@ -66,9 +65,11 @@ shinyServer(
   ### Note that this requires a very specific naming convention for image assets
   ### 'SMARTdesignX_DTR1_DTR2.gif'; if DTRX is unselected, DTR name is 0. 
   
-  output$designAimg <- renderImage({
-    filename<-filename<-normalizePath(file.path('./www/images',paste('SMARTdesignA_',input$firstDTRcompareA,'_',input$secondDTRcompareA,'.gif',sep='')))
-    list(src=filename)
+  output$designAimg <- renderImage(expr = {
+    filename<-normalizePath(file.path('./www/images',paste('SMARTdesignA_',input$firstDTRcompareA,'_',input$secondDTRcompareA,'.gif',sep='')))
+    width  <- session$output_designAimg_width
+    height <- session$output_designAimg_height
+    list(src=filename,width=width,height=height)
   },deleteFile=FALSE)
   
   ### Render 'selectize' dropdown boxes with placeholder text for AI selection.
@@ -1826,4 +1827,4 @@ shinyServer(
          <p> For a trial of size N=",formatSize," with a continuous outcome where ",sentenceCompilerD(),
               ", we have at least ",formatPower," power. </p>",sep=""))
  })
-} }))
+})
