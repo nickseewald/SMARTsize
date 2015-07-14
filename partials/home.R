@@ -38,7 +38,7 @@ tagList(
              #                                  includeHTML("www/html/exampleAmodal.html")
       ),
       column(6,
-             img(src="images/SMARTdesignB__.gif", class = "img-responsive"),
+             img(src="www/images/SMARTdesignB__.gif", class = "img-responsive"),
              actionButton("pickTabB","Design B"),
              HTML("<p> 4 embedded adaptive interventions: ArCnrD, ArCnrE, BrFnrG, BrFnrH.
                   <a data-toggle='modal' data-target='#exampleBmodal' style='color:#6b6b6b'>

@@ -25,8 +25,8 @@ disable <- function(x) {
 
 shinyUI(
   # shinybootstrap2::withBootstrap2({
-  navbarPage("SMART Sample Size Calculator", id="SMARTsize", collapsible=TRUE, 
-             footer=HTML("<p> Kidwell et al (in preparation). </p>
+  navbarPage("SMART Sample Size Calculator", id = "SMARTsize", collapsible=TRUE, 
+             footer = HTML("<p> Kidwell et al (in preparation). </p>
                          <p style='font-size:12px'> Please direct correspondence to <a href='mailto:nseewald@umich.edu'>nseewald@umich.edu</a></p>
                          <div style='color:grey;font-size:8px'>  SMARTsize Application Version 1.0.0, last updated 19 November 2014 </div>"),
              
@@ -35,20 +35,14 @@ shinyUI(
              
              
              tabPanel("Home",
-                      
-                      includeHTML("www/html/exampleAmodal.html"),
-#                       includeHTML("www/html/exampleBmodal.html"),
-#                       includeHTML("www/html/exampleCmodal.html"),
-#                       includeHTML("www/html/exampleDmodal.html"),
                      ### CSS HEADER ###
                       ### Apply style attributes across the application
                       tags$head(
-                        tags$style(HTML("img {
+                        tags$style(type = 'text/css',"img {
                                             height=auto; max-width=100%;
-                                        }")),
-                        tags$style(type='text/css',"input[type='number'] {width:60px}"), #set width of numericInputs
-                        # tags$style(type='text/css',includeHTML("www/css/bootstrap-modal.css")), #responsive modals  
-                        tags$link(rel="stylesheet", href="//fonts.googleapis.com/css?family=Roboto|Roboto+Condensed"),
+                                        }"),
+                        tags$style(type = 'text/css',"input[type='number'] {width:60px}"), #set width of numericInputs  
+                        tags$link(rel = "stylesheet", href = "//fonts.googleapis.com/css?family=Roboto|Roboto+Condensed"),
                         tags$style("body {font-family: 'Roboto', sans-serif;} 
                                     h1 {font-family: 'Roboto Condensed', sans-serif;} 
                                     h2 {font-family: 'Roboto Condensed', sans-serif;}
@@ -56,9 +50,9 @@ shinyUI(
                                     h4 {font-family: 'Roboto Condensed', sans-serif;} 
                                     h5 {font-family: 'Roboto Condensed', sans-serif;} 
                                     h6 {font-family: 'Roboto Condensed', sans-serif;}"), #apply font styles
-                        tags$style(type='text/css', 
-"modal-backdrop{                  
-                                position: fixed;
+                        tags$style(type = 'text/css', 
+                                "modal-backdrop{                  
+                                   position: fixed;
                                    height: 100%;
                                    top: 0;
                                    right: 0;
@@ -68,13 +62,20 @@ shinyUI(
                                    background-color: #000; opacity: 80%;
                                    }
                                 .modal-content {
-                          overflow:auto;
-                        }
-                                   @media (min-width: 992px) {
-  .modal-lg {
-                                   width: 900px;
-                                   }
-                                   }")
+                                   overflow: auto;
+                                }
+                                @media (min-width: 992px) {
+                                  .modal-lg {
+                                     width: 900px;
+                                  }
+                                }
+                                  img {
+      border: 1;
+                                max-width: 100%;
+                                }
+                                element.style {
+                                width: 33.33%;
+                                }")
                         ),
                      
                       sidebarPanel(
@@ -89,16 +90,15 @@ shinyUI(
                         br(),
                         fluidRow(
                           column(6,
-                                 img(src="images/SMARTdesignA__.gif", class = "img-responsive"),
+                                 img(src = "images/SMARTdesignA__.gif", class = "img-responsive"),
                                  actionButton("pickTabA","Design A"),
-                                 # bsButton(inputId = "launchModalA",label="Click here for an example",style="link"),
-                                 # bsModal(id="modalA",title="Modal A", trigger="launchModalA",source(file="./www/R/references.R",local=T,echo=F)$value,size='large')
                                  HTML("<p> 8 embedded adaptive interventions: ArCnrE, ArCnrF, ArDnrE, ArDnrF, BrGnrI, BrGnrJ, BrHnrI, BrHnrJ.
                                       <a data-toggle='modal' data-target='#exampleAmodal' style='color:#6b6b6b'>
-                                      Click here for an example. </a> </p>")
+                                      Click here for an example. </a> </p>"),
+                                 includeHTML("www/html/exampleAmodal.html")
                           ),
                           column(6,
-                                 img(src="images/SMARTdesignB__.gif", class = "img-responsive"),
+                                 img(src = "images/SMARTdesignB__.gif", class = "img-responsive"),
                                  actionButton("pickTabB","Design B"),
                                  HTML("<p> 4 embedded adaptive interventions: ArCnrD, ArCnrE, BrFnrG, BrFnrH.
                                       <a data-toggle='modal' data-target='#exampleBmodal' style='color:#6b6b6b'>
@@ -109,7 +109,7 @@ shinyUI(
                         br(),
                         fluidRow(
                           column(6,
-                                 img(src="images/SMARTdesignC__.gif", class = "img-responsive"),
+                                 img(src = "images/SMARTdesignC__.gif", class = "img-responsive"),
                                  actionButton("pickTabC","Design C"),
                                  HTML("<p> 3 embedded adaptive interventions: ArCnrD, ArCnrE, BrFnrG.
                                       <a data-toggle='modal' data-target='#exampleCmodal' style='color:#6b6b6b'>
@@ -117,7 +117,7 @@ shinyUI(
                                  includeHTML("www/html/exampleCmodal.html")
                           ),
                           column(6,
-                                 img(src="images/SMARTdesignD__.gif", class = "img-responsive"),
+                                 img(src = "images/SMARTdesignD__.gif", class = "img-responsive"),
                                  actionButton("pickTabD","Design D"),
                                  HTML("<p> 4 embedded non-adaptive interventions: AC, AD, BE, BF.
                                       <a data-toggle='modal' data-target='#exampleDmodal' style='color:#6b6b6b'>
@@ -151,6 +151,7 @@ shinyUI(
              ##### A SIDEBAR #####
              
              tabPanel("Design A",
+                      
                       sidebarPanel(
                         includeHTML("www/html/sidebarA.html")
                       ),
@@ -191,7 +192,9 @@ shinyUI(
                         # Call uiOutput, which reactively renders UI inputs according to selected DTRs and options selected below.
                         
                         fluidRow(
-                          column(7, imageOutput("designAimg")),
+                          column(7, imageOutput("designAimg", width = "100%")
+                                 # ,htmlOutput("designAdiagram",class='img-responsive')
+                                 ),
                           column(5, 
                                  numericInput("respA",
                                               label=HTML("Concerning the tailoring variable, please provide the <strong> probability of response </strong> to the 
@@ -301,46 +304,8 @@ shinyUI(
                       
                       ##### B SIDEBAR #####
                       
-                      sidebarPanel(h4("About this design:"),
-                                   p("In this design, only participants who do not respond to first-stage treatment are randomized twice. Initially all participants are randomized to A vs. B. Participants
-                                     identified as responders to A (B) are not re-randomized, and assigned to treatment C (F). Participants identified as non-responders to A (B) are re-randomized to D vs.
-                                     E (G vs. H). There are 4 embedded AIs in this SMART. They are ArCnrD, ArCnrE, BrFnrG, and BrFnrH."),
-                                   tags$hr(),
-                                   h4("Inputs Required:"),
-                                   tags$ul(
-                                     tags$li("Indication of continuous or binary outcome."),
-                                     tags$li("The probability of response to the first-stage treatment. We assume this probability is the same for both initial treatments. If you cannot provide an
-                                             estimate of this parameter, please indicate 0 to provide conservative output."),
-                                     tags$li("Indication of a one- or two-sided test."),
-                                     tags$li("Specification of a type-I error rate (level of significance). The default value is 0.05, but may range between 0 and 1."),
-                                     tags$li("If interest is in sample size, specify the power of the study. The default power is 0.80, but may range between 0 and 1.
-                                             If interest is in power, specify the sample size of the study. This must be input as an integer greater than zero."),
-                                     tags$li("For binary outcomes:",
-                                             tags$ul(
-                                               tags$li("The default inputs are the probabilities of success for each of the selected AIs. These are the overall probabilities of success for those
-                                                       participants following each of the selected embedded AIs. For example, the probability of success for ArCnrE."),
-                                               tags$li("Alternatively, cell-specific probabilities may be specified. These refer to the probabilities of success for those consistent with a particular
-                                                       intervention pathway. For example, the probability of success for ArC."),
-                                               tags$li("Alternatively, if cell-specific or AI-specific probabilities cannot be specified, a target difference in probabilities (must be between 0 and 1)
-                                                       or a target odds-ratio (must be positive and not equal to 1), may be selected and provided. With both of these selections, we assume one
-                                                       of the AIs has probability of success equal to 0.5 to yield conservative results.")
-                                             )),
-                                     tags$li("For continuous outcomes:",
-                                             tags$ul(
-                                               tags$li("Specify the standardized effect size between the selected AIs. We use Cohen's definition for standardized effect size
-                                                       such that for the two selected AIs it is the difference between the means of the two AIs divided by the square root of the pooled variance
-                                                       (square root of the average of the variances of the two groups). This may range between 0 and 10.")
-                                             ))
-                                      ),
-                                   h5("Input Formatting Rules:"),
-                                   p("All inputs must be given in decimal form with leading zero (no fractions, please), and can be precise to two decimal places.
-                                                   For example, '0.07' is valid input; both '.07' and '7/100' are invalid. Improperly-formatted input may result in 
-                                                   unpredictable behavior."),
-                                   tags$hr(),
-                                   h4("Example:"),
-                                   p("We wish to find the sample size for a SMART with a binary outcome where the probability of response to first stage interventions is 0.60. We estimate the overall probabilities
-                                     of success in the two AIs of interest, ArCnrD and BrFnrG, to be 0.70 and 0.57, respectively. Given a two-sided 5% type-I error, we require a sample size of 600 to make this
-                                     comparison with 80% power.")
+                      sidebarPanel(
+                        includeHTML("www/html/sidebarB.html")
                       ),
                       
                       mainPanel(

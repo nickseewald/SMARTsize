@@ -1,3 +1,4 @@
+
 ##### SERVER.R FOR SMART SAMPLE SIZE CALCULATOR #####
 ### NICK SEEWALD, 2014
 ### UNIVERSITY OF MICHIGAN
@@ -49,13 +50,11 @@ shinyServer(
   ### Watch for clicks on pickTab actionButtons rendered under design diagrams
   ### On click, redirect to appropriate tab. (More intuitive navigation structure)
   
-  observe({
-    if(input$pickTabA) updateTabsetPanel(session,"SMARTsize",selected="Design A")
-    if(input$pickTabB) updateTabsetPanel(session,"SMARTsize",selected="Design B")
-    if(input$pickTabC) updateTabsetPanel(session,"SMARTsize",selected="Design C")
-    if(input$pickTabD) updateTabsetPanel(session,"SMARTsize",selected="Design D")
-  })
-  
+    observeEvent(input$pickTabA, updateTabsetPanel(session,"SMARTsize",selected="Design A"))
+    observeEvent(input$pickTabB, updateTabsetPanel(session,"SMARTsize",selected="Design B"))
+    observeEvent(input$pickTabC, updateTabsetPanel(session,"SMARTsize",selected="Design C"))
+    observeEvent(input$pickTabD, updateTabsetPanel(session,"SMARTsize",selected="Design D"))
+    
   ##### DESIGN A #####
   
   ##### A HEADER #####
@@ -67,9 +66,7 @@ shinyServer(
   
   output$designAimg <- renderImage(expr = {
     filename<-normalizePath(file.path('./www/images',paste('SMARTdesignA_',input$firstDTRcompareA,'_',input$secondDTRcompareA,'.gif',sep='')))
-    width  <- session$output_designAimg_width
-    height <- session$output_designAimg_height
-    list(src=filename,width=width,height=height)
+    list(src=filename)
   },deleteFile=FALSE)
   
   ### Render 'selectize' dropdown boxes with placeholder text for AI selection.
@@ -188,8 +185,9 @@ shinyServer(
         return(disable(numericInput("DTRsuccA2disable",label=HTML("Probability of Success for Second AI &nbsp; <img src='images/red_dash.gif'>"),value=0,min=0,max=1,step=0.01)))
       }
       else{
-        output <- c(numericInput("DTRsuccA2",label=HTML("Probability of Success for Second AI &nbsp; <img src='images/red_dash.gif'>"),value=0,min=0,max=1,step=0.01), 
-                    bsTooltip(id="DTRsuccA2",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"))
+        output <- c(numericInput("DTRsuccA2",label=HTML("Probability of Success for Second AI &nbsp; <img src='images/red_dash.gif'>"),value=0,min=0,max=1,step=0.01) 
+                    # bsTooltip(id="DTRsuccA2",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus")
+                    )
         return(output)
       }
     }
