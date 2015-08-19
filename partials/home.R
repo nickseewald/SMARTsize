@@ -5,7 +5,7 @@ tagList(
                     height=auto; max-width=100%;
                     }")),
                         tags$style(type='text/css',"input[type='number'] {width:60px}"), #set width of numericInputs
-    tags$style(type='text/css',includeHTML("www/css/bootstrap-modal.css")), #responsive modals  
+    # tags$style(type='text/css',includeHTML("./www/css/bootstrap-modal.css")), #responsive modals  
     tags$link(rel="stylesheet", href="//fonts.googleapis.com/css?family=Roboto|Roboto+Condensed"),
     tags$style("body {font-family: 'Roboto', sans-serif;} 
                h1 {font-family: 'Roboto Condensed', sans-serif;} 
@@ -28,7 +28,7 @@ tagList(
     br(),
     fluidRow(
       column(6,
-             img(src="images/SMARTdesignA__.gif", class = "img-responsive"),
+             img(src = "./www/images/SMARTdesignA__.gif", class = "img-responsive"),
              actionButton("pickTabA","Design A"),
              bsButton(inputId = "launchModalA",label="Click here for an example",style="link"),
              bsModal(id="modalA",title="Modal A", trigger="launchModalA",source(file="./www/R/references.R",local=T,echo=F)$value,size='large')
