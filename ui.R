@@ -40,7 +40,7 @@ shinyUI(
                                      href = "http://fonts.googleapis.com/css?family=Roboto|Roboto+Condensed"),
                         tags$link(rel = "stylesheet", type = "text/css", href = "css/customize.css"),
                         tags$script(HTML("$(document).ready(function(){
-                                      $('.version').text('SMARTsize Version 1.0.1, last updated 18 July 2015');
+                                      $('.version').text('SMARTsize Version 1.0.4, last updated 15 September 2015');
                                     });"))
                       ),
 
@@ -135,12 +135,8 @@ shinyUI(
                           "The image below will change to highlight the AIs you select."),
                         
                         fluidRow(
-                          column(6,
-                                 uiOutput("selectAI1A")
-                          ),
-                          column(6,
-                                 uiOutput("selectAI2A")
-                          )
+                          column(6, uiOutput("selectAI1A")),
+                          column(6, uiOutput("selectAI2A"))
                         ),
                         fluidRow(textOutput("printer")),
                         
@@ -154,10 +150,10 @@ shinyUI(
                           column(7, imageOutput("designAimg", width = "100%", height = "100%")),
                           column(5, 
                                  numericInput("respA",
-                                              label = HTML("Concerning the tailoring variable, please provide the 
-                                                           <strong> probability of response </strong> to the 
+                                              label = HTML("<p>Concerning the tailoring variable, please provide the 
+                                                           <strong>probability of response</strong> to the 
                                                            first-stage intervention. If you are unsure, leave as 
-                                                           0 for a conservative estimate."), 
+                                                           0 for a conservative estimate.</p>"), 
                                               value = 0,min = 0,max = 1,step = 0.01),
                                  conditionalPanel(condition = "input.selectOutcomeA == 1",
                                                   p("Concerning the primary outcome, please provide the",
@@ -229,16 +225,16 @@ shinyUI(
                         # Choose which result to display based on binary/continuous outcome and selected result option
                         
                         h3("Results"),
-                        conditionalPanel(condition="input.selectOutcomeA==1 & input.selectResultsA=='sample'",
+                        conditionalPanel(condition = "input.selectOutcomeA == 1 & input.selectResultsA == 'sample'",
                                          htmlOutput("binarySampleSizeA")
                         ),
-                        conditionalPanel(condition="input.selectOutcomeA==1 & input.selectResultsA=='power'",
+                        conditionalPanel(condition = "input.selectOutcomeA == 1 & input.selectResultsA == 'power'",
                                          htmlOutput("binaryPowerA")
                         ),
-                        conditionalPanel(condition="input.selectOutcomeA==2 & input.selectResultsA=='sample'",
+                        conditionalPanel(condition = "input.selectOutcomeA == 2 & input.selectResultsA == 'sample'",
                                          htmlOutput("continuousSampleSizeA")
                         ),
-                        conditionalPanel(condition="input.selectOutcomeA==2 & input.selectResultsA=='power'",
+                        conditionalPanel(condition = "input.selectOutcomeA == 2 & input.selectResultsA == 'power'",
                                          htmlOutput("continuousPowerA")
                         )
                       ),
@@ -248,10 +244,14 @@ shinyUI(
                       ### Below are tooltips for inputs rendered statically in ui.R
                       ### For inputs rendered dynamically, see the appropriate renderUI() in server.R
                       
-                      bsTooltip(id="respA",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"),      
-                      bsTooltip(id="alphaA",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"),
-                      bsTooltip(id="inputPowerA",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"),
-                      bsTooltip(id="inputSampleSizeA",title="Input must be an integer greater than zero.",placement="right",trigger="focus")                    
+                      bsTooltip(id = "respA", title = "Input can range from 0-1 and must be in decimal form, up to two places.", 
+                                placement = "right", trigger = "focus"),      
+                      bsTooltip(id = "alphaA", title = "Input can range from 0-1 and must be in decimal form, up to two places.",
+                                placement = "right", trigger = "focus"),
+                      bsTooltip(id = "inputPowerA", title = "Input can range from 0-1 and must be in decimal form, up to two places.",
+                                placement = "right", trigger = "focus"),
+                      bsTooltip(id = "inputSampleSizeA", title = "Input must be an integer greater than zero.", 
+                                placement = "right", trigger = "focus")                    
                       
              ),
              
@@ -275,8 +275,8 @@ shinyUI(
                         
                         ##### B OUTCOME SELECTION #####
                         
-                        radioButtons("selectOutcomeB", label=HTML("Is the <strong> outcome </strong> of interest binary or continuous?"),
-                                     choices=list("Binary"=1,"Continuous"=2),selected=1),
+                        radioButtons("selectOutcomeB", label = HTML("Is the <strong> outcome </strong> of interest binary or continuous?"),
+                                     choices = list("Binary" = 1,"Continuous" = 2), selected = 1),
                         
                         tags$hr(),                        
                         
@@ -287,12 +287,8 @@ shinyUI(
                           "The image below will change to highlight the AIs you select."),
                         
                         fluidRow(
-                          column(6,
-                                 uiOutput("selectAI1B")
-                          ),
-                          column(6,
-                                 uiOutput("selectAI2B")  
-                          )
+                          column(6, uiOutput("selectAI1B")),
+                          column(6, uiOutput("selectAI2B"))
                         ),
                         
                         tags$hr(),
@@ -305,11 +301,11 @@ shinyUI(
                           column(7, imageOutput("designBimg")),
                           column(5,
                                  numericInput("respB",
-                                              label=HTML("Concerning the tailoring variable, please provide the <strong> probability of response
+                                              label = HTML("Concerning the tailoring variable, please provide the <strong> probability of response
                                                          </strong> to the first-stage intervention. If you are unsure, leave as 0 for a 
                                                          conservative estimate."),
-                                              value=0,min=0,max=1,step=0.01),
-                                 conditionalPanel(condition="input.selectOutcomeB==1",
+                                              value = 0, min = 0, max = 1, step = 0.01),
+                                 conditionalPanel(condition = "input.selectOutcomeB == 1",
                                                   p("Concerning the primary outcome, please provide the", strong("probability of success"), 
                                                     "for each of the AIs of interest."),
                                                   uiOutput("binaryDTR1probB"),

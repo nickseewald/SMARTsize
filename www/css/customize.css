@@ -4,12 +4,12 @@ input[type="number"]{ width: 80px}
 modal-backdrop{ position: fixed; height: 100%; top: 0; right: 0; bottom: 0; left: 0; z-index: -1; background-color: #000; opacity: 80%;}
 modal.content{ overflow: auto;}
 @media (min-width: 992px) { .modal-lg{ width: 900px; }}
-body {font-family: 'Roboto', sans-serif;} 
-h1 {font-family: 'Roboto Condensed', sans-serif;} 
+body {font-family: 'Roboto', sans-serif;}
+h1 {font-family: 'Roboto Condensed', sans-serif;}
 h2 {font-family: 'Roboto Condensed', sans-serif;}
-h3 {font-family: 'Roboto Condensed', sans-serif;} 
-h4 {font-family: 'Roboto Condensed', sans-serif;} 
-h5 {font-family: 'Roboto Condensed', sans-serif;} 
+h3 {font-family: 'Roboto Condensed', sans-serif;}
+h4 {font-family: 'Roboto Condensed', sans-serif;}
+h5 {font-family: 'Roboto Condensed', sans-serif;}
 h6 {font-family: 'Roboto Condensed', sans-serif;}
 .collapse-title {
   margin-top: 0;
@@ -17,7 +17,7 @@ h6 {font-family: 'Roboto Condensed', sans-serif;}
   color: inherit;
   font-size: h4;
 }
-.collapse-title > a, 
+.collapse-title > a,
 .collapse-title > button {
 	color: inherit
 }
@@ -27,4 +27,7 @@ h6 {font-family: 'Roboto Condensed', sans-serif;}
 .version{
 	color: #ababab;
 	font-size: 7pt;
+}
+.shiny-input-container > label{
+    font-weight: 200;
 }
