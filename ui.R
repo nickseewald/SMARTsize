@@ -8,28 +8,13 @@ library(pwr)
 library(shinyBS)
 options(encoding = 'UTF-8')
 
-### Function creates disabled (greyed-out) inputs
-### Taken from https://groups.google.com/d/msg/shiny-discuss/uSetp4TtW-s/Jktu3fS60RAJ
-disable <- function(x) {
-  if (inherits(x, 'shiny.tag')) {
-    if (x$name %in% c('input', 'select'))
-      x$attribs$disabled <- 'disabled'
-    x$children <- disable(x$children)
-  }
-  else if (is.list(x) && length(x) > 0) {
-    for (i in 1:length(x))
-      x[[i]] <- disable(x[[i]])
-  }
-  x
-}
-
 shinyUI(
   # shinybootstrap2::withBootstrap2({
   navbarPage("SMART Sample Size Calculator", id = "SMARTsize", collapsible = TRUE, footer = " ",
 #              footer = HTML("<p> Kidwell et al (in preparation). </p>
 #                          <p style='font-size:12px'> Please direct correspondence to <a href='mailto:nseewald@umich.edu'>nseewald@umich.edu</a></p>
 #                          <div style='color:grey;font-size:8px'>  SMARTsize Application Version 1.0.0, last updated 19 November 2014 </div>"),
-             
+
              ##### HOME TAB #####
              
              tabPanel("Home",
@@ -37,10 +22,10 @@ shinyUI(
                       ### Apply style attributes across the application
                       tags$head(
                         tags$link(rel = "stylesheet", type = "text/css",
-                                     href = "http://fonts.googleapis.com/css?family=Roboto|Roboto+Condensed"),
+                                     href = "https://fonts.googleapis.com/css?family=Roboto|Roboto+Condensed"),
                         tags$link(rel = "stylesheet", type = "text/css", href = "css/customize.css"),
                         tags$script(HTML("$(document).ready(function(){
-                                      $('.version').text('SMARTsize Version 1.0.4, last updated 15 September 2015');
+                                      $('.version').text('SMARTsize Version 1.1.1, last updated 13 November 2015');
                                     });"))
                       ),
 
@@ -49,14 +34,16 @@ shinyUI(
                       ),
                       
                       mainPanel(
-                        HTML("<div class='page-header'><h1>Sample Size Calculator for SMARTs with Binary or Continuous Outcomes</h1></div>"),
-                        p("Choose the SMART design of interest by clicking the corresponding tab at the top of the window, or the button below the corresponding diagram. 
+                        HTML("<div class='page-header'>
+                             <h1>Sample Size Calculator for SMARTs with Binary or Continuous Outcomes</h1></div>"),
+                        p("Choose the SMART design of interest by clicking the corresponding tab
+                          at the top of the window, or the button below the corresponding diagram.
                           Notation is established in the sidebar. See below for more background on SMARTs."),
                         br(),
                         fluidRow(
                           column(6,
                                  img(src = "images/SMARTdesignA__.gif", class = "img-responsive"),
-                                 actionButton("pickTabA","Design I"),
+                                 actionButton("pickTabA", "Design I"),
                                  HTML("<p> 8 embedded adaptive interventions: ArCnrE, ArCnrF, ArDnrE, ArDnrF, BrGnrI, BrGnrJ, BrHnrI, BrHnrJ.
                                       <a data-toggle='modal' data-target='#exampleAmodal' style='color:#6b6b6b'>
                                       Click here for an example. </a> </p>"),
@@ -122,7 +109,7 @@ shinyUI(
                         tags$hr(),
                         
                         ##### A OUTCOME SELECTION #####
-                        radioButtons("selectOutcomeA", label = HTML("Is the <strong> outcome </strong> of interest binary or continuous?"),
+                        radioButtons("selectOutcomeA", label = eval(text.outcomeType),
                                      choices = list("Binary" = 1,"Continuous" = 2), selected = 1),
                         
                         tags$hr(),
@@ -131,14 +118,12 @@ shinyUI(
                         # Dropdown menus provide options to select DTRs for comparison.
                         # Currently the menus are not reactively-repopulating (making it possible to select the same DTR twice). Possible future improvement.
                                                 
-                        p("Which two", strong("adaptive interventions"), "would you like to compare? Choose two from the menus below.",
-                          "The image below will change to highlight the AIs you select."),
+                        eval(text.selectDTRcompare), 
                         
                         fluidRow(
                           column(6, uiOutput("selectAI1A")),
                           column(6, uiOutput("selectAI2A"))
                         ),
-                        fluidRow(textOutput("printer")),
                         
                         tags$hr(),
                         
@@ -150,15 +135,10 @@ shinyUI(
                           column(7, imageOutput("designAimg", width = "100%", height = "100%")),
                           column(5, 
                                  numericInput("respA",
-                                              label = HTML("<p>Concerning the tailoring variable, please provide the 
-                                                           <strong>probability of response</strong> to the 
-                                                           first-stage intervention. If you are unsure, leave as 
-                                                           0 for a conservative estimate.</p>"), 
+                                              label = eval(text.responseProbLabel), 
                                               value = 0,min = 0,max = 1,step = 0.01),
                                  conditionalPanel(condition = "input.selectOutcomeA == 1",
-                                                  p("Concerning the primary outcome, please provide the",
-                                                    strong("probability of success"), "for each of the AIs of interest."),
-                                                  uiOutput("binaryDTR1probA"),
+                                                  eval(text.successProbLabel), uiOutput("binaryDTR1probA"),
                                                   conditionalPanel(condition = "input.cellOrConditionalA",
                                                                    fluidRow(column(11,offset = 1,
                                                                                    uiOutput("cellProbsDTR1A"))
@@ -172,9 +152,7 @@ shinyUI(
                                                   )
                                  ),
                                  conditionalPanel(condition = "input.selectOutcomeA == 2",
-                                                  p("Concerning the primary outcome, please provide the", strong("standardized effect size"), "between the
-                                                    AIs of interest."),
-                                                  uiOutput("continuousProbA")
+                                                  eval(text.stdEffectLabel), uiOutput("continuousProbA")
                                  ),
                                  
                                  ##### A INPUT OPTIONS #####
@@ -185,10 +163,10 @@ shinyUI(
                                  conditionalPanel(condition = "input.firstDTRcompareA != 0 && input.secondDTRcompareA != 0",
                                                   br(),
                                                   conditionalPanel(condition = "input.selectOutcomeA == 1",
-                                                                   helpText("If you prefer to provide different information, check the appropriate box below."),
-                                                                   checkboxInput("cellOrConditionalA",label = "Cell-Specific Success Probabilities",value = FALSE),
-                                                                   checkboxInput("targetDiffCheckA",label = "Target Difference in Success Probabilities",value=FALSE),
-                                                                   checkboxInput("targetOddsCheckA",label = "Target Odds Ratio",value = FALSE)
+                                                                   eval(text.altInputHelp),
+                                                                   checkboxInput("cellOrConditionalA", label = text.cellSpecLabel, value = FALSE),
+                                                                   checkboxInput("targetDiffCheckA",   label = text.targDiffLabel, value = FALSE),
+                                                                   checkboxInput("targetOddsCheckA",   label = text.targORLabel,   value = FALSE)
                                                   )
                                  )
                           )
@@ -202,12 +180,12 @@ shinyUI(
                         
                         fluidRow(
                           column(6,
-                                 radioButtons("selectResultsA",label="Are you interested in finding sample size or power?",
-                                                choices=list("Sample Size" = "sample", "Power" = "power"),
-                                                selected="sample"),
-                                 radioButtons("selectAlternativeA",label="Do you want to perform a one- or two-sided test?",
-                                              choices=list("One-Sided"="one.sided","Two-Sided"="two.sided"),
-                                              selected="two.sided")
+                                 radioButtons("selectResultsA", label = text.sampleSizeOrPower,
+                                                choices  = list("Sample Size" = "sample", "Power" = "power"),
+                                                selected = "sample"),
+                                 radioButtons("selectAlternativeA", label = text.oneOrTwoSidedTest,
+                                              choices=list("One-Sided" = "one.sided","Two-Sided" = "two.sided"),
+                                              selected = "two.sided")
                                  ),
                           column(6,
                                  numericInput("alphaA",label=HTML("Type I Error (&alpha;):"),value=0.05,min=0,max=1,step=0.01),
@@ -270,7 +248,7 @@ shinyUI(
                         
                         ##### B PAGE HEADER #####
                         
-                        h1("Design II"),
+                        h1(textOutput("tab")),
                         tags$hr(),
                         
                         ##### B OUTCOME SELECTION #####
@@ -404,7 +382,7 @@ shinyUI(
                       
                       ##### C SIDEBAR #####
                       
-                      sidebarPanel(includeHTML("www/HTML/sidebarC.html")),
+                      sidebarPanel(includeHTML("www/html/sidebarC.html")),
                       mainPanel(
                         
                         ##### C PAGE HEADER #####

@@ -11,46 +11,13 @@ options(encoding = 'UTF-8')
 # TODO: Deprecate choice of test sidedness for binary outcome
 # TODO: Centralize error messages in error_messages.R
 # TODO: Make progress on partials
-
-##### NON-REACTIVE FUNCTION DECLARATIONS #####
-
-### Function creates disabled (greyed-out) inputs
-### Taken from https://groups.google.com/d/msg/shiny-discuss/uSetp4TtW-s/Jktu3fS60RAJ
-disable <- function(x) {
-  if (inherits(x, 'shiny.tag')) {
-    if (x$name %in% c('input', 'select'))
-      x$attribs$disabled <- 'disabled'
-    x$children <- disable(x$children)
-  }
-  else if (is.list(x) && length(x) > 0) {
-    for (i in 1:length(x))
-      x[[i]] <- disable(x[[i]])
-  }
-  x
-}
-
-source("www/R/error_messages.R")
-
-### Function evaluates full-DTR probabilities; not reactive
-fullDTRprob <- function(cell1, resp, cell2){
-  pDTR <- cell1 * resp + cell2 * (1-resp)
-  return(pDTR)
-}
-
-### Create operator to sequentially evaluate need() statements
-`%then%` <- shiny:::`%OR%`
-
-### Create vectors of all embedded DTRs for each design
-designA.DTRs <- list("{A,C,E}" = "ArCnrE", "{A,C,F}" = "ArCnrF", "{A,D,E}" = "ArDnrE", "{A,D,F}" = "ArDnrF",
-                     "{B,G,I}" = "BrGnrI", "{B,G,J}" = "BrGnrJ", "{B,H,I}" = "BrHnrI", "{B,H,J}" = "BrHnrJ")
-designB.DTRs <- list("{A,C,D}" = "ArCnrD", "{A,C,E}" = "ArCnrE", "{B,F,G}" = "BrFnrG", "{B,F,H}" = "BrFnrH")
-designC.DTRs <- list("{A,C,D}" = "ArCnrD", "{A,C,E}" = "ArCnrE", "{B,F,G}" = "BrFnrG")
+# TODO: Move non-reactive function declarations, etc. into global.R
 
 ### Start server operation
 
 shinyServer(
   function(input,output,session){
-
+output$tab <- renderText(input$SMARTsize)
   ##### HOME #####
   ### Watch for clicks on pickTab actionButtons rendered under design diagrams
   ### On click, redirect to appropriate tab. (More intuitive navigation structure)
@@ -78,10 +45,10 @@ shinyServer(
   ### Placed in server.R rather than ui.R because of dependency on first DTR selection
 
     output$selectAI1A <- renderUI({
-      AI <- selectizeInput("firstDTRcompareA",label = "Reference Adaptive Intervention:",
+      AI <- selectizeInput("firstDTRcompareA",label = text.refDTRLabel,
                            choices = designA.DTRs,
                            options = list(
-                             placeholder = 'Please select a Reference AI.',
+                             placeholder = text.refDTRPlaceholder,
                              onInitialize = I('function() { this.setValue(0); }')
                            )
       )
@@ -89,10 +56,10 @@ shinyServer(
     })
 
     output$selectAI2A <- renderUI({
-      AI <- selectizeInput("secondDTRcompareA",label = "Comparison Adaptive Intervention:",
+      AI <- selectizeInput("secondDTRcompareA",label = text.compDTRLabel,
                            choices = designA.DTRs[substr(designA.DTRs, 1, 1) != substr(input$firstDTRcompareA, 1, 1)],
                            options = list(
-                             placeholder = 'Please select a Comparison AI.',
+                             placeholder = text.compDTRPlaceholder,
                              onInitialize = I('function() { this.setValue(0); }')
                            )
       )
@@ -110,24 +77,24 @@ shinyServer(
 
   substringDTR1A <- reactive({
     if (length(input$firstDTRcompareA) > 0) {
-      DTR1 <- paste(input$firstDTRcompareA)
-      firstStage1 <- substr(DTR1,1,1)
-      secondStageR1 <- substr(DTR1,3,3)
+      DTR1           <- paste(input$firstDTRcompareA)
+      firstStage1    <- substr(DTR1,1,1)
+      secondStageR1  <- substr(DTR1,3,3)
       secondStageNR1 <- substr(DTR1,6,6)
       return(c(DTR1, firstStage1, secondStageR1, secondStageNR1))
     }
-    else return(c(0,0,0,0))
+    else return(c(0, 0, 0, 0))
   })
 
   substringDTR2A <- reactive({
     if (length(input$secondDTRcompareA) > 0) {
-      DTR2 <- paste(input$secondDTRcompareA)
-      firstStage1 <- substr(DTR2,1,1)
-      secondStageR1 <- substr(DTR2,3,3)
+      DTR2           <- paste(input$secondDTRcompareA)
+      firstStage1    <- substr(DTR2,1,1)
+      secondStageR1  <- substr(DTR2,3,3)
       secondStageNR1 <- substr(DTR2,6,6)
       return(c(DTR2, firstStage1, secondStageR1, secondStageNR1))
     }
-    else return(c(0,0,0,0))
+    else return(c(0, 0, 0, 0))
   })
 
   #When a first DTR is selected, render an input box corresponding to whatever input method is selected.
@@ -143,7 +110,7 @@ shinyServer(
       return(disable(numericInput("DTRsuccA1disable", label = HTML("Probability of Success for Reference AI &nbsp; <img src='images/blue_dash.gif'>"), value = NA, min = 0, max = 1, step = 0.01)))
     } else {
       return(list(numericInput("DTRsuccA1", label = HTML("Probability of Success for Reference AI &nbsp; <img src='images/blue_dash.gif'>"), value = NA, min = 0, max = 1, step = 0.01),
-                 bsTooltip(id = "DTRsuccA1", title = "Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.", placement = "right", trigger = "focus"))
+                 bsTooltip(id = "DTRsuccA1", title = "Input can range from 0-1 and must be in decimal form, up to two places.", placement = "right", trigger = "focus"))
       )}
     })
 
@@ -157,7 +124,7 @@ shinyServer(
       }
       else{
         output <- list(numericInput("DTRsuccA2",label = HTML("Probability of Success for Comparison AI &nbsp; <img src='images/red_dash.gif'>"), value = NA, min = 0, max = 1, step = 0.01),
-                      bsTooltip(id = "DTRsuccA2", title = "Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.", placement = "right", trigger = "focus")
+                      bsTooltip(id = "DTRsuccA2", title = "Input can range from 0-1 and must be in decimal form?, up to two places.", placement = "right", trigger = "focus")
                     )
         return(output)
       }
@@ -1335,7 +1302,7 @@ shinyServer(
      need(input$inputSampleSizeC != 0, "Power is indeterminate for a sample size of 0. Please provide a valid sample size.")
    )
 
-   A <- dataCompilerC()[1] / (1 - dataCompilerC()[1])
+   A <- dataCompilerC()[1]  / (1 - dataCompilerC()[1])
    B <- (dataCompilerC()[2] / (1 - dataCompilerC()[2])) / A
 
    designEffect  <- (3/2) * (1 - input$respC) + input$respC

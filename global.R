@@ -36,5 +36,8 @@ designB.DTRs <- list("{A,C,D}" = "ArCnrD", "{A,C,E}" = "ArCnrE", "{B,F,G}" = "Br
 designC.DTRs <- list("{A,C,D}" = "ArCnrD", "{A,C,E}" = "ArCnrE", "{B,F,G}" = "BrFnrG")
 
 
+source("www/R/strings.R")
+
+
 ##### ERROR MESSAGES #####
 
