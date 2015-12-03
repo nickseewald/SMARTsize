@@ -391,7 +391,7 @@ output$tab <- renderText(input$SMARTsize)
       need(input$inputPowerA > 0, "Sample size is indeterminate for 0% power. Please specify a power greater than zero."),
       need(input$inputPowerA < 1, "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1.")
     )
-    HTML(paste("<h4 style='color:blue';> N=",paste(finalSampleSize)," </h4>  <h3> A = ", A, " B = ", B, "</h3>
+    HTML(paste("<h4 style='color:blue';> N=",paste(finalSampleSize)," </h4>
          <p> We wish to find the sample size for a trial with a binary outcome where the probability of response to first-stage intervention is ", formatResp, sentenceCompilerA(),
          ". Given a ", formatAltHyp, " test with ", formatAlpha, " type-I error, we require a sample size of at least ",
          finalSampleSize, " to make this comparison with ", formatPower, " power. </p>", sep=""))
@@ -425,7 +425,7 @@ output$tab <- renderText(input$SMARTsize)
   output$continuousSampleSizeA <- renderUI({
     alt.hyp       <- switch(input$selectAlternativeA,"one.sided" = "greater")
     designEffect  <- 4
-    rawSampleSize <- try(pwr.norm.test(d = dataCompilerA(), sig.level = input$alphaA, power = input$inputPowerA,alternative = alt.hyp)$n, silent = T)
+    rawSampleSize <- try(pwr.norm.test(d = dataCompilerA(), sig.level = input$alphaA, power = input$inputPowerA, alternative = alt.hyp)$n, silent = T)
 
     validate(
       need(input$inputPowerA > 0, "Sample size is indeterminate for 0% power. Please specify a power greater than zero."),

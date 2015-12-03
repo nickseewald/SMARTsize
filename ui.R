@@ -44,7 +44,7 @@ shinyUI(
                           column(6,
                                  img(src = "images/SMARTdesignA__.gif", class = "img-responsive"),
                                  actionButton("pickTabA", "Design I"),
-                                 HTML("<p> 8 embedded adaptive interventions: ArCnrE, ArCnrF, ArDnrE, ArDnrF, BrGnrI, BrGnrJ, BrHnrI, BrHnrJ.
+                                 HTML("<p> 8 embedded adaptive interventions: {A,C,E}, {A,C,F}, {A,D,E}, {A,D,F}, {B,G,I}, {B,G,J}, {B,H,I}, {B,H,J}.
                                       <a data-toggle='modal' data-target='#exampleAmodal' style='color:#6b6b6b'>
                                       Click here for an example. </a> </p>"),
                                  includeHTML("www/html/exampleAmodal.html")
@@ -52,7 +52,7 @@ shinyUI(
                           column(6,
                                  img(src = "images/SMARTdesignB__.gif", class = "img-responsive"),
                                  actionButton("pickTabB","Design II"),
-                                 HTML("<p> 4 embedded adaptive interventions: ArCnrD, ArCnrE, BrFnrG, BrFnrH.
+                                 HTML("<p> 4 embedded adaptive interventions: {A,C,D}, {A,C,E}, {B,F,G}, {B,F,H}.
                                       <a data-toggle='modal' data-target='#exampleBmodal' style='color:#6b6b6b'>
                                       Click here for an example. </a> </p>"),
                                  includeHTML("www/html/exampleBmodal.html")
@@ -64,7 +64,7 @@ shinyUI(
                           column(6,
                                  img(src = "images/SMARTdesignC__.gif", class = "img-responsive"),
                                  actionButton("pickTabC","Design III"),
-                                 HTML("<p> 3 embedded adaptive interventions: ArCnrD, ArCnrE, BrFnrG.
+                                 HTML("<p> 3 embedded adaptive interventions: {A,C,D}, {A,C,E}, {B,F,G}.
                                       <a data-toggle='modal' data-target='#exampleCmodal' style='color:#6b6b6b'>
                                       Click here for an example. </a> </p>"),
                                  includeHTML("www/html/exampleCmodal.html")
