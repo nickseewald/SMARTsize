@@ -109,7 +109,7 @@ shinyUI(
                         tags$hr(),
                         
                         ##### A OUTCOME SELECTION #####
-                        radioButtons("selectOutcomeA", label = eval(text.outcomeType),
+                        radioButtons("selectOutcomeA", label = eval(html.outcomeType),
                                      choices = list("Binary" = 1,"Continuous" = 2), selected = 1),
                         
                         tags$hr(),
@@ -145,7 +145,7 @@ shinyUI(
                                                                    )
                                                   ),
                                                   uiOutput("binaryDTR2probA"),
-                                                  conditionalPanel(condition = "input.cellOrConditionalA",
+                                                  conditionalPanel(condition = "input.cellOrConditionalA && input.secondDTRcompareA",
                                                                    fluidRow(column(11,offset = 1,
                                                                                    uiOutput("cellProbsDTR2A"))
                                                                    )

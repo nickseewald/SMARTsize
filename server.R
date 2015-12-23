@@ -36,51 +36,58 @@ output$tab <- renderText(input$SMARTsize)
   ### 'SMARTdesignX_DTR1_DTR2.gif'; if DTRX is unselected, DTR name is 0.
 
   output$designAimg <- renderImage(expr = {
-    filename <- normalizePath(file.path('./www/images', paste('SMARTdesignA_', input$firstDTRcompareA, '_', input$secondDTRcompareA,'.gif', sep = '')))
+    filename <- 
+      normalizePath(file.path('./www/images',
+                              paste('SMARTdesignA_', input$firstDTRcompareA,
+                                    '_', input$secondDTRcompareA,'.gif', sep = '')))
     list(src = filename)
   }, deleteFile = FALSE)
 
   ### Render 'selectize' dropdown boxes with placeholder text for AI selection.
-  ### Second DTR input populates with all DTRs that are NOT the first DTR--eliminates ability to select same DTR twice
+  ### Second DTR input populates with all DTRs that are NOT the first DTR
+  ###   (eliminates ability to select same DTR twice)
   ### Placed in server.R rather than ui.R because of dependency on first DTR selection
 
     output$selectAI1A <- renderUI({
-      AI <- selectizeInput("firstDTRcompareA",label = text.refDTRLabel,
+      AI <- selectizeInput("firstDTRcompareA", label = text.refDTRLabel,
                            choices = designA.DTRs,
                            options = list(
                              placeholder = text.refDTRPlaceholder,
                              onInitialize = I('function() { this.setValue(0); }')
+                             )
                            )
-      )
       return(AI)
-    })
+      })
 
     output$selectAI2A <- renderUI({
       AI <- selectizeInput("secondDTRcompareA",label = text.compDTRLabel,
-                           choices = designA.DTRs[substr(designA.DTRs, 1, 1) != substr(input$firstDTRcompareA, 1, 1)],
+                           choices = designA.DTRs[substr(designA.DTRs, 1, 1) !=
+                                                    substringDTR1A()[2]],
                            options = list(
                              placeholder = text.compDTRPlaceholder,
                              onInitialize = I('function() { this.setValue(0); }')
+                             )
                            )
-      )
       return(AI)
-    })
+      })
 
 
   ##### DESIGN A PROBABILITY INPUT #####
 
-  ### Read in DTR names from dropdowns and parse them to determine first and second stage treatments
-  ### Reactive function allows on-the-fly changes in return values with changes in selection
-  ### Outputs full DTR name, first-stage treatment (first character), second-stage treatment if response (third character),
-  ### and second-stage treatment if non-response(last character)
-  ### NOTE that these positions are exclusive to design A because responders have two second-stage treatment options
+  ## Read in DTR names from dropdowns and parse them to determine 
+  #   first and second stage treatments
+  ## Outputs full DTR name, first-stage treatment (first character), 
+  #   second-stage treatment if response (third character),
+  #   and second-stage treatment if non-response(last character) 
+  ## NOTE that these positions are exclusive to design A because responders
+  #   have two second-stage treatment options
 
   substringDTR1A <- reactive({
     if (length(input$firstDTRcompareA) > 0) {
       DTR1           <- paste(input$firstDTRcompareA)
-      firstStage1    <- substr(DTR1,1,1)
-      secondStageR1  <- substr(DTR1,3,3)
-      secondStageNR1 <- substr(DTR1,6,6)
+      firstStage1    <- substr(DTR1, 1, 1)
+      secondStageR1  <- substr(DTR1, 3, 3)
+      secondStageNR1 <- substr(DTR1, 6, 6)
       return(c(DTR1, firstStage1, secondStageR1, secondStageNR1))
     }
     else return(c(0, 0, 0, 0))
@@ -89,61 +96,77 @@ output$tab <- renderText(input$SMARTsize)
   substringDTR2A <- reactive({
     if (length(input$secondDTRcompareA) > 0) {
       DTR2           <- paste(input$secondDTRcompareA)
-      firstStage1    <- substr(DTR2,1,1)
-      secondStageR1  <- substr(DTR2,3,3)
-      secondStageNR1 <- substr(DTR2,6,6)
+      firstStage1    <- substr(DTR2, 1, 1)
+      secondStageR1  <- substr(DTR2, 3, 3)
+      secondStageNR1 <- substr(DTR2, 6, 6)
       return(c(DTR2, firstStage1, secondStageR1, secondStageNR1))
     }
     else return(c(0, 0, 0, 0))
   })
 
-  #When a first DTR is selected, render an input box corresponding to whatever input method is selected.
-  # For DTR-conditional or cell-specific inputs, first numericInput is P(S|DTR1), enabled/disabled depending on cellOrConditionalB
-  # For target-difference or OR, relevant numericInputs are rendered
-  # This is the ONLY location in which difference and OR numericInputs are built.
+  ## When a first DTR is selected, render an input box corresponding to
+  #   whatever input method is selected.
+  ## For DTR-conditional or cell-specific inputs, first numericInput is 
+  #   P(S|DTR1), enabled/disabled depending on cellOrConditionalA
+  ## For target-difference or odds ratio, relevant numericInputs are rendered
+  ## This is the ONLY location in which difference and odds ratio
+  #   numericInputs are built.
 
   generateBinaryInputs1A <- reactive({
     validate(
-      need(input$firstDTRcompareA, "Please select a Reference AI.")
+      need(input$firstDTRcompareA, text.refDTRPlaceholder)
     )
     if (input$cellOrConditionalA == TRUE) {
-      return(disable(numericInput("DTRsuccA1disable", label = HTML("Probability of Success for Reference AI &nbsp; <img src='images/blue_dash.gif'>"), value = NA, min = 0, max = 1, step = 0.01)))
+      return(disable(numericInput("DTRsuccA1disable", 
+                                  label = html.refDTRSuccess,
+                                  value = NA, min = 0, max = 1, step = 0.01)))
     } else {
-      return(list(numericInput("DTRsuccA1", label = HTML("Probability of Success for Reference AI &nbsp; <img src='images/blue_dash.gif'>"), value = NA, min = 0, max = 1, step = 0.01),
-                 bsTooltip(id = "DTRsuccA1", title = "Input can range from 0-1 and must be in decimal form, up to two places.", placement = "right", trigger = "focus"))
+      return(list(numericInput("DTRsuccA1", 
+                               label = html.refDTRSuccess,
+                               value = NA, min = 0, max = 1, step = 0.01),
+                 bsTooltip(id = "DTRsuccA1", title = text.tooltip, 
+                           placement = "right", trigger = "focus"))
       )}
     })
 
   generateBinaryInputs2A <- reactive({
     validate(
-      need(input$secondDTRcompareA != "", "Please select a Comparison AI.")
+      need(input$secondDTRcompareA != "", text.compDTRPlaceholder)
     )
-    if(input$targetDiffCheckA == FALSE && input$targetOddsCheckA == FALSE){
-      if(input$cellOrConditionalA == TRUE){
-        return(disable(numericInput("DTRsuccA2disable",label = HTML("Probability of Success for Comparison AI &nbsp; <img src='images/red_dash.gif'>"), value = NA, min = 0, max = 1, step = 0.01)))
+    # Full DTR success probability
+    if (input$targetDiffCheckA == FALSE && input$targetOddsCheckA == FALSE) {
+      if (input$cellOrConditionalA == TRUE) {
+        return(disable(numericInput("DTRsuccA2disable", 
+                                    label = html.compDTRSuccess,
+                                    value = NA, min = 0, max = 1, step = 0.01)))
       }
       else{
-        output <- list(numericInput("DTRsuccA2",label = HTML("Probability of Success for Comparison AI &nbsp; <img src='images/red_dash.gif'>"), value = NA, min = 0, max = 1, step = 0.01),
-                      bsTooltip(id = "DTRsuccA2", title = "Input can range from 0-1 and must be in decimal form?, up to two places.", placement = "right", trigger = "focus")
-                    )
-        return(output)
-      }
+        return(list(numericInput("DTRsuccA2", label = html.compDTRSuccess,
+                                    value = NA, min = 0, max = 1, step = 0.01),
+                      bsTooltip(id = "DTRsuccA2", title = text.tooltip,
+                                placement = "right", trigger = "focus"))
+      )}
     }
-
-      if(input$targetDiffCheckA == TRUE && input$targetOddsCheckA == FALSE){
-        return(list(numericInput("targetDiffA", label = "Target Difference in Success Probabilities", value = NULL, min = 0.01, max = 0.99, step = 0.01),
-                    bsTooltip(id = "targetDiffA", title = "Input must be in decimal form, up to two places.", placement = "right", trigger = "focus"),
-                    radioButtons("diffDirectionA", label = "Is the probability of the Comparison AI smaller or larger than the probability of the Reference AI?",
-                                 choices = list("Smaller" = -1, "Larger" = 1), selected = -1),
-                    renderText(input$diffDirectionA)
+    # Target difference
+    if (input$targetDiffCheckA == TRUE && input$targetOddsCheckA == FALSE) {
+      return(list(
+        numericInput("targetDiffA", label = text.targDiffLabel,
+                     value = NULL, min = 0.01, max = 0.99, step = 0.01),
+        bsTooltip(id = "targetDiffA", title = text.tooltip,
+                  placement = "right", trigger = "focus"),
+        radioButtons("diffDirectionA", label = text.diffDirection,
+                     choices = list("Smaller" = -1, "Larger" = 1),
+                     selected = -1)
         ))
-      }
-
-      if(input$targetOddsCheckA==TRUE){
-        return(list(numericInput("targetORA", label = "Target Odds Ratio of Success (with Reference AI in the denominator)", value = NULL, min = 0, step = 0.01),
-                    bsTooltip(id = "targetORA", title = "Input must be positive and in decimal form with a leading zero, up to two places.", placement = "right", trigger = "focus")
-        )
-        )
+    }
+    # Target Odds Ratio
+    if (input$targetOddsCheckA==TRUE) {
+      return(list(
+        numericInput("targetORA", label = text.targORInputLabel,
+                     value = NULL, min = 0, step = 0.01),
+        bsTooltip(id = "targetORA", title = text.tooltip,
+                            placement = "right", trigger = "focus")
+      ))
     }
     })
 
@@ -157,51 +180,57 @@ output$tab <- renderText(input$SMARTsize)
     generateBinaryInputs2A()
   })
 
-  ### For cell-specific probabilities, render a series of numericInputs labeled by information from DTR substrings
-  ### When DTR1 and DTR2 begin with the same treatment, P(S|stage1trt,r) is rendered only once, in output$cellProbsDTR1B
+  ## For cell-specific probabilities, render a sequence of numericInputs
+  #   labeled by information from DTR substrings
+  ## When DTR1 and DTR2 begin with the same treatment, P(S|stage1trt,r)
+  #   is rendered only once, in output$cellProbsDTR1A
 
   output$cellProbsDTR1A <- renderUI({
-    controlInputs<-list(
-           numericInput("marginalFirstStageA1",label=paste("Probability of success for Path ",substringDTR1A()[2],"r",substringDTR1A()[3],sep=""),value=0,min=0,max=1,step=0.01),
-           numericInput("marginalSecondStageNRA1",label=paste("Probability of success for Path ",substringDTR1A()[2],"nr",substringDTR1A()[4],sep=""), value=0,min=0,max=1,step=0.01),
-           bsTooltip(id="marginalFirstStageA1",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"),
-           bsTooltip(id="marginalSecondStageNRA1",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus")
-    )
+    return(list(
+      numericInput("marginalFirstStageA1", 
+                   label = paste(text.pathSuccess, substringDTR1A()[2], "r",
+                                 substringDTR1A()[3], sep = ""),
+                   value = 0, min = 0, max = 1, step = 0.01),
+      numericInput("marginalSecondStageNRA1",
+                   label = paste(text.pathSuccess, substringDTR1A()[2], "nr",
+                                 substringDTR1A()[4], sep = ""),
+                   value = 0, min = 0, max = 1, step = 0.01),
+      bsTooltip(id = "marginalFirstStageA1", title = text.tooltip, 
+                placement = "right", trigger = "focus"),
+      bsTooltip(id = "marginalSecondStageNRA1", title = text.tooltip,
+                placement = "right", trigger = "focus")
+    ))
   })
 
   output$cellProbsDTR2A <- renderUI({
-    if(substringDTR1A()[2]==substringDTR2A()[2] && substringDTR1A()[3]==substringDTR2A()[3] && substringDTR1A()[4]!=substringDTR2A()[4]){
-      controlInputs<-list(numericInput("marginalSecondStageNRA2",label=paste("Probability of success for Path ",substringDTR1A()[2],"nr",substringDTR2A()[4],sep=""),value=0,min=0,max=1,step=0.01),
-                       bsTooltip(id="marginalSecondStageNRA2",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus")
-      )
-    }
-
-    else if(substringDTR1A()[2]==substringDTR2A()[2] && substringDTR1A()[3]!=substringDTR2A()[3] && substringDTR1A()[4]==substringDTR2A()[4]){
-      controlInputs <- list(numericInput("marginalSecondStageNRA2",label=paste("Probability of success for Path ",substringDTR2A()[2],"r",substringDTR2A()[3],sep=""),value=0,min=0,max=1,step=0.01),
-                       bsTooltip(id="marginalSecondStageNRA2",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus")
-      )
-    }
-
-    else{
-      controlInputs <- list(
-        numericInput("marginalFirstStageA2",label=paste("Probability of success for Path ",substringDTR2A()[2],"r", substringDTR2A()[3],sep=""),value=0,min=0,max=1,step=0.01),
-        numericInput("marginalSecondStageNRA2",label=paste("Probability of success for Path ",substringDTR2A()[2],"nr",substringDTR2A()[4],sep=""),value=0,min=0,max=1,step=0.01),
-        bsTooltip(id="marginalFirstStageA2",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"),
-        bsTooltip(id="marginalSecondStageNRA2",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus")
-      )
-    }
-    controlInputs
+    return(list(
+      numericInput("marginalFirstStageA2",
+                   label = paste(text.pathSuccess, substringDTR2A()[2], "r",
+                                 substringDTR2A()[3], sep = ""),
+                   value = 0, min = 0, max = 1, step = 0.01),
+      numericInput("marginalSecondStageNRA2",
+                   label = paste(text.pathSuccess, substringDTR2A()[2], "nr",
+                                 substringDTR2A()[4], sep = ""),
+                   value = 0, min = 0, max = 1, step = 0.01),
+      bsTooltip(id = "marginalFirstStageA2", title = text.tooltip,
+                placement = "right", trigger = "focus"),
+      bsTooltip(id = "marginalSecondStageNRA2", title = text.tooltip,
+                placement = "right", trigger = "focus")
+      ))
   })
 
   ### Render enabled/disabled numericInputs when outcome is continuous
 
   generateContinuousInputA <- reactive({
     validate(
-      need(input$firstDTRcompareA, "Please select a Reference AI."),
-      need(input$secondDTRcompareA, "Please select a Comparison AI.")
+      need(input$firstDTRcompareA, text.refDTRPlaceholder),
+      need(input$secondDTRcompareA, text.compDTRPlaceholder)
     )
-    return(list(numericInput("effectSizeA", label="Standardized Effect Size",value=0,min=0,max=10,step=0.01),
-             bsTooltip(id = "effectSizeA", title = "Input can range from 0-10 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"))
+    return(list(
+      numericInput("effectSizeA", label = text.effectSize,
+                   value = 0, min = 0, max = 10, step = 0.01),
+      bsTooltip(id = "effectSizeA", title = text.tooltip,
+                placement = "right", trigger = "focus"))
     )
   })
 
@@ -282,7 +311,7 @@ output$tab <- renderText(input$SMARTsize)
       validate(
         need(!is.null(input$DTRsuccA1), "Select a Reference AI above."),
         need(!is.null(input$DTRsuccA2), "Select a Comparison AI above.") %then%
-          need(!is.na(input$DTRsuccA1) && !is.na(input$DTRsuccA2), "The success probability is missing for at least one AI. Please provide a numeric input.") %then%
+          need(!is.null(input$DTRsuccA1) && !is.null(input$DTRsuccA2), "The success probability is missing for at least one AI. Please provide a numeric input.") %then%
           need(input$DTRsuccA1 != input$DTRsuccA2, "Please provide unique success probabilities for each AI. Sample size is indeterminate for equal AI probabilities.") %then%
           need(checkDTRinputsA(), "The provided success probability for at least one AI is not a valid probability. Please enter values greater than 0 and less than 1.")
       )

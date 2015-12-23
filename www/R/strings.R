@@ -3,7 +3,7 @@
 #################################
 
 ##### Rendered Text #####
-text.outcomeType <-
+html.outcomeType <-
   HTML("Is the <strong> outcome </strong> of interest binary or continuous?")
 
 text.selectDTRcompare <- 
@@ -16,6 +16,13 @@ text.refDTRPlaceholder <- "Please select a Reference AI."
 
 text.compDTRLabel <- "Comparison Adaptive Intervention:"
 text.compDTRPlaceholder <- "Please select a Comparison AI."
+
+html.refDTRSuccess <-
+  HTML("Probability of Success for Reference AI &nbsp; <img src='images/blue_dash.gif'>")
+html.compDTRSuccess <-
+  HTML("Probability of Success for Comparison AI &nbsp; <img src='images/red_dash.gif'>")
+
+text.tooltip <- "Input can range from 0-1 and must be in decimal form, up to two places."
 
 text.responseProbLabel <-
   quote(HTML("<p>Concerning the tailoring variable, please provide the
@@ -38,6 +45,14 @@ text.altInputHelp <-
 text.cellSpecLabel <- "Cell-Specific Success Probabilities"
 text.targDiffLabel <- "Target Difference in Success Probabilities"
 text.targORLabel   <- "Target Odds Ratio"
+text.diffDirection <- 
+  "Is the probability of the Comparison AI smaller or larger than the probability of the Reference AI?"
+text.targORInputLabel <- 
+  "Target Odds Ratio of Success (with Reference AI in the denominator)"
+
+text.pathSuccess <- "Probability of success for Path "
+
+text.effectSize <- "Standardized Effect Size"
 
 text.sampleSizeOrPower <- "Are you interested in finding sample size or power?"
 text.oneOrTwoSidedTest <- "Do you want to perform a one- or two-sided test?"
