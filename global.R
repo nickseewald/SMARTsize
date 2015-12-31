@@ -3,6 +3,10 @@
 ### UNIVERSITY OF MICHIGAN
 ### DEPARTMENT OF BIOSTATISTICS
 
+library(shiny)
+library(pwr)
+library(shinyBS)
+
 ##### NON-REACTIVE FUNCTION DECLARATIONS #####
 
 ### Function creates disabled (greyed-out) inputs

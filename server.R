@@ -3,9 +3,6 @@
 ### UNIVERSITY OF MICHIGAN
 ### DEPARTMENT OF BIOSTATISTICS
 
-library(shiny)
-library(pwr)
-library(shinyBS)
 options(encoding = 'UTF-8')
 
 # TODO: Deprecate choice of test sidedness for binary outcome
@@ -17,7 +14,7 @@ options(encoding = 'UTF-8')
 
 shinyServer(
   function(input,output,session){
-output$tab <- renderText(input$SMARTsize)
+    output$tab <- renderText(input$SMARTsize)
   ##### HOME #####
   ### Watch for clicks on pickTab actionButtons rendered under design diagrams
   ### On click, redirect to appropriate tab. (More intuitive navigation structure)
@@ -39,7 +36,8 @@ output$tab <- renderText(input$SMARTsize)
     filename <- 
       normalizePath(file.path('./www/images',
                               paste('SMARTdesignA_', input$firstDTRcompareA,
-                                    '_', input$secondDTRcompareA,'.gif', sep = '')))
+                                    '_', input$secondDTRcompareA,'.gif', sep = ''))
+      )
     list(src = filename)
   }, deleteFile = FALSE)
 
@@ -160,7 +158,7 @@ output$tab <- renderText(input$SMARTsize)
         ))
     }
     # Target Odds Ratio
-    if (input$targetOddsCheckA==TRUE) {
+    if (input$targetOddsCheckA == TRUE) {
       return(list(
         numericInput("targetORA", label = text.targORInputLabel,
                      value = NULL, min = 0, step = 0.01),
@@ -245,15 +243,15 @@ output$tab <- renderText(input$SMARTsize)
 
   observe({
     if(input$targetDiffCheckA){
-      updateCheckboxInput(session,"cellOrConditionalA",value=FALSE)
-      updateCheckboxInput(session,"targetOddsCheckA",value=FALSE)
+      updateCheckboxInput(session, "cellOrConditionalA", value = FALSE)
+      updateCheckboxInput(session, "targetOddsCheckA",   value = FALSE)
     }
   })
 
   observe({
-    if(input$targetOddsCheckA){
-      updateCheckboxInput(session,"cellOrConditionalA",value=FALSE)
-      updateCheckboxInput(session,"targetDiffCheckA",value=FALSE)
+    if (input$targetOddsCheckA) {
+      updateCheckboxInput(session, "cellOrConditionalA", value = FALSE)
+      updateCheckboxInput(session, "targetDiffCheckA",   value = FALSE)
     }
   })
 
@@ -261,16 +259,16 @@ output$tab <- renderText(input$SMARTsize)
   ### Update disabled full DTR success inputs with computed probabilities
 
   observe({
-    if(input$cellOrConditionalA==TRUE){
-      updateCheckboxInput(session,"targetDiffCheckA",value=FALSE)
-      updateCheckboxInput(session,"targetOddsCheckA",value=FALSE)
+    if (input$cellOrConditionalA == TRUE) {
+      updateCheckboxInput(session, "targetDiffCheckA", value = FALSE)
+      updateCheckboxInput(session, "targetOddsCheckA", value = FALSE)
 
-      updateNumericInput(session,"DTRsuccA1disable",value=generateProbsA()[1])
-      updateNumericInput(session,"DTRsuccA2disable",value=generateProbsA()[2])
-      updateNumericInput(session,"DTRsuccA1",value=generateProbsA()[1])
-      updateNumericInput(session,"DTRsuccA2",value=generateProbsA()[2])
+      updateNumericInput(session, "DTRsuccA1disable", value = generateProbsA()[1])
+      updateNumericInput(session, "DTRsuccA2disable", value = generateProbsA()[2])
+      updateNumericInput(session, "DTRsuccA1",        value = generateProbsA()[1])
+      updateNumericInput(session, "DTRsuccA2",        value = generateProbsA()[2])
     }
-  }, priority=2)
+  }, priority = 2)
 
   ##### DESIGN A RESULT BACKEND #####
 
@@ -278,8 +276,10 @@ output$tab <- renderText(input$SMARTsize)
 
   generateProbsA <- reactive({
     if (input$selectOutcomeA == 1 && input$cellOrConditionalA == TRUE) {
-      pDTR1 <- fullDTRprob(input$marginalFirstStageA1,input$respA,input$marginalSecondStageNRA1)
-      pDTR2 <- fullDTRprob(input$marginalFirstStageA2,input$respA,input$marginalSecondStageNRA2)
+      pDTR1 <- fullDTRprob(input$marginalFirstStageA1, input$respA, 
+                           input$marginalSecondStageNRA1)
+      pDTR2 <- fullDTRprob(input$marginalFirstStageA2, input$respA, 
+                           input$marginalSecondStageNRA2)
     }
     else if (input$selectOutcomeA == 1 && input$cellOrConditionalA == FALSE) {
       pDTR1 <- input$DTRsuccA1
@@ -292,7 +292,8 @@ output$tab <- renderText(input$SMARTsize)
   ### Make sure input probabilities are valid (i.e., check for blank entries)
 
   checkDTRinputsA <- reactive({
-    return(as.logical((input$DTRsuccA1 > 0) & (input$DTRsuccA1 < 1) & (input$DTRsuccA2 > 0) & (input$DTRsuccA2 < 1)))
+    return(as.logical((input$DTRsuccA1 > 0) & (input$DTRsuccA1 < 1) &
+                        (input$DTRsuccA2 > 0) & (input$DTRsuccA2 < 1)))
   })
 
   ### Determine which inputs are being given, check their quality, then pass the appropriate arguments for computation
@@ -301,206 +302,255 @@ output$tab <- renderText(input$SMARTsize)
 
     ### Error Check: unselected DTRs, blank/invalid response probability
     validate(
-      need(!(is.na(input$respA)), "Please provide a response probability. If unknown, enter 0 for a conservative estimate of power or sample size.") %then%
-        need(0 <= input$respA && input$respA <= 1, "The provided response probability is not a valid probability. Please enter a value between 0 and 1.")
+      need(!(is.na(input$respA)), text.noResponse) %then%
+        need(0 <= input$respA && input$respA <= 1, text.invalidResponse)
     )
 
     ### Binary outcome, DTR-specific success probabilities
-    if(input$selectOutcomeA==1 && input$cellOrConditionalA==FALSE && input$targetDiffCheckA==FALSE && input$targetOddsCheckA==FALSE){
-      ### Error Check: unselected DTRs, blank success probabilities, equal success probabilities, invalid success probabilities
+    if (input$selectOutcomeA == 1 && input$cellOrConditionalA == FALSE &&
+       input$targetDiffCheckA == FALSE && input$targetOddsCheckA == FALSE) {
+      ### Error Check: unselected DTRs, blank success probabilities,
+      ### equal success probabilities, invalid success probabilities
       validate(
-        need(!is.null(input$DTRsuccA1), "Select a Reference AI above."),
-        need(!is.null(input$DTRsuccA2), "Select a Comparison AI above.") %then%
-          need(!is.null(input$DTRsuccA1) && !is.null(input$DTRsuccA2), "The success probability is missing for at least one AI. Please provide a numeric input.") %then%
-          need(input$DTRsuccA1 != input$DTRsuccA2, "Please provide unique success probabilities for each AI. Sample size is indeterminate for equal AI probabilities.") %then%
-          need(checkDTRinputsA(), "The provided success probability for at least one AI is not a valid probability. Please enter values greater than 0 and less than 1.")
+        need(!is.null(input$DTRsuccA1), text.refDTRPlaceholder),
+        need(!is.null(input$DTRsuccA2), text.compDTRPlaceholder) %then%
+          need(!is.null(input$DTRsuccA1) && !is.null(input$DTRsuccA2), text.noSuccessProb) %then%
+          need(input$DTRsuccA1 != input$DTRsuccA2, text.sameSuccessProb) %then%
+          need(checkDTRinputsA(), text.invalidSuccessProb)
       )
       return(c(input$DTRsuccA1, input$DTRsuccA2))
     }
 
-    ### Binary outcome, cell-specific success probabilities
-    if(input$selectOutcomeA == 1 && input$cellOrConditionalA == TRUE && input$targetDiffCheckA == FALSE && input$targetOddsCheckA == FALSE){
-      ### Error Check: equal DTR-specific success probabilities
+    # Binary outcome, cell-specific success probabilities
+    if (input$selectOutcomeA == 1 && input$cellOrConditionalA == TRUE &&
+       input$targetDiffCheckA == FALSE && input$targetOddsCheckA == FALSE) {
+      # Error Check: equal DTR-specific success probabilities
       validate(
-        need(generateProbsA()[1] != generateProbsA()[2], "The provided cell-specific probabilities yield identical overall AI-specific probabilities
-             of success. Sample size is indeterminate for equal AI probabilities. Please adjust your inputs.")
+        need(generateProbsA()[1] != generateProbsA()[2], text.invalidCellResult)
       )
       return(c(generateProbsA()[1], generateProbsA()[2]))
     }
 
     ### Binary outcome, target difference in success probabilities
-    if(input$selectOutcomeA == 1 && input$cellOrConditionalA == FALSE && input$targetDiffCheckA == TRUE && input$targetOddsCheckA == FALSE){
-      ### Error Check: invalid target difference (must be less than 0.5 since we're using a conservative reference probability)
+    if (input$selectOutcomeA == 1 && input$cellOrConditionalA == FALSE &&
+       input$targetDiffCheckA == TRUE && input$targetOddsCheckA == FALSE) {
+      # Error Check: invalid target difference (must be less than 0.5 since
+      # we're using a conservative reference probability)
       validate(
-        need(input$DTRsuccA1 + as.numeric(input$diffDirectionA) * input$targetDiffA >= 0 && input$DTRsuccA1 + as.numeric(input$diffDirectionA) * input$targetDiffA <= 1,
-             "The target difference is too large to produce a valid probability between 0 and 1. Please adjust your inputs."),
-        need(input$targetDiffA > 0, "The target difference must be greater than 0, since sample size is indeterminate for equal AI probabilities.
-             Please adjust your inputs.")
+        need(input$DTRsuccA1 + as.numeric(input$diffDirectionA) *
+               input$targetDiffA >= 0 && input$DTRsuccA1 + 
+               as.numeric(input$diffDirectionA) * input$targetDiffA <= 1,
+             text.invalidDiffResult),
+        need(input$targetDiffA > 0, text.invalidDiff)
         )
-      return(c(input$DTRsuccA1, input$DTRsuccA1 + as.numeric(input$diffDirectionA) * input$targetDiffA))
+      return(c(input$DTRsuccA1, input$DTRsuccA1 + 
+                 as.numeric(input$diffDirectionA) * input$targetDiffA))
     }
 
     ### Binary outcome, target odds ratio of success
-    if(input$selectOutcomeA == 1 && input$cellOrConditionalA == FALSE && input$targetDiffCheckA == FALSE && input$targetOddsCheckA == TRUE){
+    if (input$selectOutcomeA == 1 && input$cellOrConditionalA == FALSE && 
+        input$targetDiffCheckA == FALSE && input$targetOddsCheckA == TRUE) {
       ### Error check: missing/invalid odds ratio
       validate(
-        need(is.numeric(input$targetORA),"Please enter an odds ratio.") %then%
-        need(input$targetORA != 1, "Sample size is indeterminate for an odds ratio of 1. Please enter a different target odds ratio.") %then%
-        need(input$targetORA != 0, "Sample size is indeterminate for an odds ratio of 0. Please enter a different target odds ratio.")
+        need(is.numeric(input$targetORA), text.noOddsRatio) %then%
+        need(input$targetORA != 1, text.invalidOR1) %then%
+        need(input$targetORA != 0, text.invalidOR0)
       )
       q <- (input$DTRsuccA1 / (1 - input$DTRsuccA1)) * input$targetORA
       return(c(input$DTRsuccA1, q / (1 + q)))
     }
 
     ### Continuous outcome, standardized effect size
-    if(input$selectOutcomeA == 2){
+    if (input$selectOutcomeA == 2) {
       ### Error check: nonzero effect size
       validate(
-        need(input$firstDTRcompareA, "Select a reference AI above."),
-        need(input$secondDTRcompareA, "Select a comparison AI above."),
-        need(!is.null(input$effectSizeA)," ") %then%
-          need(!is.na(input$effectSizeA),"The standardized effect size is missing. Please enter a value between 0 and 10.") %then%
-            need(input$effectSizeA != 0, "Sample size is indeterminate for an effect size of 0. Please enter a different target effect size.")
+        need(input$firstDTRcompareA, text.refDTRPlaceholder),
+        need(input$secondDTRcompareA, text.compDTRPlaceholder),
+        need(!is.null(input$effectSizeA), " ") %then%
+          need(!is.na(input$effectSizeA), text.noEffectSize) %then%
+            need(input$effectSizeA != 0, text.invalidEffectSize)
       )
       return(input$effectSizeA)
     }
   })
 
-  ### Construct a portion of the explainer sentence that appears below the result, depending on the provided inputs.
+  ### Construct a portion of the explainer sentence that appears below the 
+  ### result, depending on the provided inputs.
   sentenceCompilerA <- reactive({
-    if(input$selectOutcomeA==1 && input$cellOrConditionalA==FALSE && input$targetDiffCheckA==FALSE && input$targetOddsCheckA==FALSE){
-      str <- paste(" and the overall probabilities of success in the two AIs of interest, ",input$firstDTRcompareA," and ",input$secondDTRcompareA,
-                   ", are ",input$DTRsuccA1," and ",input$DTRsuccA2,", respectively", sep="")
-      return(str)
+    if (input$selectOutcomeA == 1 && input$cellOrConditionalA == FALSE &&
+       input$targetDiffCheckA == FALSE && input$targetOddsCheckA == FALSE) {
+      return(paste(text.sentenceOverallSuccess, input$firstDTRcompareA,
+                   " and ", input$secondDTRcompareA, ", are ", input$DTRsuccA1,
+                   " and ", input$DTRsuccA2, ", respectively", sep = ""))
     }
-    if(input$selectOutcomeA==1 && input$cellOrConditionalA==TRUE && input$targetDiffCheckA==FALSE && input$targetOddsCheckA==FALSE){
-      str <- paste(" and the overall probabilities of success in the two AIs of interest, ",input$firstDTRcompareA," and ",input$secondDTRcompareA,
-                   ", are ",generateProbsA()[1]," and ",generateProbsA()[2],", respectively", sep="")
-      return(str)
-    }
-
-    if(input$selectOutcomeA==1 && input$cellOrConditionalA==FALSE && input$targetDiffCheckA==TRUE && input$targetOddsCheckA==FALSE){
-      str <- paste(" and the difference in overall probabilities of success in the two AIs of interest, ",input$firstDTRcompareA," and ",input$secondDTRcompareA,
-                   ", is ",input$targetDiffA, sep="")
-      return(str)
+    if (input$selectOutcomeA == 1 && input$cellOrConditionalA == TRUE &&
+        input$targetDiffCheckA == FALSE && input$targetOddsCheckA == FALSE) {
+      return(paste(text.sentenceOverallSuccess, input$firstDTRcompareA, " and ",
+                   input$secondDTRcompareA, ", are ", generateProbsA()[1],
+                   " and ", generateProbsA()[2], ", respectively", sep = ""))
     }
 
-    if(input$selectOutcomeA==1 && input$cellOrConditionalA==FALSE && input$targetDiffCheckA==FALSE && input$targetOddsCheckA==TRUE){
-      str <- paste(" and the odds ratio of success for the two AIs of interest, ",input$firstDTRcompareA," and ",input$secondDTRcompareA,
-                   ", is ",input$targetORA, sep="")
-      return(str)
+    if (input$selectOutcomeA == 1 && input$cellOrConditionalA == FALSE &&
+        input$targetDiffCheckA == TRUE && input$targetOddsCheckA == FALSE) {
+      return(paste(text.sentenceDiff, input$firstDTRcompareA, " and ", 
+                   input$secondDTRcompareA, ", is ", input$targetDiffA, sep = ""))
     }
 
-    if(input$selectOutcomeA==2){
-      str <- paste(" and the standardized effect size between the two AIs of interest, ",input$firstDTRcompareA," and ",input$secondDTRcompareA,
-                   ", is ", input$effectSizeA, sep="")
-      return(str)
+    if (input$selectOutcomeA == 1 && input$cellOrConditionalA == FALSE &&
+        input$targetDiffCheckA == FALSE && input$targetOddsCheckA == TRUE) {
+      return(paste(text.sentenceOR, input$firstDTRcompareA, " and ",
+                   input$secondDTRcompareA, ", is ",input$targetORA, sep = ""))
+    }
+
+    if (input$selectOutcomeA == 2) {
+      return(paste(text.sentenceEffectSize, input$firstDTRcompareA, " and ", 
+                   input$secondDTRcompareA, ", is ", input$effectSizeA, sep = ""))
     }
   })
 
   ##### DESIGN A RESULTS #####
 
-  # Pass arguments from dataCompilerA() to appropriate R function; extract and render relevant output
+  # Pass arguments from dataCompilerA() to appropriate R function
+  # Extract and render relevant output
 
+  ## Sample size calculation and output for binary outcome
     output$binarySampleSizeA <- renderUI({
-    designEffect    <- 2
-
-    A <- dataCompilerA()[1] / (1 - dataCompilerA()[1])
-    B <- (dataCompilerA()[2] / (1 - dataCompilerA()[2])) / A
-
-    rawSampleSize   <- 2 * ((qnorm(1 - input$inputPowerA) + qnorm(input$alphaA / 2)) ^ 2) * (((1 + A) ^ 2) * B + ((1 + A * B) ^ 2)) / (A * B * (log(B)) ^ 2)
-    finalSampleSize <- ceiling(designEffect * rawSampleSize)
-
-    formatPower     <- paste(input$inputPowerA * 100, "%", sep = "")
-    formatAlpha     <- paste(input$alphaA * 100, "%", sep = "")
-    formatAltHyp    <- switch(input$selectAlternativeA, "one.sided" = "one-sided ", "two.sided" = "two-sided ")
-    formatResp      <- as.numeric(input$respA)
-
-    validate(
-      need(input$inputPowerA > 0, "Sample size is indeterminate for 0% power. Please specify a power greater than zero."),
-      need(input$inputPowerA < 1, "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1.")
-    )
-    HTML(paste("<h4 style='color:blue';> N=",paste(finalSampleSize)," </h4>
-         <p> We wish to find the sample size for a trial with a binary outcome where the probability of response to first-stage intervention is ", formatResp, sentenceCompilerA(),
-         ". Given a ", formatAltHyp, " test with ", formatAlpha, " type-I error, we require a sample size of at least ",
-         finalSampleSize, " to make this comparison with ", formatPower, " power. </p>", sep=""))
+      
+      validate(
+        need(input$inputPowerA > 0, text.power0),
+        need(input$inputPowerA < 1, text.power100)
+      )
+      
+      A <- dataCompilerA()[1]  / (1 - dataCompilerA()[1])
+      B <- (dataCompilerA()[2] / (1 - dataCompilerA()[2])) / A
+      
+      designEffect <- 2
+      finalAlpha    <- ifelse(input$selectAlternativeA == "two.sided",
+                              input$alphaA / 2, input$alphaA)
+      
+      rawSampleSize   <- 2 * ((qnorm(1 - input$inputPowerA) + 
+                               qnorm(finalAlpha)) ^ 2) * 
+        (((1 + A) ^ 2) * B + ((1 + A * B) ^ 2)) / (A * B * (log(B)) ^ 2)
+      finalSampleSize <- ceiling(designEffect * rawSampleSize)
+      
+      formatPower  <- paste(input$inputPowerA * 100, "%", sep = "")
+      formatAlpha  <- paste(input$alphaA      * 100, "%", sep = "")
+      formatAltHyp <- switch(input$selectAlternativeA,
+                             "one.sided" = "one-sided ",
+                             "two.sided" = "two-sided ")
+      formatResp   <- as.numeric(input$respA)
+      
+      HTML(paste("<h4 style='color:blue';> N=", paste(finalSampleSize)," </h4>
+         <p> We wish to find the sample size for a trial with a binary outcome 
+               where the probability of response to first-stage intervention is ",
+               formatResp, sentenceCompilerA(), ". Given a ", formatAltHyp, 
+               " test with ", formatAlpha, " type-I error, we require a sample
+               size of at least ", finalSampleSize, " to make this comparison
+               with ", formatPower, " power. </p>", sep = ""))
   })
 
+  ## Power computation and output for binary outcome
   output$binaryPowerA <- renderUI({
     validate(
-      need(input$inputSampleSizeA != 0, "Power is indeterminate for a sample size of 0. Please provide a valid sample size.")
+      need(input$alphaA != 0 && !is.null(input$alphaA), html.alpha0),
+      need(input$inputSampleSizeA != 0, text.size0) %then%
+      need(input$inputSampleSizeA >= 8, text.lowSizeA)
     )
-
+    
     A <- dataCompilerA()[1] / (1 - dataCompilerA()[1])
     B <- (dataCompilerA()[2] / (1 - dataCompilerA()[2])) / A
 
     designEffect  <- 2
-    powerQuantile <- sqrt((input$inputSampleSizeA * A * B * log(B) ^ 2) / (2 * designEffect * ((1 + A) ^ 2 * B + (1 + A*B) ^ 2))) + qnorm(input$alphaA / 2)
+    finalAlpha    <- ifelse(input$selectAlternativeA == "two.sided",
+                            input$alphaA / 2, input$alphaA)
+    
+    powerQuantile <- sqrt((input$inputSampleSizeA * A * B * log(B) ^ 2) /
+                            (2 * designEffect * ((1 + A) ^ 2 * B +
+                                                   (1 + A*B) ^ 2))) +
+      qnorm(finalAlpha)
+    
     finalPower    <- round(pnorm(powerQuantile), digits = 3)
     formatPower   <- paste(finalPower   * 100, "%", sep = "")
-    formatAlpha   <- paste(input$alphaA * 100, "%", sep = "")
+    formatAlpha   <- paste(input$AlphaA * 100, "%", sep = "")
     formatSize    <- as.numeric(input$inputSampleSizeA)
     formatResp    <- as.numeric(input$respA)
-
-    validate(
-      need(input$inputSampleSizeA >= 1, paste("The provided sample size is not large enough to yield a trial in which at least
-        one person is consistent with each AI. Sample size must be at least 8 to proceed."))
-    )
-    HTML(paste("<h4 style='color:blue';> Power=",paste(formatPower)," </h4>
-         <p> For a trial of size N=",formatSize," with a binary outcome where the probability of response to first-stage intervention is ", formatResp,
-               sentenceCompilerA(),", we have at least ",formatPower," power. </p>", sep = ""))
+    
+    
+    HTML(paste("<h4 style='color:blue';> Power=", paste(formatPower), " </h4>
+         <p> For a trial of size N=", formatSize, " with a binary outcome where
+               the probability of response to first-stage intervention is ",
+               formatResp, sentenceCompilerA(),", we have at least ", 
+               formatPower, " power. </p>", sep = ""))
   })
 
+  ## Sample size computation and output for continuous outcome
   output$continuousSampleSizeA <- renderUI({
-    alt.hyp       <- switch(input$selectAlternativeA,"one.sided" = "greater")
-    designEffect  <- 4
-    rawSampleSize <- try(pwr.norm.test(d = dataCompilerA(), sig.level = input$alphaA, power = input$inputPowerA, alternative = alt.hyp)$n, silent = T)
-
     validate(
-      need(input$inputPowerA > 0, "Sample size is indeterminate for 0% power. Please specify a power greater than zero."),
-      need(input$inputPowerA < 1, "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1."),
-      need(dataCompilerA()   > 0, "Sample size is indeterminate for an effect size of 0. Please specify a different effect size.") %then%
-        need(is.numeric(rawSampleSize), "Given the provided effect size, fewer than 8 individuals are required to achieve the
-             desired power. This is not enough individuals to run a SMART. You can test for a smaller effect size, or increase
-             the desired power.")
-    )
+      need(input$inputPowerA > 0, text.power0),
+      need(input$inputPowerA < 1, text.power100),
+      need(dataCompilerA()   > 0, text.invalidEffectSize) %then%
+        need(is.numeric(rawSampleSize), text.lowEffectSizeA)
+      )
+    
+    alt.hyp       <- switch(input$selectAlternativeA,
+                            "one.sided" = "greater")
+    designEffect  <- 4
+    
+    rawSampleSize <- try(pwr.norm.test(d = dataCompilerA(),
+                                       sig.level = input$alphaA,
+                                       power = input$inputPowerA,
+                                       alternative = alt.hyp)$n,
+                         silent = T)
 
     finalSampleSize <- ceiling(2 * designEffect * rawSampleSize)
     formatPower <- paste(input$inputPowerA * 100, "%" , sep = "")
     formatAlpha <- paste(input$alphaA      * 100, "%" , sep = "")
-    formatAltHyp <- switch(input$selectAlternativeA, "one.sided" = "one-sided ", "two.sided" = "two-sided ")
+    formatAltHyp <- switch(input$selectAlternativeA, 
+                           "one.sided" = "one-sided ",
+                           "two.sided" = "two-sided ")
     formatResp <- as.numeric(input$respA)
 
-    HTML(paste("<h4 style='color:blue';> N=",paste(finalSampleSize)," </h4>
-         <p> We wish to find the sample size for a trial with a continuous outcome where the probability of response to first-stage intervention is ", formatResp, sentenceCompilerA(),
-               ". Given a ", formatAltHyp, " test with ", formatAlpha, " type-I error, we require a sample size of at least ",
-               finalSampleSize, " to make this comparison with ",formatPower," power. </p>",sep = ""))
+    HTML(paste("<h4 style='color:blue';> N=", paste(finalSampleSize), " </h4>
+         <p> We wish to find the sample size for a trial with a continuous
+               outcome where the probability of response to first-stage 
+               intervention is ", formatResp, sentenceCompilerA(),
+               ". Given a ", formatAltHyp, " test with ", formatAlpha,
+               " type-I error, we require a sample size of at least ",
+               finalSampleSize, " to make this comparison with ", formatPower,
+               " power. </p>", sep = ""))
   })
 
   output$continuousPowerA <- renderUI({
     validate(
-      need(input$inputSampleSizeA != 0, "Power is indeterminate for a sample size of 0. Please provide a valid sample size.")
+      need(input$inputSampleSizeA != 0, text.size0) %then%
+      need(size >= 1, text.lowSizeA)
     )
 
-    alt.hyp <- switch(input$selectAlternativeA, 'one.sided' = 'greater')
+    alt.hyp <- switch(input$selectAlternativeA,
+                      'one.sided' = 'greater')
     designEffect <- 4
     size <- (input$inputSampleSizeA/(2*designEffect))
 
     validate(
-      need(size >= 1, paste("The provided sample size is not large enough to yield a trial in which at least one
-                            person is consistent with each DTR. Sample size must be at least 8 to proceed."))
+  
     )
 
-    finalPower  <- round(pwr.norm.test(d = dataCompilerA(), sig.level = input$alphaA, n = size, alternative = alt.hyp)$power, digits = 3)
+    finalPower  <- round(try(pwr.norm.test(d = dataCompilerA(), 
+                                           sig.level = input$alphaA,
+                                           n = size,
+                                           alternative = alt.hyp)$power,
+                             silent = T), digits = 3)
     formatPower <- paste(finalPower   * 100, "%", sep = "")
     formatAlpha <- paste(input$alphaA * 100, "%", sep = "")
     formatSize  <- as.numeric(input$inputSampleSizeA)
     formatResp  <- as.numeric(input$respA)
 
 
-    HTML(paste("<h4 style='color:blue';> Power=",paste(formatPower)," </h4>
-         <p> For a trial of size N=",formatSize," with a continuous outcome where the probability of response to first-stage intervention is ",formatResp,
-               sentenceCompilerA(),", we have ",formatPower," power. </p>",sep=""))
+    HTML(paste("<h4 style='color:blue';> Power=", paste(formatPower)," </h4>
+         <p> For a trial of size N=", formatSize, " with a continuous outcome
+               where the probability of response to first-stage intervention
+               is ", formatResp, sentenceCompilerA(), ", we have ",
+               formatPower, " power. </p>", sep=""))
   })
 
 
@@ -515,7 +565,7 @@ output$tab <- renderText(input$SMARTsize)
       ### 'SMARTdesignX_DTR1_DTR2.gif'; if DTRX is unselected, DTR name is 0.
 
   output$designBimg <- renderImage({
-       filename <- normalizePath(file.path('./www/images',paste('SMARTdesignB_',input$firstDTRcompareB,'_',input$secondDTRcompareB,'.gif',sep='')))
+       filename <- normalizePath(file.path('./www/images', paste('SMARTdesignB_',input$firstDTRcompareB,'_',input$secondDTRcompareB,'.gif',sep='')))
        list(src  = filename)
    }, deleteFile = FALSE)
 
@@ -676,9 +726,9 @@ output$tab <- renderText(input$SMARTsize)
                    value = NULL, min = 0, max = 1, step = 0.01),
       numericInput("marginalSecondStageNRB2", label = paste("Probability of success for Path ", substringDTR2B()[2], "nr", substringDTR2B()[4], sep = ""),
                    value = NULL, min = 0, max = 1, step = 0.01),
-      bsTooltip(id = "marginalFirstStageB2",    title = "Input can range from 0-1 and must be in decimal form, up to two places.",
+      bsTooltip(id = "marginalFirstStageB2",    title = text.tooltip,
                 placement = "right", trigger = "focus"),
-      bsTooltip(id = "marginalSecondStageNRB2", title = "Input can range from 0-1 and must be in decimal form, up to two places.",
+      bsTooltip(id = "marginalSecondStageNRB2", title = text.tooltip,
                 placement = "right", trigger = "focus"))
   })
 

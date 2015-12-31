@@ -3,9 +3,6 @@
 ### UNIVERSITY OF MICHIGAN
 ### DEPARTMENT OF BIOSTATISTICS
 
-library(shiny)
-library(pwr)
-library(shinyBS)
 options(encoding = 'UTF-8')
 
 shinyUI(
