@@ -296,8 +296,10 @@ shinyServer(
                         (input$DTRsuccA2 > 0) & (input$DTRsuccA2 < 1)))
   })
 
-  ### Determine which inputs are being given, check their quality, then pass the appropriate arguments for computation
-    ### e.g., if target odds-ratio is given, compute a DTR success probability assuming the other is 0.5
+  ### Determine which inputs are being given, check their quality, then pass 
+  ###  the appropriate arguments for computation
+  ###  e.g., if target odds-ratio is given, compute a DTR success probability
+  ###  assuming the other is 0.5
   dataCompilerA <- reactive({
 
     ### Error Check: unselected DTRs, blank/invalid response probability
@@ -314,7 +316,8 @@ shinyServer(
       validate(
         need(!is.null(input$DTRsuccA1), text.refDTRPlaceholder),
         need(!is.null(input$DTRsuccA2), text.compDTRPlaceholder) %then%
-          need(!is.null(input$DTRsuccA1) && !is.null(input$DTRsuccA2), text.noSuccessProb) %then%
+          need(!is.null(input$DTRsuccA1) && !is.null(input$DTRsuccA2), 
+               text.noSuccessProb) %then%
           need(input$DTRsuccA1 != input$DTRsuccA2, text.sameSuccessProb) %then%
           need(checkDTRinputsA(), text.invalidSuccessProb)
       )
@@ -475,7 +478,6 @@ shinyServer(
     formatSize    <- as.numeric(input$inputSampleSizeA)
     formatResp    <- as.numeric(input$respA)
     
-    
     HTML(paste("<h4 style='color:blue';> Power=", paste(formatPower), " </h4>
          <p> For a trial of size N=", formatSize, " with a binary outcome where
                the probability of response to first-stage intervention is ",
@@ -530,11 +532,7 @@ shinyServer(
                       'one.sided' = 'greater')
     designEffect <- 4
     size <- (input$inputSampleSizeA/(2*designEffect))
-
-    validate(
-  
-    )
-
+    
     finalPower  <- round(try(pwr.norm.test(d = dataCompilerA(), 
                                            sig.level = input$alphaA,
                                            n = size,
@@ -550,7 +548,7 @@ shinyServer(
          <p> For a trial of size N=", formatSize, " with a continuous outcome
                where the probability of response to first-stage intervention
                is ", formatResp, sentenceCompilerA(), ", we have ",
-               formatPower, " power. </p>", sep=""))
+               formatPower, " power. </p>", sep = ""))
   })
 
 
