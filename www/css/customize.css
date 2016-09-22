@@ -28,6 +28,12 @@ h6 {font-family: 'Roboto Condensed', sans-serif;}
 	color: #ababab;
 	font-size: 7pt;
 }
+
+.Rversion{
+    font-size: inherit;
+    color: inherit;
+}
+
 .shiny-input-container > label{
     font-weight: 200;
 }

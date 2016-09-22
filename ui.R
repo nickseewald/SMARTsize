@@ -1,4 +1,4 @@
-##### UI.R FOR SMART SAMPLE SIZE CALCULATOR #####
+### UI.R FOR SMART SAMPLE SIZE CALCULATOR ###
 ### NICK SEEWALD, 2014
 ### UNIVERSITY OF MICHIGAN
 ### DEPARTMENT OF BIOSTATISTICS
@@ -7,13 +7,11 @@ options(encoding = 'UTF-8')
 
 shinyUI(
   # shinybootstrap2::withBootstrap2({
-  navbarPage("SMART Sample Size Calculator", id = "SMARTsize", collapsible = TRUE, footer = " ",
-#              footer = HTML("<p> Kidwell et al (in preparation). </p>
-#                          <p style='font-size:12px'> Please direct correspondence to <a href='mailto:nseewald@umich.edu'>nseewald@umich.edu</a></p>
-#                          <div style='color:grey;font-size:8px'>  SMARTsize Application Version 1.0.0, last updated 19 November 2014 </div>"),
-
-             ##### HOME TAB #####
+  tagList(useShinyjs(),
+          navbarPage("SMART Sample Size Calculator", id = "SMARTsize", collapsible = TRUE, footer = " ",
              
+             
+             ##### Home Tab #####
              tabPanel("Home",
                      ### CSS HEADER ###
                       ### Apply style attributes across the application
@@ -22,8 +20,12 @@ shinyUI(
                                      href = "https://fonts.googleapis.com/css?family=Roboto|Roboto+Condensed"),
                         tags$link(rel = "stylesheet", type = "text/css", href = "css/customize.css"),
                         tags$script(HTML("$(document).ready(function(){
-                                      $('.version').text('SMARTsize Version 1.1.1, last updated 13 November 2015');
+                                      $('.version').text('SMARTsize Version 1.2, last updated 29 July 2016');
                                     });"))
+                        ,
+                        tags$script(HTML(paste("$(document).ready(function(){
+                                      $('.Rversion').text('", paste(R.Version()$major, R.Version()$minor, sep = "."),"');
+                                         });", sep = "")))
                       ),
 
                       sidebarPanel(
@@ -71,7 +73,7 @@ shinyUI(
                         br(),
                         includeHTML("www/html/homeBackground.html"),
                         
-                        ##### REFERENCES #####
+                        ##### References #####
                         
                         tags$hr(),
                         h4("References"),
@@ -87,9 +89,9 @@ shinyUI(
                       )
              ), 
              
-             ##### DESIGN A #####
+             ##### DESIGN I #####
              
-             ##### A SIDEBAR #####
+             ##### D1 Sidebar #####
              
              tabPanel("Design I",
                       
@@ -97,24 +99,25 @@ shinyUI(
                         includeHTML("www/html/sidebarA.html")
                       ),
              
-            ##### A MAIN PANEL #####
+            ##### D1 Main Panel #####
                       mainPanel(
                         
-                        ##### A PAGE HEADER #####
+                        ##### D1 Page Header #####
                         
                         h1("Design I"),
                         tags$hr(),
                         
-                        ##### A OUTCOME SELECTION #####
-                        radioButtons("selectOutcomeA", label = eval(html.outcomeType),
-                                     choices = list("Binary" = 1,"Continuous" = 2), selected = 1),
-                        
+                        ##### D1 Outcome, Result, and Aim #####
+                        selectDTROutcomeUI("design1.outcome"),
+                        tags$hr(),
+                        resultOptionsUI("design1.resultOptions"),
+                        tags$hr(),
+                        primaryAimUI("design1.primaryAim"),
                         tags$hr(),
                         
-                        ##### A DTR SELECTION #####
-                        # Dropdown menus provide options to select DTRs for comparison.
-                        # Currently the menus are not reactively-repopulating (making it possible to select the same DTR twice). Possible future improvement.
-                                                
+                        ##### D1 AI Selection #####
+                        # Dropdown menus provide options to select AIs for comparison.
+
                         eval(text.selectDTRcompare), 
                         
                         fluidRow(
@@ -134,10 +137,10 @@ shinyUI(
                                  numericInput("respA",
                                               label = eval(text.responseProbLabel), 
                                               value = 0,min = 0,max = 1,step = 0.01),
-                                 conditionalPanel(condition = "input.selectOutcomeA == 1",
+                                 conditionalPanel(condition = 'output.design1outcome == "Binary"',
                                                   eval(text.successProbLabel), uiOutput("binaryDTR1probA"),
                                                   conditionalPanel(condition = "input.cellOrConditionalA",
-                                                                   fluidRow(column(11,offset = 1,
+                                                                   fluidRow(column(11, offset = 1,
                                                                                    uiOutput("cellProbsDTR1A"))
                                                                    )
                                                   ),
@@ -148,7 +151,7 @@ shinyUI(
                                                                    )
                                                   )
                                  ),
-                                 conditionalPanel(condition = "input.selectOutcomeA == 2",
+                                 conditionalPanel(condition = 'output.design1outcome == "Continuous"',
                                                   eval(text.stdEffectLabel), uiOutput("continuousProbA")
                                  ),
                                  
@@ -159,7 +162,7 @@ shinyUI(
                                  
                                  conditionalPanel(condition = "input.firstDTRcompareA != 0 && input.secondDTRcompareA != 0",
                                                   br(),
-                                                  conditionalPanel(condition = "input.selectOutcomeA == 1",
+                                                  conditionalPanel(condition = "output.designAoutcome == 1",
                                                                    eval(text.altInputHelp),
                                                                    checkboxInput("cellOrConditionalA", label = text.cellSpecLabel, value = FALSE),
                                                                    checkboxInput("targetDiffCheckA",   label = text.targDiffLabel, value = FALSE),
@@ -200,16 +203,16 @@ shinyUI(
                         # Choose which result to display based on binary/continuous outcome and selected result option
                         
                         h3("Results"),
-                        conditionalPanel(condition = "input.selectOutcomeA == 1 & input.selectResultsA == 'sample'",
+                        conditionalPanel(condition = "output.design1outcome == 'Binary' & input.selectResultsA == 'sample'",
                                          htmlOutput("binarySampleSizeA")
                         ),
-                        conditionalPanel(condition = "input.selectOutcomeA == 1 & input.selectResultsA == 'power'",
+                        conditionalPanel(condition = "output.design1outcome =='Binary' & input.selectResultsA == 'power'",
                                          htmlOutput("binaryPowerA")
                         ),
-                        conditionalPanel(condition = "input.selectOutcomeA == 2 & input.selectResultsA == 'sample'",
+                        conditionalPanel(condition = "output.design1outcome == 'Continuous' & input.selectResultsA == 'sample'",
                                          htmlOutput("continuousSampleSizeA")
                         ),
-                        conditionalPanel(condition = "input.selectOutcomeA == 2 & input.selectResultsA == 'power'",
+                        conditionalPanel(condition = "output.design1outcome == 'Continuous' & input.selectResultsA == 'power'",
                                          htmlOutput("continuousPowerA")
                         )
                       ),
@@ -243,9 +246,17 @@ shinyUI(
                       
                       mainPanel(
                         
-                        ##### B PAGE HEADER #####
+                        ##### D2 Page Header #####
                         
                         h1(textOutput("tab")),
+                        tags$hr(),
+                        
+                        ##### D2 Outcome, Result, and Aim #####
+                        selectDTROutcomeUI("design2.outcome"),
+                        tags$hr(),
+                        resultOptionsUI("design2.resultOptions"),
+                        tags$hr(),
+                        primaryAimUI("design2.primaryAim"),
                         tags$hr(),
                         
                         ##### B OUTCOME SELECTION #####
@@ -286,13 +297,13 @@ shinyUI(
                                                   uiOutput("binaryDTR1probB"),
                                                   conditionalPanel(condition="input.cellOrConditionalB",
                                                                    fluidRow(column(1),
-                                                                            column(11,uiOutput("cellProbsDTR1B"))
+                                                                            column(11, uiOutput("cellProbsDTR1B"))
                                                                    )
                                                   ),
                                                   uiOutput("binaryDTR2probB"),
                                                   conditionalPanel(condition="input.cellOrConditionalB",
                                                                    fluidRow(column(1),
-                                                                            column(11,uiOutput("cellProbsDTR2B"))
+                                                                            column(11, uiOutput("cellProbsDTR2B"))
                                                                    )
                                                   )
                                  ),
@@ -487,7 +498,7 @@ shinyUI(
                         ),
                         tags$hr(),
                         
-                        ##### C RESULTS #####
+                        ##### C Results #####
                         # Choose which result to display based on binary/continuous outcome and selected result option
                         
                         h3("Results"),
@@ -505,19 +516,108 @@ shinyUI(
                         )
                       ),
                       
-                      ##### C TOOLTIPS #####
+                      ##### C Tooltips #####
                       ### Add bootstrap-style tooltips to inputs coaching proper formatting
                       ### Below are tooltips for inputs rendered statically in ui.R
                       ### For inputs rendered dynamically, see the appropriate renderUI() in server.R
                       
-                      bsTooltip(id="respC",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"),      
-                      bsTooltip(id="alphaC",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"),
-                      bsTooltip(id="inputPowerC",title="Input can range from 0-1 and must be in decimal form with a leading zero, up to two places.",placement="right",trigger="focus"),
-                      bsTooltip(id="inputSampleSizeC",title="Input must be an integer greater than zero.",placement="right",trigger="focus")
-             )
-             
+                      bsTooltip(id = "respC", title = text.tooltip,
+                                placement = "right", trigger = "focus"),      
+                      bsTooltip(id = "alphaC", title = text.tooltip,
+                                placement = "right", trigger = "focus"),
+                      bsTooltip(id = "inputPowerC", title = text.tooltip,
+                                placement = "right", trigger = "focus"),
+                      bsTooltip(id = "inputSampleSizeC", 
+                                title = "Input must be an integer greater than zero.",
+                                placement = "right", trigger = "focus")
+             ),
             
+            ##### Design Your Own #####
+            
+            tabPanel("Design Your Own",
+                     sidebarPanel(p("Insert description, etc.")),
+                     mainPanel(
+                       
+                       ##### DYO Page Header #####
+                       h1("Design Your Own SMART"),
+                       h4("Follow the steps below to describe and size a custom SMART"),
+                       tags$hr(),
+                       
+                       ##### DYO Outcome Selection #####
+                       selectDTROutcomeUI("dyo.outcome"),
+                       tags$hr(),
+                       resultOptionsUI("dyo.resultOptions"),
+                       tags$hr(),
+                       
+                       tabsetPanel(
+                         ##### DYO Trial Design #####
+                         tabPanel(title = "Design",
+                                  bsCollapse(
+                                    bsCollapsePanel(title = "Describe the First Randomization", 
+                                                    fluidRow(column(6, sliderInput("dyo.stage1.ntxt", 
+                                                                                   label = "How many initial treatments do you have?",
+                                                                                   min = 2, max = 5, value = 2, step = 1, ticks = FALSE, width = "50%")),
+                                                             column(6, radioButtons("dyo.stage1.eqrand",
+                                                                                    label = "Are participants randomized equally between treatments?",
+                                                                                    choices = list("Yes", "No"), selected = "Yes"),
+                                                                    conditionalPanel(condition = 'input["dyo.stage1.eqrand"] == "No"',
+                                                                                     list(p("What are the allocation probabilities?"),
+                                                                                          fluidRow(column(11, uiOutput("dyo.stage1.rprobUI"), offset = 1)))))
+                                                             ),
+                                                    fluidRow(column(10),
+                                                             column(2, bsButton("dyo.stage1.continue", "Continue"))),
+                                                    value = "dyo.stage1.describe"),
+                                    bsCollapsePanel(title = "Describe the Second Randomization",
+                                                    fluidRow(column(6, h4("Responders"), tags$hr(),
+                                                                    radioButtons("dyo.rerand.resp",
+                                                                                    label = "Are responders to first-stage treatment re-randomized?",
+                                                                                    choices = list("Yes", "No"), selected = "Yes"),
+                                                                    conditionalPanel(condition = 'input["dyo.rerand.resp"] == "Yes"',
+                                                                                     list(sliderInput("dyo.rerand.resp.ntxt",
+                                                                                                      label = "How many treatments are responders re-randomized between?",
+                                                                                                      min = 2, max = 5, value = 2, step = 1, ticks = FALSE, width = "80%"),
+                                                                                          radioButtons("dyo.rerand.resp.eqrand",
+                                                                                                       label = "Are responders re-randomized equally between treatments?",
+                                                                                                       choices = list("Yes", "No"), selected = "Yes"),
+                                                                                          conditionalPanel(condition = 'input["dyo.rerand.resp.eqrand"]  == "No"',
+                                                                                                           list(p("What are the allocation probabilites?"),
+                                                                                                                fluidRow(column(11, uiOutput("dyo.rerand.resp.rprobUI"), offset = 1))))))),
+                                                             column(6, h4("Non-Responders"), tags$hr(),
+                                                                    radioButtons("dyo.rerand.nresp",
+                                                                                    label = "Are non-responders to first-stage treatment re-randomized?",
+                                                                                    choices = list("Yes", "No"), selected = "Yes"),
+                                                                    conditionalPanel(condition = 'input["dyo.rerand.nresp"] == "Yes"',
+                                                                                     list(sliderInput("dyo.rerand.nresp.ntxt",
+                                                                                                      label = "How many treatments are non-responders re-randomized between?",
+                                                                                                      min = 2, max = 5, value = 2, step = 1, ticks = FALSE, width = "80%"),
+                                                                                          radioButtons("dyo.rerand.nresp.eqrand", 
+                                                                                                       label = "Are non-responders re-randomized equally between treatments?",
+                                                                                                       choices = list("Yes", "No"), selected = "Yes"),
+                                                                                          conditionalPanel(condition = 'input["dyo.rerand.nresp.eqrand"] == "No"',
+                                                                                                           list(p("What are the allocation probabilities?"),
+                                                                                                                fluidRow(column(11, uiOutput("dyo.rerand.nresp.rprobUI"), offset = 1)))))))),
+                                                    bsAlert(anchorId = "mustRerandomize"),
+                                                    fluidRow(column(3, bsButton("dyo.rerand.back", "Back")),
+                                                             column(7),
+                                                             column(2, bsButton("dyo.rerand.continue", "Continue"))),
+                                                    value = "dyo.rerand.describe"),
+                                    id = "dyo.design.collapse", multiple = FALSE, open = "dyo.stage1.describe")
+                                  ), # end Design tabPanel
+                         tabPanel("Size",
+                                  br(),
+                                  fluidRow(column(6,
+                                                  radioButtons("dyo.stage1.resprob.eq", "Are the response rates the same for all first-stage treatments?",
+                                                               choices = c("Yes", "No"), selected = "Yes"),
+                                                  fluidRow(column(11, uiOutput("dyo.stage1.resprobUI"), offset = 1))),
+                                           column(6, primaryAimUI("dyo.primaryAim"))),
+                                  tags$hr()
+                                  ), #end Size tabPanel
+                       id = "dyo.tabset", selected = "Design", type = "tabs"),
+                       tags$hr(),
+                       br(),
+                       verbatimTextOutput("graphstring"),
+                       DiagrammeROutput("dyo.diagram", height = "500px")
+                     ) # end mainPanel
+                     ) # end tabPanel
 
-)
-  # })
-)
+)))

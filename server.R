@@ -15,7 +15,6 @@ options(encoding = 'UTF-8')
 shinyServer(
   function(input,output,session){
     output$tab <- renderText(input$SMARTsize)
-  ##### HOME #####
   ### Watch for clicks on pickTab actionButtons rendered under design diagrams
   ### On click, redirect to appropriate tab. (More intuitive navigation structure)
 
@@ -23,9 +22,9 @@ shinyServer(
     observeEvent(input$pickTabB, updateTabsetPanel(session, "SMARTsize", selected = "Design II"))
     observeEvent(input$pickTabC, updateTabsetPanel(session, "SMARTsize", selected = "Design III"))
 
-  ##### DESIGN A #####
+  ##### DESIGN I #####
 
-  ##### A HEADER #####
+  ##### Design I Header #####
 
   ### Render the design image which highlights selected DTRs
   ### Takes the names of selected DTRs, generates a filepath, and renders the image in the UI
@@ -40,6 +39,26 @@ shinyServer(
       )
     list(src = filename)
   }, deleteFile = FALSE)
+    
+    
+    ##### Design I Modules #####
+    
+    # Backend for outcome selection radioButtons
+    design1.outcome <- callModule(selectDTROutcome, "design1.outcome")
+    output$design1outcome <- renderText(design1.outcome())
+    outputOptions(output, 'design1outcome', suspendWhenHidden = FALSE)
+    
+    # Backend for result options (alpha, desired power/sample size, etc.)
+    design1.resultOptions <- callModule(resultOptions, "design1.resultOptions")
+    output$design1resultOptions <- renderText(unlist(design1.resultOptions()))
+    outputOptions(output, 'design1resultOptions', suspendWhenHidden = FALSE)
+    
+    # Backend for selection of primary comparison for sample size calculation
+    design1.primaryAim <- callModule(primaryAim, "design1.primaryAim",
+                                     rerand = reactive({c("responders", "nonresponders")}))
+    output$design1primaryAim <- renderText(design1.primaryAim())
+    outputOptions(output, 'design1primaryAim', suspendWhenHidden = FALSE)
+    
 
   ### Render 'selectize' dropdown boxes with placeholder text for AI selection.
   ### Second DTR input populates with all DTRs that are NOT the first DTR
@@ -48,7 +67,7 @@ shinyServer(
 
     output$selectAI1A <- renderUI({
       AI <- selectizeInput("firstDTRcompareA", label = text.refDTRLabel,
-                           choices = designA.DTRs,
+                           choices = designA.AIs,
                            options = list(
                              placeholder = text.refDTRPlaceholder,
                              onInitialize = I('function() { this.setValue(0); }')
@@ -59,7 +78,7 @@ shinyServer(
 
     output$selectAI2A <- renderUI({
       AI <- selectizeInput("secondDTRcompareA",label = text.compDTRLabel,
-                           choices = designA.DTRs[substr(designA.DTRs, 1, 1) !=
+                           choices = designA.AIs[substr(designA.AIs, 1, 1) !=
                                                     substringDTR1A()[2]],
                            options = list(
                              placeholder = text.compDTRPlaceholder,
@@ -242,7 +261,7 @@ shinyServer(
   ### Allow checkboxes to function like radio buttons, while also allowing none to be selected
 
   observe({
-    if(input$targetDiffCheckA){
+    if (input$targetDiffCheckA) {
       updateCheckboxInput(session, "cellOrConditionalA", value = FALSE)
       updateCheckboxInput(session, "targetOddsCheckA",   value = FALSE)
     }
@@ -275,13 +294,13 @@ shinyServer(
   ### Compute full DTR probabilities or effect size when providing cell-specific probabilities or mean/SD
 
   generateProbsA <- reactive({
-    if (input$selectOutcomeA == 1 && input$cellOrConditionalA == TRUE) {
+    if (design1.outcome() == "Binary" && input$cellOrConditionalA == TRUE) {
       pDTR1 <- fullDTRprob(input$marginalFirstStageA1, input$respA, 
                            input$marginalSecondStageNRA1)
       pDTR2 <- fullDTRprob(input$marginalFirstStageA2, input$respA, 
                            input$marginalSecondStageNRA2)
     }
-    else if (input$selectOutcomeA == 1 && input$cellOrConditionalA == FALSE) {
+    else if (design1.outcome() == "Binary" && input$cellOrConditionalA == FALSE) {
       pDTR1 <- input$DTRsuccA1
       pDTR2 <- input$DTRsuccA2
     }
@@ -309,7 +328,7 @@ shinyServer(
     )
 
     ### Binary outcome, DTR-specific success probabilities
-    if (input$selectOutcomeA == 1 && input$cellOrConditionalA == FALSE &&
+    if (design1.outcome() == "Binary" && input$cellOrConditionalA == FALSE &&
        input$targetDiffCheckA == FALSE && input$targetOddsCheckA == FALSE) {
       ### Error Check: unselected DTRs, blank success probabilities,
       ### equal success probabilities, invalid success probabilities
@@ -325,7 +344,7 @@ shinyServer(
     }
 
     # Binary outcome, cell-specific success probabilities
-    if (input$selectOutcomeA == 1 && input$cellOrConditionalA == TRUE &&
+    if (design1.outcome() == "Binary" && input$cellOrConditionalA == TRUE &&
        input$targetDiffCheckA == FALSE && input$targetOddsCheckA == FALSE) {
       # Error Check: equal DTR-specific success probabilities
       validate(
@@ -335,7 +354,7 @@ shinyServer(
     }
 
     ### Binary outcome, target difference in success probabilities
-    if (input$selectOutcomeA == 1 && input$cellOrConditionalA == FALSE &&
+    if (design1.outcome() == "Binary" && input$cellOrConditionalA == FALSE &&
        input$targetDiffCheckA == TRUE && input$targetOddsCheckA == FALSE) {
       # Error Check: invalid target difference (must be less than 0.5 since
       # we're using a conservative reference probability)
@@ -351,7 +370,7 @@ shinyServer(
     }
 
     ### Binary outcome, target odds ratio of success
-    if (input$selectOutcomeA == 1 && input$cellOrConditionalA == FALSE && 
+    if (design1.outcome() == "Binary" && input$cellOrConditionalA == FALSE && 
         input$targetDiffCheckA == FALSE && input$targetOddsCheckA == TRUE) {
       ### Error check: missing/invalid odds ratio
       validate(
@@ -364,7 +383,7 @@ shinyServer(
     }
 
     ### Continuous outcome, standardized effect size
-    if (input$selectOutcomeA == 2) {
+    if (design1.outcome() == "Continuous") {
       ### Error check: nonzero effect size
       validate(
         need(input$firstDTRcompareA, text.refDTRPlaceholder),
@@ -380,32 +399,32 @@ shinyServer(
   ### Construct a portion of the explainer sentence that appears below the 
   ### result, depending on the provided inputs.
   sentenceCompilerA <- reactive({
-    if (input$selectOutcomeA == 1 && input$cellOrConditionalA == FALSE &&
+    if (design1.outcome() == "Binary" && input$cellOrConditionalA == FALSE &&
        input$targetDiffCheckA == FALSE && input$targetOddsCheckA == FALSE) {
       return(paste(text.sentenceOverallSuccess, input$firstDTRcompareA,
                    " and ", input$secondDTRcompareA, ", are ", input$DTRsuccA1,
                    " and ", input$DTRsuccA2, ", respectively", sep = ""))
     }
-    if (input$selectOutcomeA == 1 && input$cellOrConditionalA == TRUE &&
+    if (design1.outcome() == "Binary" && input$cellOrConditionalA == TRUE &&
         input$targetDiffCheckA == FALSE && input$targetOddsCheckA == FALSE) {
       return(paste(text.sentenceOverallSuccess, input$firstDTRcompareA, " and ",
                    input$secondDTRcompareA, ", are ", generateProbsA()[1],
                    " and ", generateProbsA()[2], ", respectively", sep = ""))
     }
 
-    if (input$selectOutcomeA == 1 && input$cellOrConditionalA == FALSE &&
+    if (design1.outcome() == "Binary" && input$cellOrConditionalA == FALSE &&
         input$targetDiffCheckA == TRUE && input$targetOddsCheckA == FALSE) {
       return(paste(text.sentenceDiff, input$firstDTRcompareA, " and ", 
                    input$secondDTRcompareA, ", is ", input$targetDiffA, sep = ""))
     }
 
-    if (input$selectOutcomeA == 1 && input$cellOrConditionalA == FALSE &&
+    if (design1.outcome() == "Binary" && input$cellOrConditionalA == FALSE &&
         input$targetDiffCheckA == FALSE && input$targetOddsCheckA == TRUE) {
       return(paste(text.sentenceOR, input$firstDTRcompareA, " and ",
                    input$secondDTRcompareA, ", is ",input$targetORA, sep = ""))
     }
 
-    if (input$selectOutcomeA == 2) {
+    if (design1.outcome() == "Continuous") {
       return(paste(text.sentenceEffectSize, input$firstDTRcompareA, " and ", 
                    input$secondDTRcompareA, ", is ", input$effectSizeA, sep = ""))
     }
@@ -553,9 +572,9 @@ shinyServer(
 
 
 
-  ##### DESIGN B #####
+  ##### DESIGN 2 #####
 
-  ##### B HEADER #####
+  ##### Design 2 Header #####
 
   ### Render the design image which highlights selected DTRs
   ### Takes the names of selected DTRs, generates a filepath, and renders the image in the UI
@@ -567,13 +586,32 @@ shinyServer(
        list(src  = filename)
    }, deleteFile = FALSE)
 
+  
+  ##### Design 2 Modules #####
+  
+  # Backend for outcome selection radioButtons
+  design2.outcome <- callModule(selectDTROutcome, "design2.outcome")
+  output$design2outcome <- renderText(design2.outcome())
+  outputOptions(output, 'design2outcome', suspendWhenHidden = FALSE)
+  
+  # Backend for result options (alpha, desired power/sample size, etc.)
+  design2.resultOptions <- callModule(resultOptions, "design2.resultOptions")
+  output$design2resultOptions <- renderText(unlist(design2.resultOptions()))
+  outputOptions(output, 'design2resultOptions', suspendWhenHidden = FALSE)
+  
+  # Backend for selection of primary comparison for sample size calculation
+  design2.primaryAim <- callModule(primaryAim, "design2.primaryAim",
+                                   rerand = reactive("nonresponders"))
+  output$design2primaryAim <- renderText(design2.primaryAim())
+  outputOptions(output, 'design2primaryAim', suspendWhenHidden = FALSE)
+  
   ### Render 'selectize' dropdown boxes with placeholder text for AI selection.
     ### Second DTR input populates with all DTRs that are NOT the first DTR--eliminates ability to select same DTR twice
     ### Placed in server.R rather than ui.R because of dependency on first DTR selection
 
   output$selectAI1B <- renderUI({
     AI <- selectizeInput("firstDTRcompareB", label = "Reference Adaptive Intevention",
-                       choices = designB.DTRs,
+                       choices = designB.AIs,
                        options = list(
                          placeholder = 'Please select a Reference AI.',
                          onInitialize = I('function() { this.setValue(0); }')
@@ -584,7 +622,7 @@ shinyServer(
 
   output$selectAI2B <- renderUI({
     AI <- selectizeInput("secondDTRcompareB",label = "Comparison Adaptive Intervention",
-                     choices = designB.DTRs[substr(designB.DTRs, 1, 1) != substr(input$firstDTRcompareB, 1, 1)],
+                     choices = designB.AIs[substr(designB.AIs, 1, 1) != substr(input$firstDTRcompareB, 1, 1)],
                      options = list(
                        placeholder = 'Please select a Comparison AI.',
                        onInitialize = I('function() { this.setValue(""); }')
@@ -1021,7 +1059,7 @@ shinyServer(
 
  output$selectAI1C <- renderUI({
    AI <- selectizeInput("firstDTRcompareC",label="Compare AI",
-                        choices=designC.DTRs,
+                        choices=designC.AIs,
                         options = list(
                           placeholder = 'Please select a Reference AI.',
                           onInitialize = I('function() { this.setValue(0); }')
@@ -1032,7 +1070,7 @@ shinyServer(
 
  output$selectAI2C <- renderUI({
    AI <- selectizeInput("secondDTRcompareC",label="to AI",
-                        choices = designC.DTRs[substr(designC.DTRs, 1, 1) != substr(input$firstDTRcompareC, 1, 1)],
+                        choices = designC.AIs[substr(designC.AIs, 1, 1) != substr(input$firstDTRcompareC, 1, 1)],
                         options = list(
                           placeholder = 'Please select a Comparison AI.',
                           onInitialize = I('function() { this.setValue(""); }')
@@ -1437,4 +1475,174 @@ shinyServer(
               <p> For a trial of size N=",formatSize," with a continuous outcome where the probability of response to first-stage interventions is ",formatResp,
               sentenceCompilerC(),", we have at least ",formatPower," power. </p>",sep=""))
  })
+ 
+ 
+ ##### DESIGN YOUR OWN #####
+ 
+ ##### DYO Modules #####
+ ## Backend for outcome selection radioButtons
+ dyo.outcome <- callModule(selectDTROutcome, "dyo.outcome")
+ output$dyooutcome <- renderText(dyo.outcome())
+ outputOptions(output, 'dyooutcome', suspendWhenHidden = FALSE)
+ 
+ ## Backend for result options (alpha, desired power/sample size, etc.)
+ dyo.resultOptions <- callModule(resultOptions, "dyo.resultOptions")
+ output$dyoresultOptions <- renderText(unlist(dyo.resultOptions()))
+ outputOptions(output, 'dyoresultOptions', suspendWhenHidden = FALSE)
+ 
+ ## Backend for selection of primary aim (e.g., pairwise DTR comparison, omnibus DTR, etc.)
+ dyo.primaryAim.rerand <- reactive({
+   validate(need(input$dyo.rerand.resp == "Yes" | input$dyo.rerand.nresp == "Yes", text.mustRerandomize))
+   c("responders", "nonresponders")[c(input$dyo.rerand.resp == "Yes", input$dyo.rerand.nresp == "Yes")]
+ })
+ dyo.primaryAim <- callModule(primaryAim, "dyo.primaryAim", rerand = dyo.primaryAim.rerand)
+ output$dyoprimaryAim <- renderText(dyo.primaryAim())
+ outputOptions(output, 'dyoprimaryAim', suspendWhenHidden = FALSE)
+ 
+ ##### DYO Randomization Probabilities #####
+ ### Create inputs for varying randomization probabilites 
+ output$dyo.stage1.rprobUI <- renderUI({
+   list(lapply(1:input$dyo.stage1.ntxt, 
+               function(i) {
+                 numericInput(paste0("dyo.stage1.txt", i, ".rprob"),
+                              label = paste0("Probability of allocation to Treatment ", i), 
+                              min = 0, max = 1, value = NA, step = 0.01)
+               }),
+        helpText(paste("The probability of allocation to Treatment", isolate(input$dyo.stage1.ntxt),
+                       "will automatically update so that all allocation probabilities sum to 1.")))
+ })
+ output$dyo.rerand.resp.rprobUI <- renderUI({
+   list(lapply(1:input$dyo.rerand.resp.ntxt, 
+               function(i) {
+                 numericInput(paste0("dyo.rerand.resp.txt", i, ".rprob"),
+                              label = paste0("Probability of allocation to Treatment ", i), 
+                              min = 0, max = 1, value = NA, step = 0.01)
+               }),
+        helpText(paste("The probability of allocation to Treatment", isolate(input$dyo.rerand.resp.ntxt),
+                       "will automatically update so that all allocation probabilities sum to 1."))
+   )
+ })
+ output$dyo.rerand.nresp.rprobUI <- renderUI({
+   list(lapply(1:(input$dyo.rerand.nresp.ntxt), 
+               function(i) {
+                 numericInput(paste0("dyo.rerand.nresp.txt", i, ".rprob"),
+                              label = paste("Probability of allocation to Treatment", i), 
+                              min = 0, max = 1, value = NA, step = 0.01)
+               }),
+        helpText(paste("The probability of allocation to Treatment", isolate(input$dyo.rerand.nresp.ntxt),
+                       "will automatically update so that all allocation probabilities sum to 1.")))
+   
+ })
+ 
+ ### Update randomization probabilities for last treatment in the list so everything sums to 1
+ ## Compute sums for each randomization
+ dyo.stage1.allocProbs.sum <- reactive({
+   do.call(sum, lapply(1:(input$dyo.stage1.ntxt - 1), 
+                       function(i) input[[paste0('dyo.stage1.txt', i, '.rprob')]]))
+ })
+ dyo.rerand.resp.allocProbs.sum <- reactive({
+   do.call(sum, lapply(1:(input$dyo.rerand.resp.ntxt - 1), 
+                       function(i) input[[paste0('dyo.rerand.resp.txt', i, '.rprob')]]))
+ })
+ dyo.rerand.nresp.allocProbs.sum <- reactive({
+   do.call(sum, lapply(1:(input$dyo.rerand.nresp.ntxt - 1), 
+                       function(i) input[[paste0('dyo.rerand.nresp.txt', i, '.rprob')]]))
+ })
+ 
+ ## Whenever the sum of the first n-1 treatment probabilities changes, update the last probability
+ observe({
+   updateNumericInput(session, paste0('dyo.stage1.txt', isolate(input$dyo.stage1.ntxt), '.rprob'),
+                      value = 1 - dyo.stage1.allocProbs.sum())})
+ observe({
+   updateNumericInput(session, paste0('dyo.rerand.resp.txt', isolate(input$dyo.rerand.resp.ntxt), '.rprob'),
+                      value = 1 - dyo.rerand.resp.allocProbs.sum())})
+ observe({
+   updateNumericInput(session, paste0('dyo.rerand.nresp.txt', isolate(input$dyo.rerand.nresp.ntxt), '.rprob'),
+                      value = 1 - dyo.rerand.nresp.allocProbs.sum())})
+ 
+ ## Disable continue button in second stage randomization when nobody is rerandomized
+ observe({
+   shinyjs::toggleState("dyo.rerand.continue", input$dyo.rerand.resp == "Yes" | input$dyo.rerand.nresp == "Yes")
+ })
+ 
+ 
+ ##### DYO Sizing Inputs #####
+ ### Generate inputs for varying response probabilities
+ output$dyo.stage1.resprobUI <- renderUI({
+   if (input$dyo.stage1.resprob.eq == "No") {
+     lapply(1:input$dyo.stage1.ntxt,
+            function(i) { 
+              numericInput(paste0("dyo.stage1.txt", i, "resprob"),
+                           label = paste("Probability of Response to Treatment", i),
+                           min = 0, max = 1, value = NA, step = 0.01)
+            })
+   } else {
+     numericInput("dyo.stage1.allTxt.resprob",
+                  label = "Probability of Response to Any Treatment",
+                  min = 0, max = 1, value = NA, step = 0.01)
+   }
+ })
+ 
+ 
+ #### DYO Diagram Creation ####
+ 
+ ## Call shiny module to write strings which define the mermaid graph 
+ dyo.stage2respDiagram <- callModule(module = dyoDiagramStage2, id = "dyo.stage2respDiagram",
+                                     RNR = "R", rerand = reactive(input$dyo.rerand.resp), reactive(input$dyo.stage1.ntxt),
+                                     reactive(input$dyo.rerand.resp.ntxt))
+ dyo.stage2nrespDiagram <- callModule(module = dyoDiagramStage2, id = "dyo.stage2nrespDiagram",
+                                      RNR = "NR", rerand = reactive(input$dyo.rerand.nresp), reactive(input$dyo.stage1.ntxt),
+                                      reactive(input$dyo.rerand.nresp.ntxt))
+ 
+ ## Create diagram components for first randomization to first-stage treatments
+ dyo.stage1.diagram <- reactive({
+   paste(sapply(1:input$dyo.stage1.ntxt,
+                function(i) paste0("R1-->", LETTERS[i],
+                                   "[Treatment ", LETTERS[i], "]")), collapse = "\n")
+ })
+ 
+ ## Render graph definition string for verification
+ output$graphstring <- renderText(paste("graph LR", 
+                                        "classDef className fill:#f9f,stroke:#333,stroke-width:4px;",
+                                        "R1((R))",
+                                        dyo.stage1.diagram(),
+                                        dyo.stage2respDiagram(),
+                                        dyo.stage2nrespDiagram(),
+                                        sep = "\n ")
+ )
+ ## Render diagram
+ output$dyo.diagram <- renderDiagrammeR({
+   # Make sure either responders or non-responders are re-randomized before rendering diagram
+   # (Need at least one group to be re-randomized or else design is not a SMART)
+   validate(
+     need(input$dyo.rerand.resp == "Yes" | input$dyo.rerand.nresp == "Yes", text.mustRerandomize)
+   )
+   
+   # Create alert if neither responders or non-responders are rerandomized
+   
+   
+   DiagrammeR(diagram = paste("graph LR", 
+                              "R1((R))",
+                              dyo.stage1.diagram(),
+                              dyo.stage2respDiagram(),
+                              dyo.stage2nrespDiagram(),
+                              sep = " \n "),
+              type = "mermaid")
+   })
+ 
+ #### DYO Design Collapse and Tabset Handlers ####
+ 
+ # Observer for button "dyo.stage1.continue" inside stage 1 design spec collapse panel
+ # When button is pressed, update the collapse so that the stage 1 panel closes and the stage 2 panel opens
+ observeEvent(input$dyo.stage1.continue, 
+              updateCollapse(session, "dyo.design.collapse", 
+                             open = "dyo.rerand.describe", 
+                             close = "dyo.stage1.describe"))
+ observeEvent(input$dyo.rerand.back, 
+              updateCollapse(session, "dyo.design.collapse", 
+                             open = "dyo.stage1.describe", 
+                             close = "dyo.rerand.describe"))
+ observeEvent(input$dyo.rerand.continue,
+              # updateTabsetPanel(session, "dyo.tabset", selected = "Size")
+              updateButton(session, "dyo.rerand.back", disabled = T))
 })

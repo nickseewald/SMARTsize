@@ -97,3 +97,4 @@ text.lowEffectSizeA <- paste("Given the provided effect size, fewer than 8 ",
                              "SMART. You can test for a smaller effect size, ",
                              "or increase the desired power.")
 
+text.mustRerandomize <- "Either responders or non-responders must be re-randomized. Change the study design so that at least one group is re-randomized."
