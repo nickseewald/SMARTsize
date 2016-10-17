@@ -10,6 +10,7 @@ library(DiagrammeR)
 library(V8)
 library(htmlwidgets)
 library(shinyjs)
+library(rsvg)
 
 ### Function creates disabled (greyed-out) inputs
 ### https://groups.google.com/d/msg/shiny-discuss/uSetp4TtW-s/Jktu3fS60RAJ

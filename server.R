@@ -1641,51 +1641,53 @@ shinyServer(
       }
     })
     
-    
     #### DYO Diagram Creation ####
     
     ## Call shiny module to write strings which define the mermaid graph 
     dyo.stage2respDiagram <- callModule(module = dyoDiagramStage2, id = "dyo.stage2respDiagram",
-                                        RNR = "R", rerand = reactive(input$dyo.rerand.resp),
-                                        ntxt.stage1 = reactive(input$dyo.stage1.ntxt),
-                                        ntxt.stage2 = reactive(input$dyo.rerand.resp.ntxt))
+                                        RNR = "R", rerand = reactive(input$dyo.rerand.resp), reactive(input$dyo.stage1.ntxt),
+                                        reactive(input$dyo.rerand.resp.ntxt))
     dyo.stage2nrespDiagram <- callModule(module = dyoDiagramStage2, id = "dyo.stage2nrespDiagram",
-                                         RNR = "NR", rerand = reactive(input$dyo.rerand.nresp), 
-                                         ntxt.stage1 = reactive(input$dyo.stage1.ntxt),
-                                         ntxt.stage2 = reactive(input$dyo.rerand.nresp.ntxt))
+                                         RNR = "NR", rerand = reactive(input$dyo.rerand.nresp), reactive(input$dyo.stage1.ntxt),
+                                         reactive(input$dyo.rerand.nresp.ntxt))
     
     ## Create diagram components for first randomization to first-stage treatments
     dyo.stage1.diagram <- reactive({
-      # Create node for first randomization
-      nodes <- create_nodes(nodes = "R1", label = "R", shape = "circle")
-      
-      # Add nodes for first-stage treatments and edges connecting those
-      # treatments to the first randomization
-      nodes <- combine_nodes(nodes, create_nodes(nodes = LETTERS[1:input$dyo.stage1.ntxt], shape = "rectangle"))
-      edges <- create_edges(from = rep("R1", times = input$dyo.stage1.ntxt), to = LETTERS[1:input$dyo.stage1.ntxt])
-      
-      return(list("nodes" = nodes, "edges" = edges))
+      paste(sapply(1:input$dyo.stage1.ntxt,
+                   function(i) paste0("R1-->", LETTERS[i],
+                                      "[", LETTERS[i], "]")), collapse = "\n")
     })
     
-    ## Render diagram
-    output$dyo.diagram <- renderGrViz({
+    ## Render graph definition string for verification
+    output$graphstring <- renderText(paste("graph LR", 
+                                           "classDef className fill:#f9f,stroke:#333,stroke-width:4px;",
+                                           "R1((R))",
+                                           dyo.stage1.diagram(),
+                                           dyo.stage2respDiagram(),
+                                           dyo.stage2nrespDiagram(),
+                                           sep = "\n ")
+    )
+    # Render diagram
+    output$dyo.diagram <- renderDiagrammeR({
       # Make sure either responders or non-responders are re-randomized before rendering diagram
       # (Need at least one group to be re-randomized or else design is not a SMART)
       validate(
         need(input$dyo.rerand.resp == "Yes" | input$dyo.rerand.nresp == "Yes", text.mustRerandomize)
       )
-      
+
       # Create alert if neither responders or non-responders are rerandomized
-      render_graph(create_graph(
-        nodes_df = combine_nodes(dyo.stage1.diagram()$nodes,
-                                 dyo.stage2respDiagram()$nodes,
-                                 dyo.stage2nrespDiagram()$nodes),
-        edges_df = combine_edges(dyo.stage1.diagram()$edges,
-                                 dyo.stage2respDiagram()$edges,
-                                 dyo.stage2nrespDiagram()$edges),
-        graph_attrs = "rankdir=LR; splines=line",
-        node_attrs = "fontname=Helvetica",
-        edge_attrs = "fontname=Helvetica; fontsize='11pt'"))
+      
+      graph <- DiagrammeR(diagram = paste("graph LR",
+                                          "R1((R))",
+                                          dyo.stage1.diagram(),
+                                          dyo.stage2respDiagram(),
+                                          dyo.stage2nrespDiagram(),
+                                          sep = " \n "),
+                          type = "mermaid")
+
+      # export_graph(graph, file_name = "diagram", file_type = "png")
+      
+      graph
     })
     
     #### DYO Design Collapse and Tabset Handlers ####
