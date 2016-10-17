@@ -7,11 +7,9 @@ library(shiny)
 # library(pwr)
 library(shinyBS)
 library(DiagrammeR)
-# library(DiagrammeRsvg)
+library(V8)
 library(htmlwidgets)
 library(shinyjs)
-
-##### NON-REACTIVE FUNCTION DECLARATIONS #####
 
 ### Function creates disabled (greyed-out) inputs
 ### https://groups.google.com/d/msg/shiny-discuss/uSetp4TtW-s/Jktu3fS60RAJ
