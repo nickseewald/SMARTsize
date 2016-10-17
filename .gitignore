@@ -1,4 +1,9 @@
 *.dcf
+*.tex
+*.aux
+*.log
+*.out
+*.synctex.gz
 
 #################
 ## Eclipse
