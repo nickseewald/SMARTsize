@@ -594,14 +594,14 @@ shinyUI(
                                   ), # end Design tabPanel
                                   tabPanel("Size",
                                            br(),
-                                           fluidRow(primaryAimUI("dyo.primaryAim")),
+                                           fluidRow(column(6),
+                                                    column(6, primaryAimUI("dyo.primaryAim"))),
                                            tags$hr()
                                   ), #end Size tabPanel
                                   id = "dyo.tabset", selected = "Design", type = "tabs"), #end bsCollapse
                                 tags$hr(),
                                 br(),
-                                verbatimTextOutput("graphstring"),
-                                DiagrammeROutput("dyo.diagram", height = "500px")
+                                grVizOutput("dyo.diagram", height = "500px")
                               ) # end mainPanel
                      ) # end tabPanel
                      
