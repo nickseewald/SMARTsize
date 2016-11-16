@@ -11,6 +11,10 @@ library(V8)
 library(htmlwidgets)
 library(shinyjs)
 
+### Enable bookmarkable state via URL (shinyapps.io doesn't yet
+### support server-side saves)
+enableBookmarking(store = "url")
+
 ### Function creates disabled (greyed-out) inputs
 ### https://groups.google.com/d/msg/shiny-discuss/uSetp4TtW-s/Jktu3fS60RAJ
 disable <- function(x) {

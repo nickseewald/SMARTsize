@@ -1656,42 +1656,63 @@ shinyServer(
     
     ## Create diagram components for first randomization to first-stage treatments
     dyo.stage1.diagram <- reactive({
-      # Create node for first randomization
-      nodes <- create_nodes(nodes = "R1", label = "R", shape = "circle")
-      
-      # Add nodes for first-stage treatments and edges connecting those
-      # treatments to the first randomization
-      nodes <- combine_nodes(nodes, create_nodes(nodes = LETTERS[1:input$dyo.stage1.ntxt], shape = "rectangle"))
-      edges <- create_edges(from = rep("R1", times = input$dyo.stage1.ntxt), to = LETTERS[1:input$dyo.stage1.ntxt])
-      
-      return(list("nodes" = nodes, "edges" = edges))
+      # for every stage 1 treatment, draw an arrow from the first randomization to txt
+      # label each arrow with the randomization probability
+      paste(sapply(1:input$dyo.stage1.ntxt,
+                   function(i) paste0("R1-->", 
+                                      # "|", eval(parse(text = paste0("input$dyo.stage1.txt.", i, ".rprob"))), "|",
+                                      LETTERS[i], "[", LETTERS[i], "]")), collapse = "\n")
+    })
+    
+    ## Render graph definition string for verification
+    output$graphstring <- renderText(paste("graph LR", 
+                                           "classDef default fill:#f9f,stroke:#333,stroke-width:4px;",
+                                           "R1((R))",
+                                           dyo.stage1.diagram(),
+                                           dyo.stage2respDiagram(),
+                                           dyo.stage2nrespDiagram(),
+                                           sep = "\n ")
+    )
+    
+    diagram <- reactive({
+      DiagrammeR(diagram = paste("graph LR;",
+                                 "R1((R))",
+                                 dyo.stage1.diagram(),
+                                 dyo.stage2respDiagram(),
+                                 dyo.stage2nrespDiagram(),
+                                 sep = " \n"),
+                 type = "mermaid")
     })
     
     ## Render diagram
-    output$dyo.diagram <- renderGrViz({
+    output$dyo.diagram <- renderDiagrammeR({
       # Make sure either responders or non-responders are re-randomized before rendering diagram
       # (Need at least one group to be re-randomized or else design is not a SMART)
       validate(
         need(input$dyo.rerand.resp == "Yes" | input$dyo.rerand.nresp == "Yes", text.mustRerandomize)
       )
-      
-      # Create alert if neither responders or non-responders are rerandomized
-      render_graph(create_graph(
-        nodes_df = combine_nodes(dyo.stage1.diagram()$nodes,
-                                 dyo.stage2respDiagram()$nodes,
-                                 dyo.stage2nrespDiagram()$nodes),
-        edges_df = combine_edges(dyo.stage1.diagram()$edges,
-                                 dyo.stage2respDiagram()$edges,
-                                 dyo.stage2nrespDiagram()$edges),
-        graph_attrs = "rankdir=LR; splines=line",
-        node_attrs = "fontname=Helvetica",
-        edge_attrs = "fontname=Helvetica; fontsize='11pt'"))
+      diagram()
     })
+    
+    output$dyo.diagram.modal <- renderDiagrammeR({diagram()})
+    
+    ## Zoom Diagram Modal
+    observeEvent(input$zoom,
+                 showModal(modalDialog(
+                   DiagrammeROutput("dyo.diagram.modal", 
+                                    height = paste0(60 * input$dyo.stage1.ntxt * (input$dyo.rerand.nresp.ntxt + input$dyo.rerand.resp.ntxt), "px")),
+                   p("Save options are coming soon."),
+                   easyClose = T
+                 )))
     
     #### DYO Design Collapse and Tabset Handlers ####
     
     # Observer for button "dyo.stage1.continue" inside stage 1 design spec collapse panel
     # When button is pressed, update the collapse so that the stage 1 panel closes and the stage 2 panel opens
+    observeEvent(input$dyo.outcome.continue,
+                 updateCollapse(session, "dyo.setup.collapse",
+                                open = "dyo.resultOptions.describe",
+                                close = "dyo.outcome.describe"))
     observeEvent(input$dyo.stage1.continue, 
                  updateCollapse(session, "dyo.design.collapse", 
                                 open = "dyo.resp.describe", 

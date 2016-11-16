@@ -18,14 +18,19 @@ shinyUI(
                                 tags$link(rel = "stylesheet", type = "text/css",
                                           href = "https://fonts.googleapis.com/css?family=Roboto|Roboto+Condensed"),
                                 tags$link(rel = "stylesheet", type = "text/css", href = "css/customize.css"),
-                                # tags$link(rel = "stylesheet", href = "lightbox2/dist/css/lightbox.css"),
                                 tags$script(HTML("$(document).ready(function(){
                                       $('.version').text('SMARTsize Version 1.2, last updated 29 July 2016');
                                     });")),
                                 tags$script(HTML(paste("$(document).ready(function(){
                                       $('.Rversion').text('", paste(R.Version()$major, R.Version()$minor, sep = "."),"');
-                                         });", sep = "")))
-                                # tags$script(src = "js/img-zoom.js")
+                                         });", sep = ""))),
+                                tags$script(src = "C:/Users/Nick/node_modules/svg-pan-zoom/dist/svg-pan-zoom.min.js"),
+                                tags$script(src = "www/js/mermaidAPI.js"),
+                                tags$script(HTML("var config = {
+                                                 startOnLoad:true,
+                                                 flowchart:{}
+                                                 };
+                                                 mermaid.initialize(config);"))
                               ),
                               
                               ### Home Sidebar Panel: Purpose, Notation, Assumptions, and Methods
@@ -40,6 +45,17 @@ shinyUI(
                                 p("Get started by choosing whether you'd like to design a SMART from scratch, or
                                   select one of three popular designs."),
                                 br(),
+  #                               HTML('<div class="btn-group" data-toggle="buttons">
+  # <label class="btn btn-primary active">
+  #                                    <input type="checkbox" autocomplete="off" checked> Checkbox 1 (pre-checked)
+  #                                    </label>
+  #                                    <label class="btn btn-primary">
+  #                                    <input type="checkbox" autocomplete="off"> Checkbox 2
+  #                                    </label>
+  #                                    <label class="btn btn-primary">
+  #                                    <input type="checkbox" autocomplete="off"> Checkbox 3
+  #                                    </label>
+  #                                    </div>'),
                                 fluidRow(
                                   column(12, bsButton("DYO.startbutton", 
                                                   label = "Design Your Own SMART",
@@ -524,11 +540,26 @@ shinyUI(
                                 h1("Design Your Own SMART"),
                                 h4("Follow the steps below to describe and size a custom SMART"),
                                 tags$hr(),
+                                p("First, "),
+                                bsCollapse(
+                                  bsCollapsePanel(title = "Describe the Outcome",
+                                                  selectDTROutcomeUI("dyo.outcome"),
+                                                  fluidRow(column(10),
+                                                           column(2, bsButton("dyo.outcome.continue", 
+                                                                              label = "Continue",
+                                                                              icon = icon("arrow-right", lib = "glyphicon"),
+                                                                              style = "primary"))),
+                                                  value = "dyo.outcome.describe"),
+                                  bsCollapsePanel(title = "Describe Your Desired Result", 
+                                                  resultOptionsUI("dyo.resultOptions"),
+                                                  value = "dyo.resultOptions.describe"),
+                                  id = "dyo.setup.collapse",
+                                  open = "dyo.outcome.describe", multiple = TRUE
+                                ),
                                 
                                 ##### DYO Outcome Selection #####
-                                selectDTROutcomeUI("dyo.outcome"),
+                                # ,
                                 tags$hr(),
-                                resultOptionsUI("dyo.resultOptions"),
                                 tags$hr(),
                                 
                                 tabsetPanel(
@@ -588,21 +619,26 @@ shinyUI(
                                                              bsAlert(anchorId = "mustRerandomize"),
                                                              fluidRow(column(3, bsButton("dyo.rerand.back", "Back")),
                                                                       column(6),
-                                                                      column(3, bsButton("dyo.rerand.continue", "Continue", style = "primary"))),
+                                                                      column(3, bsButton("dyo.rerand.continue", label = "Continue", 
+                                                                                         icon = icon("arrow-right", lib = "glyphicon"),
+                                                                                         style = "primary"))),
                                                              value = "dyo.rerand.describe"),
                                              id = "dyo.design.collapse", multiple = FALSE, open = "dyo.stage1.describe")
                                   ), # end Design tabPanel
                                   tabPanel("Size",
                                            br(),
-                                           fluidRow(column(6),
+                                           fluidRow(
                                                     column(6, primaryAimUI("dyo.primaryAim"))),
                                            tags$hr()
                                   ), #end Size tabPanel
                                   id = "dyo.tabset", selected = "Design", type = "tabs"), #end bsCollapse
                                 tags$hr(),
                                 br(),
-                                grVizOutput("dyo.diagram", height = "500px")
-                              ) # end mainPanel
+                                fluidRow(
+                                  column(10, DiagrammeROutput("dyo.diagram", height = "500px")),
+                                  column(2, actionButton("zoom", "Zoom", icon = icon("zoom-in", lib = "glyphicon")))
+                                ),
+                                bookmarkButton()
                      ) # end tabPanel
                      
           )))
