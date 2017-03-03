@@ -5,15 +5,14 @@
 
 options(encoding = 'UTF-8')
 
-# TODO: Deprecate choice of test sidedness for binary outcome
-# TODO: Centralize error messages in error_messages.R
-# TODO: Make progress on partials
-# TODO: Move non-reactive function declarations, etc. into global.R
+
 
 ### Start server operation
 
 shinyServer(
-  function(input,output,session){
+  function(input, output, session){
+    
+    session$allowReconnect(TRUE)
     
     premade <- eventReactive(input$premade.startbutton,
                             list(
@@ -75,9 +74,9 @@ shinyServer(
     
     ### Watch for clicks on pickTab actionButtons rendered under design diagrams
     ### On click, redirect to appropriate tab. (More intuitive navigation structure)
-    observeEvent(input$pickTabA, updateTabsetPanel(session, "SMARTsize", selected = "Design I"))
-    observeEvent(input$pickTabB, updateTabsetPanel(session, "SMARTsize", selected = "Design II"))
-    observeEvent(input$pickTabC, updateTabsetPanel(session, "SMARTsize", selected = "Design III"))
+    # observeEvent(input$pickTabA, updateTabsetPanel(session, "SMARTsize", selected = "Design I"))
+    # observeEvent(input$pickTabB, updateTabsetPanel(session, "SMARTsize", selected = "Design II"))
+    # observeEvent(input$pickTabC, updateTabsetPanel(session, "SMARTsize", selected = "Design III"))
     observeEvent(input$DYO.startbutton, updateTabsetPanel(session, "SMARTsize", selected = "Design and Size"))
     
     ##### DESIGN I #####
@@ -1513,13 +1512,13 @@ shinyServer(
       HTML(paste("<h4 style='color:blue';> N=",paste(finalSampleSize),"</h4>
          <p> We wish to find the sample size for a trial with a continuous outcome where the probability of response to first-stage interventions is ", formatResp, sentenceCompilerC(),
                  ". Given a ", formatAltHyp, " test with ", formatAlpha, " type-I error, we require a sample size of at least ",
-                 finalSampleSize, " to make this comparison with at least ",formatPower," power. </p>",sep=""))
+                 finalSampleSize, " to make this comparison with at least ", formatPower," power. </p>",sep = ""))
     })
     
     output$continuousPowerC <- renderUI({
-      alt.hyp<-switch(input$selectAlternativeC,"one.sided"="greater")
+      alt.hyp<-switch(input$selectAlternativeC,"one.sided" = "greater")
       validate(
-        need(input$inputSampleSizeC!=0, "Power is indeterminate for a sample size of 0. Please provide a valid sample size.")
+        need(input$inputSampleSizeC != 0, "Power is indeterminate for a sample size of 0. Please provide a valid sample size.")
       )
       designEffect <- (3/2) * (1 - input$respC) + input$respC
       size         <- (input$inputSampleSizeC / (2 * designEffect))
@@ -1555,9 +1554,27 @@ shinyServer(
     })
     dyo.primaryAim <- callModule(primaryAim, "dyo.primaryAim", rerand = dyo.primaryAim.rerand)
     output$dyoprimaryAim <- renderText(dyo.primaryAim())
-    outputOptions(output, 'dyoprimaryAim', suspendWhenHidden = FALSE)
+    outputOptions(output, 'dyoprimaryAim', suspendWhenHidden = F)
+    # outputOptions(output, 'dyoprimaryAim', suspendWhenHidden = FALSE)
     
-    ##### DYO Randomization Probabilities #####
+    ##### DYO Re-Randomization Setup UI #####
+    output$dyo.rerand.respUI <- renderUI({
+      list(checkboxGroupInput("dyo.rerand.resp.whichtxt",
+                         label = "Select first-stage treatments for which responders are re-randomized.",
+                         choices = lapply(1:input$dyo.stage1.ntxt, function(i) LETTERS[i]),
+                         selected = LETTERS[1:input$dyo.stage1.ntxt], inline = TRUE))
+    })
+    outputOptions(output, 'dyo.rerand.respUI', suspendWhenHidden = FALSE)
+    
+    output$dyo.rerand.nrespUI <- renderUI({
+      list(checkboxGroupInput("dyo.rerand.nresp.whichtxt",
+                              label = "Select first-stage treatments for which non-responders are re-randomized.",
+                              choices = lapply(1:input$dyo.stage1.ntxt, function(i) LETTERS[i]),
+                              selected = LETTERS[1:input$dyo.stage1.ntxt], inline = TRUE))
+    })
+    outputOptions(output, 'dyo.rerand.nrespUI', suspendWhenHidden = FALSE)
+
+    ##### DYO Randomization Probabilities UI #####
     ### Create inputs for varying randomization probabilites 
     output$dyo.stage1.rprobUI <- renderUI({
       list(lapply(1:input$dyo.stage1.ntxt, 
@@ -1623,6 +1640,60 @@ shinyServer(
       shinyjs::toggleState("dyo.rerand.continue", input$dyo.rerand.resp == "Yes" | input$dyo.rerand.nresp == "Yes")
     })
     
+    dyo.stage1.allocProbs.values <- reactive({
+      values <- sapply(1:input$dyo.stage1.ntxt,
+                       function(i) {
+                         eval(parse(text = paste0("input$dyo.stage1.txt", i, ".rprob")))
+                       })
+      sapply(values, 
+             function(x) {
+               ifelse(is.null(x), "", x)
+             })
+    })
+    
+    ##### DTR Name Construction #####
+    
+    ## Goal: Create DTR "names" (i.e., ordered triples identifying embedded DTRs) by 
+    ## listing all possible pairs of treatments for responders and non-responders 
+    ## starting with the same first-stage treatment
+    
+    dtr.names <- reactive({
+      ## Construct treatment names
+      
+      stage2r.names <- lapply(1:input$dyo.stage1.ntxt, function(i) {
+        if (input$dyo.rerand.resp == "Yes") {
+          if (LETTERS[i] %in% input$dyo.rerand.resp.whichtxt) {
+            paste0(LETTERS[i], "r", 1:input$dyo.rerand.resp.ntxt)
+          } else {
+            paste0(LETTERS[i], "r")
+          }
+        } else {
+          paste0(LETTERS[i], "r")
+        }
+      })
+      
+      stage2nr.names <- lapply(1:input$dyo.stage1.ntxt, function(i) {
+        if (input$dyo.rerand.nresp == "Yes") {
+          if (LETTERS[i] %in% input$dyo.rerand.nresp.whichtxt) {
+            paste0(LETTERS[i], "nr", 1:input$dyo.rerand.nresp.ntxt)
+          } else {
+            paste0(LETTERS[i], "nr")
+          }
+        } else {
+          paste0(LETTERS[i], "nr")
+        }
+      })
+      
+      ## Generate DTRs with formatting 
+      stagenames <- list("r" = stage2r.names, "nr" = stage2nr.names)
+      namepairs <- do.call(rbind, lapply(1:input$dyo.stage1.ntxt, function(i) {
+        expand.grid("r" = stagenames$r[[i]], "nr" = stagenames$nr[[i]])
+      }))
+      namepairs <- namepairs[order(namepairs$r), ]
+      namepairs <- cbind("s1" = substr(namepairs$r, 1, 1), namepairs)
+      paste0("{", namepairs$s1, ", ", namepairs$r, ", ", namepairs$nr, "}")
+    })
+    
     
     ##### DYO Sizing Inputs #####
     ### Generate inputs for varying response probabilities
@@ -1642,15 +1713,63 @@ shinyServer(
     })
     
     
-    #### DYO Diagram Creation ####
+    ### Generate DTR Selection
+    
+    output$dyo.refdtrSelect <- renderUI({
+      selectizeInput("dyo.refDTR",
+                     label = text.refDTRLabel,
+                     choices = dtr.names(),
+                     options = list(
+                       placeholder = text.refDTRPlaceholder,
+                       onInitialize = I('function() { this.setValue(0); }')
+                     )
+      )})
+    
+    output$dyo.compdtrSelect <- renderUI({
+      selectizeInput("dyo.compDTR",
+                     label = text.compDTRLabel,
+                     choices = dtr.names()[substr(dtr.names(), 2, 2) != substr(input$dyo.refDTR, 2, 2)],
+                     options = list(
+                       placeholder = text.compDTRPlaceholder,
+                       onInitialize = I('function() { this.setValue(0); }')
+                     )
+      )})
+    
+    ### Parse names of selected DTRs
+    refDTR.substr <- reactive({
+      if (length(input$dyo.refDTR) > 0) {
+        DTR    <- paste(input$dyo.refDTR)
+        DTR    <- substr(DTR, 2, nchar(DTR) - 1)
+        DTRvec <- strsplit(DTR, split = ", ")
+        return(c(input$dyo.refDTR, DTRvec))
+      }
+      else return(c(0, 0, 0, 0))
+    })
+    
+    compDTR.substr <- reactive({
+      if (length(input$dyo.compDTR) > 0) {
+        DTR    <- paste(input$dyo.compDTR)
+        DTR    <- substr(DTR, 2, nchar(DTR) - 1)
+        DTRvec <- strsplit(DTR, split = ", ")
+        return(c(input$dyo.compDTR, DTRvec))
+      }
+      else return(c(0, 0, 0, 0))
+    })
+
+    output$refdtrsubstr <- renderPrint(refDTR.substr())
+    output$compdtrsubstr <- renderPrint(compDTR.substr())
+    
+    ##### DYO Diagram Creation #####
     
     ## Call shiny module to write strings which define the mermaid graph 
     dyo.stage2respDiagram <- callModule(module = dyoDiagramStage2, id = "dyo.stage2respDiagram",
                                         RNR = "R", rerand = reactive(input$dyo.rerand.resp),
+                                        whichtxts = reactive(input$dyo.rerand.resp.whichtxt),
                                         ntxt.stage1 = reactive(input$dyo.stage1.ntxt),
                                         ntxt.stage2 = reactive(input$dyo.rerand.resp.ntxt))
     dyo.stage2nrespDiagram <- callModule(module = dyoDiagramStage2, id = "dyo.stage2nrespDiagram",
-                                         RNR = "NR", rerand = reactive(input$dyo.rerand.nresp), 
+                                         RNR = "NR", rerand = reactive(input$dyo.rerand.nresp),
+                                         whichtxts = reactive(input$dyo.rerand.nresp.whichtxt),
                                          ntxt.stage1 = reactive(input$dyo.stage1.ntxt),
                                          ntxt.stage2 = reactive(input$dyo.rerand.nresp.ntxt))
     
@@ -1659,27 +1778,45 @@ shinyServer(
       # for every stage 1 treatment, draw an arrow from the first randomization to txt
       # label each arrow with the randomization probability
       paste(sapply(1:input$dyo.stage1.ntxt,
-                   function(i) paste0("R1-->", 
-                                      # "|", eval(parse(text = paste0("input$dyo.stage1.txt.", i, ".rprob"))), "|",
+                   function(i) paste0("R1-->",
                                       LETTERS[i], "[", LETTERS[i], "]")), collapse = "\n")
+    })
+    
+    dyo.diagramStyles <- reactive({
+      if (refDTR.substr()[[1]] != "")
+        rclass <- paste0("class ", paste0(refDTR.substr()[[2]], collapse = ","), " refdtr; \n ")
+      else 
+        rclass <- ""
+      if (compDTR.substr()[[1]] != "")
+        cclass <- paste0("class ", paste0(compDTR.substr()[[2]], collapse = ","), " compdtr; \n")
+      else
+        cclass <- ""
+      
+      paste(rclass, cclass, sep = "\n")
     })
     
     ## Render graph definition string for verification
     output$graphstring <- renderText(paste("graph LR", 
-                                           "classDef default fill:#f9f,stroke:#333,stroke-width:4px;",
                                            "R1((R))",
                                            dyo.stage1.diagram(),
                                            dyo.stage2respDiagram(),
                                            dyo.stage2nrespDiagram(),
+                                           dyo.diagramStyles(),
                                            sep = "\n ")
     )
     
     diagram <- reactive({
       DiagrammeR(diagram = paste("graph LR;",
-                                 "R1((R))",
+                                 "classDef default fill:#fff,stroke:#000,stroke-width:1px;",
+                                 "classDef randomize fill:#fff,stroke:#000,stroke-width:2px;",
+                                 "classDef refdtr fill:#fcc,stroke:#c33,stroke-width:3px;",
+                                 "classDef compdtr fill:#ccf,stroke:#06c,stroke-width:3px;",
+                                 "R1((R));",
+                                 "class R1 randomize;",
                                  dyo.stage1.diagram(),
                                  dyo.stage2respDiagram(),
                                  dyo.stage2nrespDiagram(),
+                                 dyo.diagramStyles(),
                                  sep = " \n"),
                  type = "mermaid")
     })
@@ -1691,6 +1828,11 @@ shinyServer(
       validate(
         need(input$dyo.rerand.resp == "Yes" | input$dyo.rerand.nresp == "Yes", text.mustRerandomize)
       )
+      if (input$dyo.rerand.resp == "Yes") {
+        validate(need(length(input$dyo.rerand.resp.whichtxt) > 0, text.rerandMismatchResp))
+      } else if (input$dyo.rerand.nresp == "Yes") {
+        validate(need(length(input$dyo.rerand.nresp.whichtxt) > 0, text.rerandMismatchNresp))
+      }
       diagram()
     })
     
@@ -1708,20 +1850,185 @@ shinyServer(
     #### DYO Design Collapse and Tabset Handlers ####
     
     # Observer for button "dyo.stage1.continue" inside stage 1 design spec collapse panel
-    # When button is pressed, update the collapse so that the stage 1 panel closes and the stage 2 panel opens
+    # When button is pressed, update the collapse so that the "close" panel closes and the "open" panel opens
     observeEvent(input$dyo.outcome.continue,
                  updateCollapse(session, "dyo.setup.collapse",
                                 open = "dyo.resultOptions.describe",
                                 close = "dyo.outcome.describe"))
+    observeEvent(input$dyo.resultOptions.continue,
+                 updateCollapse(session, "dyo.setup.collapse",
+                                open = "dyo.stage1.describe",
+                                close = "dyo.resultOptions.describe"))
     observeEvent(input$dyo.stage1.continue, 
-                 updateCollapse(session, "dyo.design.collapse", 
+                 updateCollapse(session, "dyo.setup.collapse", 
                                 open = "dyo.resp.describe", 
                                 close = "dyo.stage1.describe"))
+    observeEvent(input$dyo.resprob.continue, 
+                 updateCollapse(session, "dyo.setup.collapse", 
+                                open = "dyo.rerand.describe", 
+                                close = "dyo.resp.describe"))
+    # back buttons
+    observeEvent(input$dyo.resultOptions.back, 
+                 updateCollapse(session, "dyo.setup.collapse", 
+                                open = "dyo.outcome.describe", 
+                                close = "dyo.resultOptions.describe"))
+    observeEvent(input$dyo.stage1.back, 
+                 updateCollapse(session, "dyo.setup.collapse", 
+                                open = "dyo.resultOptions.describe", 
+                                close = "dyo.stage1.describe"))
+    observeEvent(input$dyo.resp.back, 
+                 updateCollapse(session, "dyo.setup.collapse", 
+                                open = "dyo.stage1.describe", 
+                                close = "dyo.resp.describe"))
     observeEvent(input$dyo.rerand.back, 
-                 updateCollapse(session, "dyo.design.collapse", 
+                 updateCollapse(session, "dyo.setup.collapse", 
                                 open = "dyo.resp.describe", 
                                 close = "dyo.rerand.describe"))
-    observeEvent(input$dyo.rerand.continue,
-                 updateTabsetPanel(session, "dyo.tabset", selected = "Size")
-    )
+
+    
+    ##### Premade Design Autofill #####
+    ### Design I
+
+    observeEvent(input$pickTabA, {    
+        # Input updates: stage 1 treatments
+        updateSliderInput(session, "dyo.stage1.ntxt", value = 2)
+        updateRadioButtons(session, "dyo.stage1.eqrand", selected = "Yes")
+        shinyjs::disable("dyo.stage1.ntxt")
+        shinyjs::disable("dyo.stage1.eqrand")
+        
+        # Input updates: equal response
+        updateRadioButtons(session, "dyo.stage1.resprob.eq", selected = "Yes")
+        shinyjs::disable("dyo.stage1.resprob.eq")
+        
+        # Input updates: stage 2 treatments
+        updateRadioButtons(session, "dyo.rerand.resp", selected = "Yes")
+        updateSliderInput(session, "dyo.rerand.resp.ntxt", value = 2)
+        updateRadioButtons(session, "dyo.rerand.resp.eqrand", selected = "Yes")
+        updateRadioButtons(session, "dyo.rerand.nresp", selected = "Yes")
+        updateSliderInput(session, "dyo.rerand.nresp.ntxt", value = 2)
+        updateRadioButtons(session, "dyo.rerand.nresp.eqrand", selected = "Yes")
+        shinyjs::disable("dyo.rerand.resp")
+        shinyjs::disable("dyo.rerand.resp.ntxt")
+        shinyjs::disable("dyo.rerand.resp.eqrand")
+        shinyjs::disable("dyo.rerand.nresp")
+        shinyjs::disable("dyo.rerand.nresp.ntxt")
+        shinyjs::disable("dyo.rerand.nresp.eqrand")
+        
+        # Raise alerts about disabled inputs
+        shinyBS::createAlert(session,
+                             anchorId = "premade-design-disabled-stage1-describe",
+                             title = text.alert.premadeDisabled.title,
+                             content = "Because you've selected a premade design, you are unable to edit these parameters.")
+        shinyBS::createAlert(session,
+                             anchorId = "premade-design-disabled-resp-describe",
+                             title = "Part of this section has been disabled.",
+                             content = "Because you've selected a premade design, you are unable to edit these parameters.")
+        shinyBS::createAlert(session,
+                             anchorId = "premadeDesignInputsDisabled-stage2Alert",
+                             title = text.alert.premadeDisabled.title,
+                             content = "Because you've selected a premade design, you are unable to edit these parameters.")
+
+        # UI updates
+        updateCollapse(session, "dyo.setup.collapse",
+                       close = "dyo.stage1.describe")
+        shinyjs::hide("dyo.stage1.resprob.continue")
+        shinyjs::disable("dyo.stage1.describe")
+        updateTabsetPanel(session, "SMARTsize", selected = "Design and Size")
+    })
+    
+    ## Design II
+    observeEvent(input$pickTabB, {    
+      # Input updates: stage 1 treatments
+      updateSliderInput(session, "dyo.stage1.ntxt", value = 2)
+      updateRadioButtons(session, "dyo.stage1.eqrand", selected = "Yes")
+      shinyjs::disable("dyo.stage1.ntxt")
+      shinyjs::disable("dyo.stage1.eqrand")
+      
+      # Input updates: equal response
+      updateRadioButtons(session, "dyo.stage1.resprob.eq", selected = "Yes")
+      shinyjs::disable("dyo.stage1.resprob.eq")
+      
+      # Input updates: stage 2 treatments
+      updateRadioButtons(session, "dyo.rerand.resp", selected = "No")
+      updateRadioButtons(session, "dyo.rerand.resp.eqrand", selected = "Yes")
+      updateRadioButtons(session, "dyo.rerand.nresp", selected = "Yes")
+      updateSliderInput(session, "dyo.rerand.nresp.ntxt", value = 2)
+      updateRadioButtons(session, "dyo.rerand.nresp.eqrand", selected = "Yes")
+      shinyjs::disable("dyo.rerand.resp")
+      shinyjs::disable("dyo.rerand.resp.ntxt")
+      shinyjs::disable("dyo.rerand.resp.eqrand")
+      shinyjs::disable("dyo.rerand.nresp")
+      shinyjs::disable("dyo.rerand.nresp.ntxt")
+      shinyjs::disable("dyo.rerand.nresp.eqrand")
+      
+      # Raise alerts about disabled inputs
+      shinyBS::createAlert(session,
+                           anchorId = "premade-design-disabled-stage1-describe",
+                           title = text.alert.premadeDisabled.title,
+                           content = "Because you've selected a premade design, you are unable to edit these parameters.")
+      shinyBS::createAlert(session,
+                           anchorId = "premade-design-disabled-resp-describe",
+                           title = "Part of this section has been disabled.",
+                           content = "Because you've selected a premade design, you are unable to edit these parameters.")
+      shinyBS::createAlert(session,
+                           anchorId = "premadeDesignInputsDisabled-stage2Alert",
+                           title = text.alert.premadeDisabled.title,
+                           content = "Because you've selected a premade design, you are unable to edit these parameters.")
+
+      # UI updates
+      updateCollapse(session, "dyo.setup.collapse",
+                     close = "dyo.stage1.describe")
+      shinyjs::hide("dyo.stage1.resprob.continue")
+      shinyjs::disable("dyo.stage1.describe")
+      updateTabsetPanel(session, "SMARTsize", selected = "Design and Size")
+    })
+    
+    observeEvent(input$pickTabC, {    
+      # Input updates: stage 1 treatments
+      updateSliderInput(session, "dyo.stage1.ntxt", value = 2)
+      updateRadioButtons(session, "dyo.stage1.eqrand", selected = "Yes")
+      shinyjs::disable("dyo.stage1.ntxt")
+      shinyjs::disable("dyo.stage1.eqrand")
+      
+      # Input updates: equal response
+      updateRadioButtons(session, "dyo.stage1.resprob.eq", selected = "Yes")
+      shinyjs::disable("dyo.stage1.resprob.eq")
+      
+      # Input updates: stage 2 treatments
+      updateRadioButtons(session, "dyo.rerand.resp", selected = "No")
+      updateRadioButtons(session, "dyo.rerand.resp.eqrand", selected = "Yes")
+      updateRadioButtons(session, "dyo.rerand.nresp", selected = "Yes")
+      updateCheckboxGroupInput(session, "dyo.rerand.nresp.whichtxt", 
+                               selected = c("A"))
+      updateSliderInput(session, "dyo.rerand.nresp.ntxt", value = 2)
+      updateRadioButtons(session, "dyo.rerand.nresp.eqrand", selected = "Yes")
+      shinyjs::disable("dyo.rerand.resp")
+      shinyjs::disable("dyo.rerand.resp.ntxt")
+      shinyjs::disable("dyo.rerand.resp.eqrand")
+      shinyjs::disable("dyo.rerand.nresp")
+      shinyjs::disable("dyo.rerand.nresp.ntxt")
+      shinyjs::disable("dyo.rerand.nresp.eqrand")
+      
+      # Raise alerts about disabled inputs
+      shinyBS::createAlert(session,
+                           anchorId = "premade-design-disabled-stage1-describe",
+                           title = text.alert.premadeDisabled.title,
+                           content = "Because you've selected a premade design, you are unable to edit these parameters.")
+      shinyBS::createAlert(session,
+                           anchorId = "premade-design-disabled-resp-describe",
+                           title = "Part of this section has been disabled.",
+                           content = "Because you've selected a premade design, you are unable to edit these parameters.")
+      shinyBS::createAlert(session,
+                           anchorId = "premadeDesignInputsDisabled-stage2Alert",
+                           title = text.alert.premadeDisabled.title,
+                           content = "Because you've selected a premade design, you are unable to edit these parameters.")
+      
+      # UI updates
+      updateCollapse(session, "dyo.setup.collapse",
+                     close = "dyo.stage1.describe")
+      shinyjs::hide("dyo.stage1.resprob.continue")
+      shinyjs::disable("dyo.stage1.describe")
+      updateTabsetPanel(session, "SMARTsize", selected = "Design and Size")
+    })
+    
   })

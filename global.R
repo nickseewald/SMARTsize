@@ -30,6 +30,21 @@ disable <- function(x) {
   x
 }
 
+### Custom "back" and "continue" buttons
+backButton <- function(inputId) {
+  bsButton(inputId,
+           label = "Back",
+           icon = icon("arrow-left", lib = "glyphicon"),
+           style = "default", class = "btn-pull-left")
+}
+continueButton <- function(inputId) {
+  bsButton(inputId, 
+           label = "Continue",
+           icon = icon("arrow-right", lib = "glyphicon"),
+           style = "primary", class = "btn-pull-right")
+}
+
+
 ### Function evaluates full-DTR probabilities; not reactive
 fullDTRprob <- function(cell1, resp, cell2){
   pDTR <- cell1 * resp + cell2 * (1 - resp)

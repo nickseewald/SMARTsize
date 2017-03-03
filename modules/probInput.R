@@ -2,12 +2,9 @@ probInputUI <- function(id) {
   ns <- NS(id)
   
   tagList(
-    numericInput(ns("respA"),
-                 label = HTML("<p>Concerning the tailoring variable, please provide the
-             <strong>probability of response</strong> to the first-stage
-                              intervention. If you are unsure, leave as 0 for a conservative
-                              estimate.</p>"),
-                 value = 0,min = 0,max = 1,step = 0.01),
+    numericInput(ns("respProb"),
+                 label = eval(text.responseProbLabel),
+                 value = 0, min = 0, max = 1, step = 0.01),
     conditionalPanel(condition = 'output.designAoutcome == "Binary"',
                      eval(text.successProbLabel), uiOutput("binaryDTR1probA"),
                      conditionalPanel(condition = "input.cellOrConditionalA",
@@ -15,7 +12,7 @@ probInputUI <- function(id) {
                                                       uiOutput("cellProbsDTR1A"))
                                       )
                      ),
-                     uiOutput("binaryDTR2probA"),
+                     uiOutput(ns("binaryDTR2probA")),
                      conditionalPanel(condition = "input.cellOrConditionalA && input.secondDTRcompareA",
                                       fluidRow(column(11,offset = 1,
                                                       uiOutput("cellProbsDTR2A"))

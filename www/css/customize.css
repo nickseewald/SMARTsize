@@ -67,3 +67,13 @@ h6 {font-family: 'Roboto Condensed', sans-serif;}
 .img-zoom:hover {
   opacity: 0.7;
 }
+
+.btn-pull-right {
+  float: right !important;
+  margin-right: .35em;
+}
+
+.btn-pull-left {
+  float: left !important;
+  margin-left: .35em;
+}

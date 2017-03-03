@@ -5,15 +5,14 @@ primaryAimUI <- function(id) {
 
 primaryAim <- function(input, output, session, rerand) {
   choice <- reactive({
-    choices <- list("Compare First-stage Treatments" = "stage1")
+    choices <- list("Compare first-stage treatments as initial treatments in an adaptive intervention." = "stage1")
     if ("responders" %in% rerand())
-      choices[["Compare Second-stage Treatments among Responders"]] <- "stage2resp"
+      choices[["Compare second-stage treatments among responders as secondary treatments in an adaptive intervention."]] <- "stage2resp"
     if ("nonresponders" %in% rerand()) 
-      choices[["Compare Second-stage Treatments among Non-Responders"]] <- "stage2nresp"
+      choices[["Compare second-stage treatments among non-responders as secondary treatments in an adaptive intervention."]] <- "stage2nresp"
     if (is.null(rerand()))
-      choices[["Compare Second-stage Treatments"]] <- "stage2"
-    choices[["Compare Two Embedded Adaptive Interventions"]] <- "pairwise"
-    choices[["Compare All Embedded Adaptive Interventions"]] <- "omnibus"
+      choices[["Compare second-stage treatments as secondary treatments in an adaptive intervention."]] <- "stage2"
+    choices[["Compare two embedded adaptive interventions with different first-stage treatments."]] <- "dtrs"
     choices
   })
   
@@ -23,7 +22,7 @@ primaryAim <- function(input, output, session, rerand) {
                  label = "What is your primary aim?",
                  choices = choice(),
                  width = "100%",
-                 selected = "stage1")
+                 selected = "dtrs")
   })
   return(reactive({input$primaryAim}))
 }

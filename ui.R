@@ -24,13 +24,14 @@ shinyUI(
                                 tags$script(HTML(paste("$(document).ready(function(){
                                       $('.Rversion').text('", paste(R.Version()$major, R.Version()$minor, sep = "."),"');
                                          });", sep = ""))),
-                                tags$script(src = "C:/Users/Nick/node_modules/svg-pan-zoom/dist/svg-pan-zoom.min.js"),
-                                tags$script(src = "www/js/mermaidAPI.js"),
-                                tags$script(HTML("var config = {
-                                                 startOnLoad:true,
-                                                 flowchart:{}
-                                                 };
-                                                 mermaid.initialize(config);"))
+                                # tags$script(src = "C:/Users/Nick/node_modules/svg-pan-zoom/dist/svg-pan-zoom.min.js"),
+                                # tags$script(src = "www/js/mermaidAPI.js"),
+                                # tags$script(HTML("var config = {
+                                #                  startOnLoad:true,
+                                #                  flowchart:{}
+                                #                  };
+                                #                  mermaid.initialize(config);")),
+                                tags$script(type = "text/javascript", src = "js/svg-pan-zoom.min.js")
                               ),
                               
                               ### Home Sidebar Panel: Purpose, Notation, Assumptions, and Methods
@@ -43,7 +44,7 @@ shinyUI(
                                 HTML("<div class='page-header'>
                                      <h1>Sample Size Calculator for SMARTs with Binary or Continuous Outcomes</h1></div>"),
                                 p("Get started by choosing whether you'd like to design a SMART from scratch, or
-                                  select one of three popular designs."),
+                                  select one of three common designs."),
                                 br(),
   #                               HTML('<div class="btn-group" data-toggle="buttons">
   # <label class="btn btn-primary active">
@@ -533,112 +534,126 @@ shinyUI(
                      ##### Design Your Own #####
                      
                      tabPanel("Design and Size",
-                              sidebarPanel(p("Insert description, etc.")),
+                              sidebarPanel(p("Insert description, etc."),
+                                           conditionalPanel("input.pickTabA > 0",
+                                                            bsButton(inputId = "unlock-dyo",
+                                                                     label = "Unlock Disabled Sections", style = "link"))),
                               mainPanel(
                                 
                                 ##### DYO Page Header #####
                                 h1("Design Your Own SMART"),
                                 h4("Follow the steps below to describe and size a custom SMART"),
                                 tags$hr(),
-                                p("First, "),
+                                
+                                ##### DYO Description #####
                                 bsCollapse(
-                                  bsCollapsePanel(title = "Describe the Outcome",
+                                  bsCollapsePanel(title = "1. Describe the Outcome",
                                                   selectDTROutcomeUI("dyo.outcome"),
-                                                  fluidRow(column(10),
-                                                           column(2, bsButton("dyo.outcome.continue", 
-                                                                              label = "Continue",
-                                                                              icon = icon("arrow-right", lib = "glyphicon"),
-                                                                              style = "primary"))),
+                                                  fluidRow(continueButton("dyo.outcome.continue")),
                                                   value = "dyo.outcome.describe"),
-                                  bsCollapsePanel(title = "Describe Your Desired Result", 
+                                  bsCollapsePanel(title = "2. Describe Your Desired Result", 
                                                   resultOptionsUI("dyo.resultOptions"),
+                                                  fluidRow(backButton("dyo.resultOptions.back"),
+                                                           continueButton("dyo.resultOptions.continue")),
                                                   value = "dyo.resultOptions.describe"),
+                                  bsCollapsePanel(title = "Describe the First Randomization", 
+                                                  bsAlert(anchorId = "premade-design-disabled-stage1-describe"),
+                                                  fluidRow(column(6, sliderInput("dyo.stage1.ntxt", 
+                                                                                 label = "How many initial treatments do you have?",
+                                                                                 min = 2, max = 5, value = 2, step = 1, ticks = FALSE, width = "50%")),
+                                                           column(6, radioButtons("dyo.stage1.eqrand",
+                                                                                  label = "Are participants randomized equally between treatments?",
+                                                                                  choices = list("Yes", "No"), selected = "Yes"),
+                                                                  conditionalPanel(condition = 'input["dyo.stage1.eqrand"] == "No"',
+                                                                                   list(p("What are the allocation probabilities?"),
+                                                                                        fluidRow(column(11, uiOutput("dyo.stage1.rprobUI"), offset = 1)))))
+                                                  ),
+                                                  fluidRow(backButton("dyo.stage1.back"),
+                                                           continueButton("dyo.stage1.continue")),
+                                                  value = "dyo.stage1.describe"),
+                                  bsCollapsePanel(title = "Describe Response to First-Stage Treatment",
+                                                  bsAlert(anchorId = "premade-design-disabled-resp-describe"),
+                                                  fluidRow(
+                                                    column(6, radioButtons("dyo.stage1.resprob.eq",
+                                                                           "Are the response rates the same for all first-stage treatments?",
+                                                                           choices = c("Yes", "No"), selected = "Yes")),
+                                                    column(6, uiOutput("dyo.stage1.resprobUI"))
+                                                  ),
+                                                  fluidRow(backButton("dyo.resp.back"),
+                                                           continueButton("dyo.resp.continue")),
+                                                  value = "dyo.resp.describe"),
+                                  bsCollapsePanel(title = "Describe the Second Randomization",
+                                                  bsAlert("premadeDesignInputsDisabled-stage2Alert"),
+                                                  fluidRow(column(6, h4("Responders"), tags$hr(),
+                                                                  radioButtons("dyo.rerand.resp",
+                                                                               label = "Are responders to first-stage treatment re-randomized?",
+                                                                               choices = list("Yes", "No"), selected = "Yes"),
+                                                                  conditionalPanel(condition = 'input["dyo.rerand.resp"] == "Yes"',
+                                                                                   list(uiOutput("dyo.rerand.respUI"),
+                                                                                        sliderInput("dyo.rerand.resp.ntxt",
+                                                                                                    label = "How many treatments are responders re-randomized between?",
+                                                                                                    min = 2, max = 5, value = 2, step = 1, ticks = FALSE, width = "80%"),
+                                                                                        radioButtons("dyo.rerand.resp.eqrand",
+                                                                                                     label = "Are responders re-randomized equally between treatments?",
+                                                                                                     choices = list("Yes", "No"), selected = "Yes"),
+                                                                                        conditionalPanel(condition = 'input["dyo.rerand.resp.eqrand"]  == "No"',
+                                                                                                         list(p("What are the allocation probabilites?"),
+                                                                                                              fluidRow(column(11, uiOutput("dyo.rerand.resp.rprobUI"), offset = 1))))))),
+                                                           column(6, h4("Non-Responders"), tags$hr(),
+                                                                  radioButtons("dyo.rerand.nresp",
+                                                                               label = "Are non-responders to first-stage treatment re-randomized?",
+                                                                               choices = list("Yes", "No"), selected = "Yes"),
+                                                                  conditionalPanel(condition = 'input["dyo.rerand.nresp"] == "Yes"',
+                                                                                   list(uiOutput("dyo.rerand.nrespUI"),
+                                                                                        sliderInput("dyo.rerand.nresp.ntxt",
+                                                                                                    label = "How many treatments are non-responders re-randomized between?",
+                                                                                                    min = 2, max = 5, value = 2, step = 1, ticks = FALSE, width = "80%"),
+                                                                                        radioButtons("dyo.rerand.nresp.eqrand", 
+                                                                                                     label = "Are non-responders re-randomized equally between treatments?",
+                                                                                                     choices = list("Yes", "No"), selected = "Yes"),
+                                                                                        conditionalPanel(condition = 'input["dyo.rerand.nresp.eqrand"] == "No"',
+                                                                                                         list(p("What are the allocation probabilities?"),
+                                                                                                              fluidRow(column(11, uiOutput("dyo.rerand.nresp.rprobUI"), offset = 1)))))))),
+                                                  bsAlert("mustRerandomizeAlert"),
+                                                  fluidRow(backButton("dyo.rerand.back")),
+                                                  value = "dyo.rerand.describe"),
+                                  bsCollapsePanel(title = "Describe Your Primary Aim",
+                                                  primaryAimUI("dyo.primaryAim"),
+                                                  value = "dyo.primaryaim.describe"),
                                   id = "dyo.setup.collapse",
-                                  open = "dyo.outcome.describe", multiple = TRUE
+                                  open = "dyo.outcome.describe", multiple = FALSE
                                 ),
                                 
                                 ##### DYO Outcome Selection #####
-                                # ,
-                                tags$hr(),
+                                br(), 
+                                
+                                # verbatimTextOutput("test3"),
+                                
+                                conditionalPanel("output.dyoprimaryAim == 'dtrs'",
+                                                 eval(text.selectDTRcompare),
+                                                 fluidRow(column(6, uiOutput("dyo.refdtrSelect")),
+                                                          column(6, uiOutput("dyo.compdtrSelect")))
+                                                 ),
+                                
+                                
                                 tags$hr(),
                                 
-                                tabsetPanel(
-                                  ##### DYO Trial Design #####
-                                  tabPanel(title = "Design",
-                                           bsCollapse(
-                                             bsCollapsePanel(title = "Describe the First Randomization", 
-                                                             fluidRow(column(6, sliderInput("dyo.stage1.ntxt", 
-                                                                                            label = "How many initial treatments do you have?",
-                                                                                            min = 2, max = 5, value = 2, step = 1, ticks = FALSE, width = "50%")),
-                                                                      column(6, radioButtons("dyo.stage1.eqrand",
-                                                                                             label = "Are participants randomized equally between treatments?",
-                                                                                             choices = list("Yes", "No"), selected = "Yes"),
-                                                                             conditionalPanel(condition = 'input["dyo.stage1.eqrand"] == "No"',
-                                                                                              list(p("What are the allocation probabilities?"),
-                                                                                                   fluidRow(column(11, uiOutput("dyo.stage1.rprobUI"), offset = 1)))))
-                                                             ),
-                                                             fluidRow(column(10),
-                                                                      column(2, bsButton("dyo.stage1.continue", "Continue", style = "primary"))),
-                                                             value = "dyo.stage1.describe"),
-                                             bsCollapsePanel(title = "Describe Response to First-Stage Treatment",
-                                                             fluidRow(
-                                                               column(6, radioButtons("dyo.stage1.resprob.eq", "Are the response rates the same for all first-stage treatments?",
-                                                                                      choices = c("Yes", "No"), selected = "Yes")),
-                                                               column(6,  uiOutput("dyo.stage1.resprobUI"))
-                                                             ),
-                                                             value = "dyo.resp.describe"),
-                                             bsCollapsePanel(title = "Describe the Second Randomization",
-                                                             fluidRow(column(6, h4("Responders"), tags$hr(),
-                                                                             radioButtons("dyo.rerand.resp",
-                                                                                          label = "Are responders to first-stage treatment re-randomized?",
-                                                                                          choices = list("Yes", "No"), selected = "Yes"),
-                                                                             conditionalPanel(condition = 'input["dyo.rerand.resp"] == "Yes"',
-                                                                                              list(sliderInput("dyo.rerand.resp.ntxt",
-                                                                                                               label = "How many treatments are responders re-randomized between?",
-                                                                                                               min = 2, max = 5, value = 2, step = 1, ticks = FALSE, width = "80%"),
-                                                                                                   radioButtons("dyo.rerand.resp.eqrand",
-                                                                                                                label = "Are responders re-randomized equally between treatments?",
-                                                                                                                choices = list("Yes", "No"), selected = "Yes"),
-                                                                                                   conditionalPanel(condition = 'input["dyo.rerand.resp.eqrand"]  == "No"',
-                                                                                                                    list(p("What are the allocation probabilites?"),
-                                                                                                                         fluidRow(column(11, uiOutput("dyo.rerand.resp.rprobUI"), offset = 1))))))),
-                                                                      column(6, h4("Non-Responders"), tags$hr(),
-                                                                             radioButtons("dyo.rerand.nresp",
-                                                                                          label = "Are non-responders to first-stage treatment re-randomized?",
-                                                                                          choices = list("Yes", "No"), selected = "Yes"),
-                                                                             conditionalPanel(condition = 'input["dyo.rerand.nresp"] == "Yes"',
-                                                                                              list(sliderInput("dyo.rerand.nresp.ntxt",
-                                                                                                               label = "How many treatments are non-responders re-randomized between?",
-                                                                                                               min = 2, max = 5, value = 2, step = 1, ticks = FALSE, width = "80%"),
-                                                                                                   radioButtons("dyo.rerand.nresp.eqrand", 
-                                                                                                                label = "Are non-responders re-randomized equally between treatments?",
-                                                                                                                choices = list("Yes", "No"), selected = "Yes"),
-                                                                                                   conditionalPanel(condition = 'input["dyo.rerand.nresp.eqrand"] == "No"',
-                                                                                                                    list(p("What are the allocation probabilities?"),
-                                                                                                                         fluidRow(column(11, uiOutput("dyo.rerand.nresp.rprobUI"), offset = 1)))))))),
-                                                             bsAlert(anchorId = "mustRerandomize"),
-                                                             fluidRow(column(3, bsButton("dyo.rerand.back", "Back")),
-                                                                      column(6),
-                                                                      column(3, bsButton("dyo.rerand.continue", label = "Continue", 
-                                                                                         icon = icon("arrow-right", lib = "glyphicon"),
-                                                                                         style = "primary"))),
-                                                             value = "dyo.rerand.describe"),
-                                             id = "dyo.design.collapse", multiple = FALSE, open = "dyo.stage1.describe")
-                                  ), # end Design tabPanel
-                                  tabPanel("Size",
-                                           br(),
-                                           fluidRow(
-                                                    column(6, primaryAimUI("dyo.primaryAim"))),
-                                           tags$hr()
-                                  ), #end Size tabPanel
-                                  id = "dyo.tabset", selected = "Design", type = "tabs"), #end bsCollapse
-                                tags$hr(),
-                                br(),
                                 fluidRow(
-                                  column(10, DiagrammeROutput("dyo.diagram", height = "500px")),
-                                  column(2, actionButton("zoom", "Zoom", icon = icon("zoom-in", lib = "glyphicon")))
+                                  column(7, DiagrammeROutput("dyo.diagram", height = "500px")),
+                                  column(5, actionButton("zoom", "Zoom", icon = icon("zoom-in", lib = "glyphicon")))
                                 ),
+                                # verbatimTextOutput("graphstring"),
+                                # tags$script(HTML("$(document).ready(function(){
+                                #                  zoomDiagram = svgPanZoom('#mermaidChart0', {
+                                #                  zoomEnabled: true,
+                                #                  controlIconsEnabled: true,
+                                #                  fit: true,
+                                #                  center: true,});
+                                #                  });")),
                                 bookmarkButton()
+                                
+                                # tags$script()
+                              ) # end mainPanel
                      ) # end tabPanel
                      
           )))

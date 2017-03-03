@@ -98,3 +98,10 @@ text.lowEffectSizeA <- paste("Given the provided effect size, fewer than 8 ",
                              "or increase the desired power.")
 
 text.mustRerandomize <- "Either responders or non-responders must be re-randomized. Change the study design so that at least one group is re-randomized."
+text.rerandMismatchResp <- paste("You have indicated that some or all responders to first-stage treatments are re-randomized, but have not selected", 
+                                 "any first-stage treatments for which the responders are re-randomized. Please correct this to continue.")
+text.rerandMismatchNresp <- paste("You have indicated that some or all non-responders to first-stage treatments are re-randomized, but have not selected", 
+                                 "any first-stage treatments for which the non-responders are re-randomized. Please correct this to continue.")
+
+
+text.alert.premadeDisabled.title <- "This section has been disabled."
