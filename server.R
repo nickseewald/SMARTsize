@@ -1552,10 +1552,12 @@ shinyServer(
       validate(need(input$dyo.rerand.resp == "Yes" | input$dyo.rerand.nresp == "Yes", text.mustRerandomize))
       c("responders", "nonresponders")[c(input$dyo.rerand.resp == "Yes", input$dyo.rerand.nresp == "Yes")]
     })
+    # output$dyoprimaryAimRerand <- renderText(dyo.primaryAim.rerand())
+    # outputOptions(output, "dyoprimaryAimRerand", suspendWhenHidden = FALSE)
+    
     dyo.primaryAim <- callModule(primaryAim, "dyo.primaryAim", rerand = dyo.primaryAim.rerand)
-    output$dyoprimaryAim <- renderText(dyo.primaryAim())
-    outputOptions(output, 'dyoprimaryAim', suspendWhenHidden = F)
-    # outputOptions(output, 'dyoprimaryAim', suspendWhenHidden = FALSE)
+    output$dyoprimaryAim <- renderText(input[["dyo.primaryAim-primaryAim"]])
+    outputOptions(output, 'dyoprimaryAim', suspendWhenHidden = FALSE)
     
     ##### DYO Re-Randomization Setup UI #####
     output$dyo.rerand.respUI <- renderUI({
@@ -1783,14 +1785,25 @@ shinyServer(
     })
     
     dyo.diagramStyles <- reactive({
-      if (refDTR.substr()[[1]] != "")
-        rclass <- paste0("class ", paste0(refDTR.substr()[[2]], collapse = ","), " refdtr; \n ")
-      else 
+      ## Add nodes to be styled into rclass (reference class) and cclass (comparison class)
+      ## based on selected primary aim and provided 
+      if (input[["dyo.primaryAim-primaryAim"]] == "dtrs") {
+        validate(
+          need(!is.null(refDTR.substr()), "please"),
+          need(!is.null(compDTR.substr()), "help")
+        )
+        if (refDTR.substr()[[1]] != "")
+          rclass <- paste0("class ", paste0(refDTR.substr()[[2]], collapse = ","), " refdtr; \n ")
+        else 
+          rclass <- ""
+        if (compDTR.substr()[[1]] != "")
+          cclass <- paste0("class ", paste0(compDTR.substr()[[2]], collapse = ","), " compdtr; \n")
+        else
+          cclass <- ""
+      } else {
         rclass <- ""
-      if (compDTR.substr()[[1]] != "")
-        cclass <- paste0("class ", paste0(compDTR.substr()[[2]], collapse = ","), " compdtr; \n")
-      else
         cclass <- ""
+      }
       
       paste(rclass, cclass, sep = "\n")
     })

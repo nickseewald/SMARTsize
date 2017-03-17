@@ -629,7 +629,7 @@ shinyUI(
                                 
                                 # verbatimTextOutput("test3"),
                                 
-                                conditionalPanel("output.dyoprimaryAim == 'dtrs'",
+                                conditionalPanel("input.dyo.primaryAim-primaryAim == 'dtrs'",
                                                  eval(text.selectDTRcompare),
                                                  fluidRow(column(6, uiOutput("dyo.refdtrSelect")),
                                                           column(6, uiOutput("dyo.compdtrSelect")))
