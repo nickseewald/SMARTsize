@@ -24,7 +24,7 @@ html.compDTRSuccess <-
 text.tooltip <- "Input can range from 0-1 and must be in decimal form, up to two places."
 
 text.responseProbLabel <-
-  quote(HTML("<p>Concerning the tailoring variable, please provide the
+  quote(HTML("<p>Please provide the
              <strong>probability of response</strong> to the first-stage
              intervention. If you are unsure, leave as 0 for a conservative
              estimate.</p>"))

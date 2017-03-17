@@ -161,7 +161,7 @@ shinyUI(
                                          
                                          conditionalPanel(condition = "input.firstDTRcompareA != 0 && input.secondDTRcompareA != 0",
                                                           br(),
-                                                          conditionalPanel(condition = "output.designAoutcome == 1",
+                                                          conditionalPanel(condition = "output.designAoutcome == 'Binary'",
                                                                            eval(text.altInputHelp),
                                                                            checkboxInput("cellOrConditionalA", label = text.cellSpecLabel, value = FALSE),
                                                                            checkboxInput("targetDiffCheckA",   label = text.targDiffLabel, value = FALSE),
@@ -545,10 +545,11 @@ shinyUI(
                                 h4("Follow the steps below to describe and size a custom SMART"),
                                 tags$hr(),
                                 
-                                ##### DYO Description #####
+                                ##### DYO Collapse #####
+                                h3("Describe Your Study"),
                                 bsCollapse(
-                                  bsCollapsePanel(title = "1. Describe the Outcome",
-                                                  selectDTROutcomeUI("dyo.outcome"),
+                                  bsCollapsePanel(title = "1. Describe the Study Outcome",
+                                                  selectDTROutcomeUI("dyoOutcome"),
                                                   fluidRow(continueButton("dyo.outcome.continue")),
                                                   value = "dyo.outcome.describe"),
                                   bsCollapsePanel(title = "2. Describe Your Desired Result", 
@@ -617,31 +618,46 @@ shinyUI(
                                                   bsAlert("mustRerandomizeAlert"),
                                                   fluidRow(backButton("dyo.rerand.back")),
                                                   value = "dyo.rerand.describe"),
-                                  bsCollapsePanel(title = "Describe Your Primary Aim",
-                                                  primaryAimUI("dyo.primaryAim"),
-                                                  value = "dyo.primaryaim.describe"),
                                   id = "dyo.setup.collapse",
                                   open = "dyo.outcome.describe", multiple = FALSE
                                 ),
                                 
-                                ##### DYO Outcome Selection #####
-                                br(), 
-                                
-                                # verbatimTextOutput("test3"),
-                                
-                                conditionalPanel("input.dyo.primaryAim-primaryAim == 'dtrs'",
+                                ##### Aim Selection #####
+                                primaryAimUI("dyo.primaryAim"),
+                                conditionalPanel("output.dyoprimaryAim == 'dtrs'",
                                                  eval(text.selectDTRcompare),
                                                  fluidRow(column(6, uiOutput("dyo.refdtrSelect")),
                                                           column(6, uiOutput("dyo.compdtrSelect")))
                                                  ),
                                 
-                                
                                 tags$hr(),
                                 
+                                ##### Diagram and Probability Inputs #####
                                 fluidRow(
                                   column(7, DiagrammeROutput("dyo.diagram", height = "500px")),
-                                  column(5, actionButton("zoom", "Zoom", icon = icon("zoom-in", lib = "glyphicon")))
+                                  column(5, 
+                                         conditionalPanel(condition = "output.dyooutcome == 'Binary'",
+                                                          uiOutput("binaryRefInput"),
+                                                          conditionalPanel(condition = "input.cellOrMarginal",
+                                                                           fluidRow(column(1),
+                                                                                    column(11, uiOutput("binaryRefCellProbs"))
+                                                                           )),
+                                                          uiOutput("binaryCompInput"),
+                                                          conditionalPanel(condition = "input.cellOrMarginal",
+                                                                           fluidRow(column(1),
+                                                                                    column(11, uiOutput("binaryCompCellProbs"))
+                                                                           )
+                                                          )
+                                         ),
+                                         conditionalPanel(condition = "input.dyoRefDTR != '' && input.dyoCompDTR != ''",
+                                                          br(),
+                                                          conditionalPanel(condition = "output.dyooutcome == 'Binary'",
+                                                                           eval(text.altInputHelp),
+                                                                           checkboxInput("cellOrMarginal", label = text.cellSpecLabel, value = FALSE)
+                                                          )
+                                         ))
                                 ),
+                                # fluidRow(actionButton("zoom", "Zoom", icon = icon("zoom-in", lib = "glyphicon"))),
                                 # verbatimTextOutput("graphstring"),
                                 # tags$script(HTML("$(document).ready(function(){
                                 #                  zoomDiagram = svgPanZoom('#mermaidChart0', {
