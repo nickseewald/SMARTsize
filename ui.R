@@ -634,7 +634,7 @@ shinyUI(
                                 
                                 ##### Diagram and Probability Inputs #####
                                 fluidRow(
-                                  column(7, DiagrammeROutput("dyo.diagram", height = "500px")),
+                                  column(7, DiagrammeROutput("dyo.diagram", height = "75%")),
                                   column(5, 
                                          conditionalPanel(condition = "output.dyooutcome == 'Binary'",
                                                           uiOutput("binaryRefInput"),

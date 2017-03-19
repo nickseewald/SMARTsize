@@ -1533,10 +1533,9 @@ shinyServer(
                  sentenceCompilerC(),", we have at least ",formatPower," power. </p>",sep=""))
     })
     
+
+    ##### Modules #####
     
-    ##### DESIGN YOUR OWN #####
-    
-    ##### DYO Modules #####
     ## Backend for outcome selection radioButtons
     dyo.outcome <- callModule(selectDTROutcome, "dyoOutcome")
     output$dyooutcome <- renderText(dyo.outcome())
@@ -1559,7 +1558,24 @@ shinyServer(
     output$dyoprimaryAim <- renderText(primaryAim())
     outputOptions(output, 'dyoprimaryAim', suspendWhenHidden = FALSE)
     
-    ##### DYO Re-Randomization Setup UI #####
+    ##### Response Probability UI ####
+    output$dyo.stage1.resprobUI <- renderUI({
+      if (input$dyo.stage1.resprob.eq == "No") {
+        lapply(1:input$dyo.stage1.ntxt,
+               function(i) { 
+                 numericInput(paste0("dyo.stage1.", LETTERS[i], ".resprob"),
+                              label = paste0("Probability of Response to ", LETTERS[i],
+                                             ". If you are unsure, leave as 0 for a conservative estimate."),
+                              min = 0, max = 1, value = NA, step = 0.01)
+               })
+      } else {
+        numericInput("dyo.stage1.allTxt.resprob",
+                     label = eval(text.responseProbLabel),
+                     min = 0, max = 1, value = NA, step = 0.01)
+      }
+    })
+    
+    ##### Re-Randomization Setup UI #####
     output$dyo.rerand.respUI <- renderUI({
       list(checkboxGroupInput("dyo.rerand.resp.whichtxt",
                          label = "Select first-stage treatments for which responders are re-randomized.",
@@ -1576,7 +1592,7 @@ shinyServer(
     })
     outputOptions(output, 'dyo.rerand.nrespUI', suspendWhenHidden = FALSE)
 
-    ##### DYO Randomization Probabilities UI #####
+    ##### Randomization Probabilities UI #####
     ### Create inputs for varying randomization probabilites 
     output$dyo.stage1.rprobUI <- renderUI({
       list(lapply(1:input$dyo.stage1.ntxt, 
@@ -1697,26 +1713,11 @@ shinyServer(
     })
     
     
-    ##### Sizing Inputs #####
-    ### Generate inputs for varying response probabilities
-    output$dyo.stage1.resprobUI <- renderUI({
-      if (input$dyo.stage1.resprob.eq == "No") {
-        lapply(1:input$dyo.stage1.ntxt,
-               function(i) { 
-                 numericInput(paste0("dyo.stage1.txt", i, "resprob"),
-                              label = paste0("Probability of Response to ", LETTERS[i],
-                                             ". If you are unsure, leave as 0 for a conservative estimate."),
-                              min = 0, max = 1, value = NA, step = 0.01)
-               })
-      } else {
-        numericInput("dyo.stage1.allTxt.resprob",
-                     label = text.responseProbLabel,
-                     min = 0, max = 1, value = NA, step = 0.01)
-      }
-    })
     
     
-    ### Generate DTR Selectors
+    ##### Binary DTR Probability Inputs #####
+    
+    ### Generate DTR Selection Inputs
     output$dyo.refdtrSelect <- renderUI({
       selectizeInput("dyoRefDTR",
                      label = text.refDTRLabel,
@@ -1758,19 +1759,7 @@ shinyServer(
       else return(c(0, 0, 0, 0))
     })
     
-    
-    ## When a first DTR is selected, render an input box corresponding to
-    #   whatever input method is selected.
-    ## For DTR-conditional or cell-specific inputs, first numericInput is 
-    #   P(S|DTR1), enabled/disabled depending on cellOrConditionalA
-    ## For target-difference or odds ratio, relevant numericInputs are rendered
-    ## This is the ONLY location in which difference and odds ratio
-    #   numericInputs are built.
-    
-    observeEvent(input$cellOrMarginal, {
-      shinyjs::toggleState("refDTRProb")
-    })
-    
+    ### Generate inputs for marginal success probabilities
     output$binaryRefInput <- renderUI({
       validate(
         need(input$dyoRefDTR != "", text.refDTRPlaceholder)
@@ -1786,7 +1775,6 @@ shinyServer(
       validate(
         need(input$dyoCompDTR != "", text.compDTRPlaceholder)
       )
-      # Full DTR success probability
       # if (input$targetDiffCheckA == FALSE && input$targetOddsCheckA == FALSE) {
       return(list(numericInput("compDTRProb", label = html.compDTRSuccess,
                                value = NA, min = 0, max = 1, step = 0.01),
@@ -1817,7 +1805,19 @@ shinyServer(
       # }
     })
     
+    ### If requested by user, provide inputs for "cell-specific" probabilities, 
+    ### i.e., P(success | stage 1 treatment, response)
     output$binaryRefCellProbs <- renderUI({
+      req(input$dyoRefDTR)
+      validate(
+        if (input$dyo.stage1.resprob.eq == "Yes") {
+          need(isTruthy(input$dyo.stage1.allTxt.resprob), text.noResponse)
+        } else {
+          need(isTruthy(input[[paste0("dyo.stage1.", refDTR.substr()[2], ".resprob")]]),
+               paste0("Please provide the probability of response to treatment ",
+                      refDTR.substr()[2], ". If you are unsure, enter 0 for a conservative estimate."))
+        }
+      )
       list(numericInput("refDTRProb.responders",
                         label = HTML(paste0("Probability of success for path <strong>",
                                             refDTR.substr()[2], ", ",
@@ -1828,14 +1828,26 @@ shinyServer(
                                             refDTR.substr()[2], ", ",
                                             refDTR.substr()[4], "</strong>")),
                         value = NULL, min = 0, max = 1, step = 0.01),
-           bsTooltip(id = "refDTRProb.responders",    title = "Input can range from 0-1 and must be in decimal form, up to two places.",
+           bsTooltip(id = "refDTRProb.responders",
+                     title = "Input can range from 0-1 and must be in decimal form, up to two places.",
                      placement = "right", trigger = "focus"),
-           bsTooltip(id = "refDTRProb.nonresponders", title = "Input can range from 0-1 and must be in decimal form, up to two places.",
+           bsTooltip(id = "refDTRProb.nonresponders",
+                     title = "Input can range from 0-1 and must be in decimal form, up to two places.",
                      placement = "right", trigger = "focus")
         )
     })
     
     output$binaryCompCellProbs <- renderUI({
+      req(input$dyoCompDTR)
+      validate(
+        if (input$dyo.stage1.resprob.eq == "Yes") {
+          need(isTruthy(input$dyo.stage1.allTxt.resprob), text.noResponse)
+        } else {
+          need(isTruthy(input[[paste0("dyo.stage1.", compDTR.substr()[2], ".resprob")]]),
+               paste0("Please provide the probability of response to treatment ",
+                      compDTR.substr()[2], ". If you are unsure, enter 0 for a conservative estimate."))
+        }
+      )
       list(numericInput("compDTRProb.responders",
                         label = HTML(paste0("Probability of success for path <strong>",
                                             compDTR.substr()[2], ", ",
@@ -1846,11 +1858,53 @@ shinyServer(
                                             compDTR.substr()[2], ", ",
                                             compDTR.substr()[4], "</strong>")),
                         value = NULL, min = 0, max = 1, step = 0.01),
-           bsTooltip(id = "compDTRProb.responders",    title = "Input can range from 0-1 and must be in decimal form, up to two places.",
+           bsTooltip(id = "compDTRProb.responders",    
+                     title = "Input can range from 0-1 and must be in decimal form, up to two places.",
                      placement = "right", trigger = "focus"),
-           bsTooltip(id = "compDTRProb.nonresponders", title = "Input can range from 0-1 and must be in decimal form, up to two places.",
+           bsTooltip(id = "compDTRProb.nonresponders",
+                     title = "Input can range from 0-1 and must be in decimal form, up to two places.",
                      placement = "right", trigger = "focus")
       )
+    })
+    
+    ### Disable marginal probability inputs when cell-specific inputs are provided
+    observeEvent(input$cellOrMarginal, {
+      shinyjs::toggleState("refDTRProb")
+      shinyjs::toggleState("compDTRProb")
+    })
+    
+    observe({
+      if (input$cellOrMarginal == TRUE) {
+        updateNumericInput(session, "refDTRProb",  value = generateProbs()[1])
+        updateNumericInput(session, "compDTRProb", value = generateProbs()[2])
+      }
+    }, priority = 2)
+    
+    ### Compute full DTR probabilities or effect size when providing cell-specific probabilities or mean/SD
+    
+    generateProbs <- reactive({
+      if (design1.outcome() == "Binary" && input$cellOrMarginal == TRUE) {
+        if (input$dyo.stage1.resprob.eq == "Yes") {
+          pDTR1 <- marginalizeDTRProbs(input$refDTRProb.responders,
+                                       input$dyo.stage1.allTxt.resprob, 
+                                       input$refDTRProb.nonresponders)
+          pDTR2 <- marginalizeDTRProbs(input$compDTRProb.responders,
+                                       input$dyo.stage1.allTxt.resprob, 
+                                       input$compDTRProb.nonresponders)
+        } else {
+          pDTR1 <- marginalizeDTRProbs(input$refDTRProb.responders,
+                                       input[[paste0("dyo.stage1.", refDTR.substr()[2], ".resprob")]], 
+                                       input$refDTRProb.nonresponders)
+          pDTR2 <- marginalizeDTRProbs(input$compDTRProb.responders,
+                                       input[[paste0("dyo.stage1.", compDTR.substr()[2], ".resprob")]], 
+                                       input$compDTRProb.nonresponders)
+        }
+      } else if (design1.outcome() == "Binary" && input$cellOrMarginal == FALSE) {
+        pDTR1 <- input$refDTRProb
+        pDTR2 <- input$DTRsuccA2
+      }
+      
+      return(c(pDTR1,pDTR2))
     })
     
     
@@ -1877,50 +1931,86 @@ shinyServer(
                                       LETTERS[i], "[", LETTERS[i], "]")), collapse = "\n")
     })
     
-    dyo.diagramStyles <- reactive({
+    dyo.diagramNodeStyles <- reactive({
       ## Add nodes to be styled into rclass (reference class) and cclass (comparison class)
-      ## based on selected primary aim and
+      ## based on selected primary aim
+      ## TODO: Add styling for other primary aims
       if (is.null(input[["dyo.primaryAim-primaryAim"]])) {
         rclass <- ""
         cclass <- ""
-      } else if (input[["dyo.primaryAim-primaryAim"]] == "dtrs") {
-        if (refDTR.substr()[1] != "")
-          rclass <- paste0("class ", paste0(refDTR.substr()[2:4], collapse = ","), " refdtr; \n ")
-        else 
-          rclass <- ""
-        if (compDTR.substr()[1] != "")
-          cclass <- paste0("class ", paste0(compDTR.substr()[2:4], collapse = ","), " compdtr; \n")
-        else
-          cclass <- ""
       } else {
-        rclass <- ""
-        cclass <- ""
+        if (input[["dyo.primaryAim-primaryAim"]] == "dtrs") {
+          if (refDTR.substr()[1] != "")
+            rclass <- paste0("class ", paste0(refDTR.substr()[2:4], collapse = ","), " refdtr; \n ")
+          else 
+            rclass <- ""
+          if (compDTR.substr()[1] != "")
+            cclass <- paste0("class ", paste0(compDTR.substr()[2:4], collapse = ","), " compdtr; \n")
+          else
+            cclass <- ""
+        } else {
+          rclass <- ""
+          cclass <- ""
+        }
       }
       paste(rclass, cclass, sep = "\n")
     })
     
+    dyo.diagramLinkStyles <- reactive({
+      ## Mermaid IDs "links" (edges) by the order in which they're drawn.
+      ## (This is tremendously obnoxious.)
+      if (is.null(input[["dyo.primaryAim-primaryAim"]])) {
+        rclass <- ""
+        cclass <- ""
+      } else {
+        if (input[["dyo.primaryAim-primaryAim"]] == "dtrs") {
+          if (refDTR.substr()[1] != "") {
+            r1class <- paste("linkStyle",
+                             as.character(which(refDTR.substr()[2] == LETTERS) - 1),
+                             "fill:none,stroke:#06c,stroke-width:3px,stroke-dasharray:8,8;")
+          } else 
+            r1class <- ""
+          if (compDTR.substr()[1] != "") {
+            c1class <- paste("linkStyle",
+                             as.character(which(compDTR.substr()[2] == LETTERS) - 1),
+                             "fill:none,stroke:#c33,stroke-width:3px,stroke-dasharray:6,4;")
+          } else
+            c1class <- ""
+          paste(r1class, c1class, sep = "\n")
+        } else
+          NULL
+      }
+    })
+    
     ## Render graph definition string for verification
-    output$graphstring <- renderText(paste("graph LR", 
-                                           "R1((R))",
+    output$graphstring <- renderText(paste("graph LR;",
+                                           "classDef default fill:#fff,stroke:#000,stroke-width:1px;",
+                                           "classDef randomize fill:#fff,stroke:#000,stroke-width:2px;",
+                                           "classDef compdtr fill:#fcc,stroke:#c33,stroke-width:3px,stroke-dasharray:6,4;", # red
+                                           "classDef refdtr fill:#ccf,stroke:#06c,stroke-width:3px,stroke-dasharray:8,8;", #blue
+                                           "R1((R));",
+                                           "class R1 randomize;",
                                            dyo.stage1.diagram(),
                                            dyo.stage2respDiagram(),
                                            dyo.stage2nrespDiagram(),
-                                           dyo.diagramStyles(),
-                                           sep = "\n ")
+                                           dyo.diagramNodeStyles(),
+                                           dyo.diagramLinkStyles(),
+                                           sep = " \n")
     )
     
     diagram <- reactive({
       DiagrammeR(diagram = paste("graph LR;",
                                  "classDef default fill:#fff,stroke:#000,stroke-width:1px;",
                                  "classDef randomize fill:#fff,stroke:#000,stroke-width:2px;",
-                                 "classDef compdtr fill:#fcc,stroke:#c33,stroke-width:3px;",
-                                 "classDef refdtr fill:#ccf,stroke:#06c,stroke-width:3px;",
+                                 "classDef compdtr fill:#fcc,stroke:#c33,stroke-width:3px,stroke-dasharray:6,4;", # red
+                                 "classDef refdtr fill:#ccf,stroke:#06c,stroke-width:3px,stroke-dasharray:8,8;", #blue
                                  "R1((R));",
                                  "class R1 randomize;",
                                  dyo.stage1.diagram(),
                                  dyo.stage2respDiagram(),
                                  dyo.stage2nrespDiagram(),
-                                 dyo.diagramStyles(),
+                                 dyo.diagramNodeStyles(),
+                                 dyo.diagramLinkStyles(),
                                  sep = " \n"),
                  type = "mermaid")
     })
@@ -1951,7 +2041,7 @@ shinyServer(
                    easyClose = T
                  )))
     
-    #### DYO Design Collapse and Tabset Handlers ####
+    #### Collapse and Tabset Handlers ####
     
     # Observer for button "dyo.stage1.continue" inside stage 1 design spec collapse panel
     # When button is pressed, update the collapse so that the "close" panel closes and the "open" panel opens

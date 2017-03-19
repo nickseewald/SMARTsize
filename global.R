@@ -46,7 +46,7 @@ continueButton <- function(inputId) {
 
 
 ### Function evaluates full-DTR probabilities; not reactive
-fullDTRprob <- function(cell1, resp, cell2){
+marginalizeDTRProbs <- function(cell1, resp, cell2){
   pDTR <- cell1 * resp + cell2 * (1 - resp)
   return(pDTR)
 }
