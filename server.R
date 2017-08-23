@@ -2365,6 +2365,8 @@ shinyServer(
       ## Compute A and B using the gathered inputs
       A <- ABcomp(pi1, r1, pi2R.1, pi2NR.1)
       B <- ABcomp(pi0, r0, pi2R.0, pi2NR.0)
+      
+      return(list("A" = A, "B" = B))
     })
     
   })
