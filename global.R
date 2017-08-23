@@ -61,8 +61,16 @@ continueButton <- function(inputId) {
 
 ### Compute A and B for sample size formula
 ABcomp <- function(pi.stage1, resp, pi.stage2R, pi.stage2NR) {
-  resp/pi.stage2R + (1 - resp) / pi.stage2NR
+  resp/(pi.stage1 * pi.stage2R) + (1 - resp) / (pi.stage1 * pi.stage2NR)
 }
+
+### Compute sample size
+sampleSize <- function(alpha, power, p1, p2, A, B) {
+  logOR <- log((p1 * (1 - p2)) / (p2 * (1 - p1)))
+  zsum  <- qnorm(power) + qnorm(1 - (alpha / 2))
+  (zsum / logOR)^2 * ((A / (p1 * (1 - p1))) + (B / (p2 * (1 - p2))))
+}
+
 
 ### Function evaluates full-DTR probabilities; not reactive
 marginalizeDTRProbs <- function(cell1, resp, cell2){
