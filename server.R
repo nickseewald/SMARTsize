@@ -2225,4 +2225,67 @@ shinyServer(
       updateTabsetPanel(session, "SMARTsize", selected = "Design and Size")
     })
     
+    # If user decides to input cell-specific probabilities and hasn't provided 
+    # a response probability, open the appropriate panel.
+    
+    observeEvent(req(input$cellOrMarginal), {
+      if (input$dyo.stage1.resprob.eq == "Yes") {
+        if (!isTruthy(input$dyo.stage1.allTxt.resprob)) {
+          # updateCollapse(session, "dyo.setup.collapse", close = input$dyo.setup.collapse)
+          updateCollapse(session, "dyo.setup.collapse", open = "dyo.resp.describe")
+          
+        }
+      }
+    })
+    
+    ##### Sample Size Computation #####
+    
+    AB <- reactive({
+      req(input$dyo.stage1.eqrand, input$dyo.stage1.resprob.eq, input$dyo.rerand.resp)
+      
+      ## Gather appropriate inputs
+      if (input$dyo.stage1.eqrand == "Yes") {
+        # If stage 1 is randomized equally, pi1 and pi0 are both 1/(number of first-stage treatments)
+        pi1 <- pi0 <- 1 / input$dyo.stage1.ntxt
+      } else {
+        # If stage 1 is not randomized equally, pull pi1 and pi0 from appropriate inputs
+        validate(
+          need(isTruthy(input[[paste0("dyo.stage1.txt", which(LETTERS == refDTR.substr()[2]), ".rprob")]]),
+               paste0("Please provide the probability of randomization to treatment ", refDTR.substr()[2], ".")),
+          need(isTruthy(input[[paste0("dyo.stage1.txt", which(LETTERS == compDTR.substr()[2]), ".rprob")]]),
+               paste0("Please provide the probability of randomization to treatment ", compDTR.substr()[2], "."))
+          )
+        pi1 <- input[[paste0("dyo.stage1.txt", which(LETTERS == refDTR.substr()[2]), ".rprob")]]
+        pi0 <- input[[paste0("dyo.stage1.txt", which(LETTERS == compDTR.substr()[2]), ".rprob")]]
+      }
+      
+      if (input$dyo.stage1.resprob.eq == "Yes") {
+        validate(
+          need(input$dyo.stage1.allTxt.resprob, "")
+        )
+        r1 <- r0 <- input$dyo.stage1.allTxt.resprob
+      } else {
+        r1 <- input[[paste0("dyo.stage1.", which(LETTERS == refDTR.substr()[2]), ".resprob")]]
+        r0 <- input[[paste0("dyo.stage1.", which(LETTERS == compDTR.substr()[2]), ".resprob")]]
+      }
+      if (input$dyo.rerand.resp == "Yes") {
+        if (LETTERS[refDTR.substr()[2]] %in% input$dyo.rerand.resp.whichtxt) {
+          if (input$dyo.rerand.resp.eqrand == "Yes") {
+            pi2R.1 <- 1 / input$dyo.rerand.resp.ntxt
+          }
+          pi2R.1 <- input[[paste0("dyo.rerand.resp.txt", which(LETTERS == refDTR.substr()[3]), ".rprob")]]
+        } else {
+          pi2R.1 <- 1
+        }
+        if (LETTERS[compDTR.substr()[2]] %in% input$dyo.rerand.resp.whichtxt) {
+          pi2R.0 <- input[[paste0("dyo.rerand.resp.txt", which(LETTERS == compDTR.substr()[3]), ".rprob")]]
+        }
+        else {
+          pi2R.0 <- 1
+        }
+      }
+      
+      # A <- ABcomp()
+    })
+    
   })
