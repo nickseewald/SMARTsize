@@ -1,3 +1,18 @@
+# This file is part of SMARTsize.
+# 
+# SMARTsize is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# SMARTsize is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with SMARTsize.  If not, see <http://www.gnu.org/licenses/>.
+
 ##### GLOBAL.R FOR SMART SAMPLE SIZE CALCULATOR #####
 ### NICK SEEWALD, 2014
 ### UNIVERSITY OF MICHIGAN
@@ -7,8 +22,8 @@ library(shiny)
 # library(pwr)
 library(shinyBS)
 library(DiagrammeR)
-library(V8)
-library(htmlwidgets)
+# library(V8)
+# library(htmlwidgets)
 library(shinyjs)
 
 ### Enable bookmarkable state via URL (shinyapps.io doesn't yet
@@ -44,6 +59,10 @@ continueButton <- function(inputId) {
            style = "primary", class = "btn-pull-right")
 }
 
+### Compute A and B for sample size formula
+ABcomp <- function(pi.stage1, resp, pi.stage2R, pi.stage2NR) {
+  (pi.stage2R * (1 - resp) + pi.stage2NR * resp) / (pi.stage1 * pi.stage2R * pi.stage2NR)
+}
 
 ### Function evaluates full-DTR probabilities; not reactive
 marginalizeDTRProbs <- function(cell1, resp, cell2){
