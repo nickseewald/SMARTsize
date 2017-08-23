@@ -685,7 +685,7 @@ shinyServer(
       AI <- selectizeInput("firstDTRcompareB", label = "Reference Adaptive Intevention",
                            choices = designB.AIs,
                            options = list(
-                             placeholder = 'Please select a Reference AI.',
+                             placeholder = text.refDTRPlaceholder,
                              onInitialize = I('function() { this.setValue(0); }')
                            )
       )
@@ -696,7 +696,7 @@ shinyServer(
       AI <- selectizeInput("secondDTRcompareB",label = "Comparison Adaptive Intervention",
                            choices = designB.AIs[substr(designB.AIs, 1, 1) != substr(input$firstDTRcompareB, 1, 1)],
                            options = list(
-                             placeholder = 'Please select a Comparison AI.',
+                             placeholder = text.compDTRPlaceholder,
                              onInitialize = I('function() { this.setValue(""); }')
                            )
       )
@@ -743,7 +743,7 @@ shinyServer(
     
     generateBinaryInputs1B <- reactive({
       validate(
-        need(input$firstDTRcompareB, "Please select a Reference AI.")
+        need(input$firstDTRcompareB, text.refDTRPlaceholder)
       )
       if (input$cellOrConditionalB == TRUE) {
         return(disable(numericInput("DTRsuccB1disable",
@@ -844,8 +844,8 @@ shinyServer(
     
     generateContinuousInputB <- reactive({
       validate(
-        need(input$firstDTRcompareB,  "Please select a Reference AI."),
-        need(input$secondDTRcompareB, "Please select a Comparison AI.")
+        need(input$firstDTRcompareB,  text.refDTRPlaceholder),
+        need(input$secondDTRcompareB, text.compDTRPlaceholder)
       )
       return(list(numericInput( "effectSizeB", label = "Standardized Effect Size", value = 0, min = 0, max = 10, step = 0.01),
                   bsTooltip(id = "effectSizeB", title = "Input can range from 0-10 and must be in decimal form, up to two places.",
@@ -1373,8 +1373,8 @@ shinyServer(
       # Binary outcome, provided full-DTR probabilities
       if (input$selectOutcomeC == 1 && input$cellOrConditionalC == FALSE && input$targetDiffCheckC == FALSE && input$targetOddsCheckC == FALSE) {
         validate(
-          need(!is.null(input$DTRsuccC1), "Select a Reference AI above."),
-          need(!is.null(input$DTRsuccC2), "Select a Comparison AI above.") %then%
+          need(!is.null(input$DTRsuccC1), text.refDTRPlaceholder),
+          need(!is.null(input$DTRsuccC2), text.compDTRPlaceholder) %then%
             need(!is.na(input$DTRsuccC1) && !is.na(input$DTRsuccC2), "The success probability is missing for at least one AI. Please provide a numeric input.") %then%
             need(input$DTRsuccC1 != input$DTRsuccC2, "Please provide unique success probabilities for each AI. Sample size is indeterminate for equal AI probabilities.") %then%
             need(checkDTRinputsC(), "The provided success probability for at least one AI is not a valid probability. Please enter a value between 0 and 1.")
@@ -2255,8 +2255,14 @@ shinyServer(
     
     ##### Sample Size Computation #####
     
+    ## Gather inputs needed to compute A and B, then pass them to ABcomp (global.R) to compute A and B
     AB <- reactive({
       req(input$dyo.stage1.eqrand, input$dyo.stage1.resprob.eq, input$dyo.rerand.resp)
+      
+      validate(  # Check for necessary inputs
+        need(refDTR.substr()[1]  != 0, text.refDTRPlaceholder),
+        need(compDTR.substr()[1] != 0, text.compDTRPlaceholder)
+      )
       
       ## Gather appropriate inputs
       if (input$dyo.stage1.eqrand == "Yes") {
@@ -2264,7 +2270,7 @@ shinyServer(
         pi1 <- pi0 <- 1 / input$dyo.stage1.ntxt
       } else {
         # If stage 1 is not randomized equally, pull pi1 and pi0 from appropriate inputs
-        validate(
+        validate(  # check appropriate inputs are available
           need(isTruthy(input[[paste0("dyo.stage1.txt", which(LETTERS == refDTR.substr()[2]), ".rprob")]]),
                paste0("Please provide the probability of randomization to treatment ", refDTR.substr()[2], ".")),
           need(isTruthy(input[[paste0("dyo.stage1.txt", which(LETTERS == compDTR.substr()[2]), ".rprob")]]),
@@ -2274,33 +2280,91 @@ shinyServer(
         pi0 <- input[[paste0("dyo.stage1.txt", which(LETTERS == compDTR.substr()[2]), ".rprob")]]
       }
       
-      if (input$dyo.stage1.resprob.eq == "Yes") {
-        validate(
-          need(input$dyo.stage1.allTxt.resprob, "")
+      ## Get response probabilities for first-stage treatments recommended by refDTR and compDTR
+      if (input$dyo.stage1.resprob.eq == "Yes") {  # Check if response probability is equal across all first-stage treatments
+        validate(  # Verify there's an input for shared response probability; if not, show message
+          need(input$dyo.stage1.allTxt.resprob, "Please provide the probability of response to all first-stage treatments")  
         )
-        r1 <- r0 <- input$dyo.stage1.allTxt.resprob
-      } else {
+        r1 <- r0 <- input$dyo.stage1.allTxt.resprob  # After verifying input, store value
+      } else {  # If response probability varies by first-stage treatment,
+        validate(  # Check that appropriate inputs have been provided
+          need(isTruthy(input[[paste0("dyo.stage1.", which(LETTERS == refDTR.substr()[2]), ".resprob")]]),
+               paste0("Please provide a response probability for first-stage treatment ", refDTR.substr()[2], ".")),
+          need(isTruthy(input[[paste0("dyo.stage1.", which(LETTERS == compDTR.substr()[2]), ".resprob")]]),
+               paste0("Please provide a response probability for first-stage treatment ", compDTR.substr()[2], "."))
+        )
+        # get response probabilities
         r1 <- input[[paste0("dyo.stage1.", which(LETTERS == refDTR.substr()[2]), ".resprob")]]
         r0 <- input[[paste0("dyo.stage1.", which(LETTERS == compDTR.substr()[2]), ".resprob")]]
       }
-      if (input$dyo.rerand.resp == "Yes") {
-        if (LETTERS[refDTR.substr()[2]] %in% input$dyo.rerand.resp.whichtxt) {
-          if (input$dyo.rerand.resp.eqrand == "Yes") {
-            pi2R.1 <- 1 / input$dyo.rerand.resp.ntxt
+      
+      ## Get re-randomization probabilities for responders 
+      if (input$dyo.rerand.resp == "Yes") {  # are any responders re-randomized in the design?
+        if (LETTERS[refDTR.substr()[2]] %in% input$dyo.rerand.resp.whichtxt) {  # are responders to the first-stage treatment recommended by the reference DTR re-randomized?
+          if (input$dyo.rerand.resp.eqrand == "Yes") { # are responders in reference DTR re-randomized equally?
+            pi2R.1 <- 1 / input$dyo.rerand.resp.ntxt  # if yes, randomization proability is 1/(number of options)
+          } else {  # if no, pull randomization probability from the appropriate input
+            validate(  # check that appropriate input exists
+              need(isTruthy(input[[paste0("dyo.rerand.resp.txt", which(LETTERS == refDTR.substr()[3]), ".rprob")]]), 
+                   paste0("Please provide a randomization probability for responders to first-stage treatment ", refDTR.substr()[2]), ".")
+            )
+            pi2R.1 <- input[[paste0("dyo.rerand.resp.txt", which(LETTERS == refDTR.substr()[3]), ".rprob")]]
           }
-          pi2R.1 <- input[[paste0("dyo.rerand.resp.txt", which(LETTERS == refDTR.substr()[3]), ".rprob")]]
-        } else {
+        } else {  # if responders to refDTR's first-stage treatment are not re-randomized, assignment to A2 is w/ prob 1
           pi2R.1 <- 1
         }
-        if (LETTERS[compDTR.substr()[2]] %in% input$dyo.rerand.resp.whichtxt) {
-          pi2R.0 <- input[[paste0("dyo.rerand.resp.txt", which(LETTERS == compDTR.substr()[3]), ".rprob")]]
+        if (LETTERS[compDTR.substr()[2]] %in% input$dyo.rerand.resp.whichtxt) {  # are responders to first-stage treatment recommended by compDTR re-randomized?
+          if (input$dyo.rerand.resp.eqrand == "Yes") {
+            pi2R.0 <- 1 / input$dyo.rerand.resp.ntxt  # if yes, randomization probability is 1/(number of options)
+          } else {
+            validate(  # check that appropriate input exists
+              need(isTruthy(input[[paste0("dyo.rerand.resp.txt", which(LETTERS == compDTR.substr()[3]), ".rprob")]]), 
+                   paste0("Please provide a randomization probability for responders to first-stage treatment ", compDTR.substr()[2]), ".")
+            )
+            pi2R.0 <- input[[paste0("dyo.rerand.resp.txt", which(LETTERS == compDTR.substr()[3]), ".rprob")]]  # If no, pull randomization proability from appropriate input
+          }
+        } else {
+          pi2R.0 <- 1  # If responders to compDTR's first-stage treatment are not re-randomized, assignment to A2 is w/ prob 1
         }
-        else {
-          pi2R.0 <- 1
-        }
+      } else {
+        pi2R.1 <- pi2R.0 <- 1  # If no responders in the design are re-randomized, assignment to A2 is w/ prob 1 for refDTR and compDTR
       }
       
-      # A <- ABcomp()
+      ## Get re-randomization probabilities for non-responders
+      if (input$dyo.rerand.nresp == "Yes") {  # Are any non-responders re-randomized in the design?
+        if (LETTERS[refDTR.substr()[2]] %in% input$dyo.rerand.nesp.whichtxt) {  # If yes, are NRs to the first-stage treatment recommended by refDTR re-randomized?
+          if (input$dyo.rerand.nresp.eqrand == "Yes") {  # Are NRs re-randomized with equal probability?
+            pi2NR.1 <- 1 / input$dyo.rerand.nresp.ntxt 
+          } else {  # If no, pull appropriate probability
+            validate(  # Make sure appropriate probability is available
+              need(isTruthy(input[[paste0("dyo.rerand.nresp.txt", which(LETTERS == refDTR.substr()[4]), ".rprob")]]),
+                   paste0("Please provide a randomization probability for non-responders to first-stage treatment ", refDTR.substr()[2], "."))
+            )
+            pi2NR.1 <- input[[paste0("dyo.rerand.nresp.txt", which(LETTERS == refDTR.substr()[4]), ".rprob")]]
+          }
+        } else {
+          pi2NR.1 <- 1  # If NRs in refDTR aren't re-randomized, assignment to A2 is w/ prob 1
+        }
+        if (LETTERS[compDTR.substr()[2]] %in% input$dyo.rerand.nresp.whichtxt) {  # Are NRs to first-stage treatment recommended by compDTR re-randomized?
+          if (input$dyo.rerand.nresp.eqrand == "Yes") {  # Are they re-randomized equally?
+            pi2NR.0 <- 1 / input$dyo.rerand.nresp.ntxt  # If yes, A2 assigned w/ prob 1/(number of options)
+          } else {
+            validate(  # check that appropriate input exists
+              need(isTruthy(input[[paste0("dyo.rerand.nresp.txt", which(LETTERS == compDTR.substr()[3]), ".rprob")]]), 
+                   paste0("Please provide a randomization probability for non-responders to first-stage treatment ", compDTR.substr()[2]), ".")
+            )
+            pi2NR.0 <- input[[paste0("dyo.rerand.nresp.txt", which(LETTERS == compDTR.substr()[4]), ".rprob")]]  # If not, pull from input
+          }
+        } else {
+          pi2NR.0 <- 1  # If NRs in compDTR aren't re-randomized, assignment to A2 w/ prob 1
+        }
+      } else {
+        pi2NR.1 <- pi2NR.0 <- 1  # If no NRs in the design are re-randomized, assignment to A2 is w/ prob 1 for refDTR and compDTR
+      }
+      
+      ## Compute A and B using the gathered inputs
+      A <- ABcomp(pi1, r1, pi2R.1, pi2NR.1)
+      B <- ABcomp(pi0, r0, pi2R.0, pi2NR.0)
     })
     
   })

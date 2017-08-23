@@ -61,7 +61,7 @@ continueButton <- function(inputId) {
 
 ### Compute A and B for sample size formula
 ABcomp <- function(pi.stage1, resp, pi.stage2R, pi.stage2NR) {
-  (pi.stage2R * (1 - resp) + pi.stage2NR * resp) / (pi.stage1 * pi.stage2R * pi.stage2NR)
+  resp/pi.stage2R + (1 - resp) / pi.stage2NR
 }
 
 ### Function evaluates full-DTR probabilities; not reactive
