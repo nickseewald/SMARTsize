@@ -19,6 +19,27 @@
 ### DEPARTMENT OF BIOSTATISTICS
 
 options(encoding = 'UTF-8')
+# This file is part of SMARTsize.
+# 
+# SMARTsize is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# SMARTsize is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with SMARTsize.  If not, see <http://www.gnu.org/licenses/>.
+
+##### SERVER.R FOR SMART SAMPLE SIZE CALCULATOR #####
+### NICK SEEWALD, 2014
+### UNIVERSITY OF MICHIGAN
+### DEPARTMENT OF BIOSTATISTICS
+
+options(encoding = 'UTF-8')
 
 
 
@@ -30,57 +51,57 @@ shinyServer(
     session$allowReconnect(TRUE)
     
     premade <- eventReactive(input$premade.startbutton,
-                            list(
-                                 p("The three designs below are commonly seen in the field. If your design
-                                   matches one, click the button below it to get started. Otherwise, you can
-                                   design your own. Click an image to zoom."),
-                                 fluidRow(
-                              column(4,
-                                     div(a(img(id = "D1.diagram.home", src = "images/SMARTdesignA__.gif",
-                                               class = "img-responsive img-zoom", alt = "Design I"),
-                                           href = "images/SMARTdesignA__.gif", target = "_blank")),
-                                     br(),
-                                     actionButton("pickTabA", "Use Design I", class = "center-block"),
-                                     p("Both responders and non-responders to first-stage treatment are re-randomized.
-                                       There are 8 embedded adaptive interventions: {A,C,E}, {A,C,F}, {A,D,E}, {A,D,F},
-                                       {B,G,I}, {B,G,J}, {B,H,I}, {B,H,J}.", 
-                                       a("Click here for an example from the field.", `data-toggle` = "modal",
-                                         `data-target` = "#exampleAmodal", style = "color:#6b6b6b")),
-                                     includeHTML("www/html/exampleAmodal.html")
-                                     ),
-                              column(4,
-                                     div(a(img(id = "D2.diagram.home", src = "images/SMARTdesignB__.gif",
-                                               class = "img-responsive img-zoom", alt = "Design II"),
-                                           href = "images/SMARTdesignB__.gif", target = "_blank")),
-                                     br(),
-                                     actionButton("pickTabB","Use Design II", class = "center-block"),
-                                     p("Only non-responders to either first-stage treatment are re-randomized.
-                                       There are 4 embedded adaptive interventions: {A,C,D}, {A,C,E}, {B,F,G}, {B,F,H}.",
-                                       a("Click here for an example from the field.", `data-toggle` = "modal",
-                                         `data-target` = "#exampleBmodal", style = "color:#6b6b6b")),
-                                     includeHTML("www/html/exampleBmodal.html")
-                                     ),
-                              column(4,
-                                     div(a(img(id = "D3.diagram.home", src = "images/SMARTdesignC__.gif",
-                                               class = "img-responsive img-zoom", alt = "Design III"),
-                                           href = "images/SMARTdesignC__.gif", target = "_blank")),
-                                     br(),
-                                     bsButton("pickTabC","Use Design III", class = "center-block"),
-                                     p("Only non-responders to a particular first-stage treatment are re-randomized.
-                                       There are 3 embedded adaptive interventions: {A,C,D}, {A,C,E}, {B,F,G}.",
-                                       a("Click here for an example from the field.", `data-toggle` = "modal",
-                                         `data-target` = "#exampleCmodal", style = "color:#6b6b6b")),
-                                     includeHTML("www/html/exampleCmodal.html")
-                                     )
-                              )
-                              # br(),
-                              # fluidRow(
-                              #   column(3),
-                              #   ,
-                              #   column(3)
-                              #   )
-                       )
-                 )
+                             list(
+                               p("The three designs below are commonly seen in the field. If your design
+                                 matches one, click the button below it to get started. Otherwise, you can
+                                 design your own. Click an image to zoom."),
+                               fluidRow(
+                                 column(4,
+                                        div(a(img(id = "D1.diagram.home", src = "images/SMARTdesignA__.gif",
+                                                  class = "img-responsive img-zoom", alt = "Design I"),
+                                              href = "images/SMARTdesignA__.gif", target = "_blank")),
+                                        br(),
+                                        actionButton("pickTabA", "Use Design I", class = "center-block"),
+                                        p("Both responders and non-responders to first-stage treatment are re-randomized.
+                                          There are 8 embedded adaptive interventions: {A,C,E}, {A,C,F}, {A,D,E}, {A,D,F},
+                                          {B,G,I}, {B,G,J}, {B,H,I}, {B,H,J}.", 
+                                          a("Click here for an example from the field.", `data-toggle` = "modal",
+                                            `data-target` = "#exampleAmodal", style = "color:#6b6b6b")),
+                                        includeHTML("www/html/exampleAmodal.html")
+                                 ),
+                                 column(4,
+                                        div(a(img(id = "D2.diagram.home", src = "images/SMARTdesignB__.gif",
+                                                  class = "img-responsive img-zoom", alt = "Design II"),
+                                              href = "images/SMARTdesignB__.gif", target = "_blank")),
+                                        br(),
+                                        actionButton("pickTabB","Use Design II", class = "center-block"),
+                                        p("Only non-responders to either first-stage treatment are re-randomized.
+                                          There are 4 embedded adaptive interventions: {A,C,D}, {A,C,E}, {B,F,G}, {B,F,H}.",
+                                          a("Click here for an example from the field.", `data-toggle` = "modal",
+                                            `data-target` = "#exampleBmodal", style = "color:#6b6b6b")),
+                                        includeHTML("www/html/exampleBmodal.html")
+                                 ),
+                                 column(4,
+                                        div(a(img(id = "D3.diagram.home", src = "images/SMARTdesignC__.gif",
+                                                  class = "img-responsive img-zoom", alt = "Design III"),
+                                              href = "images/SMARTdesignC__.gif", target = "_blank")),
+                                        br(),
+                                        bsButton("pickTabC","Use Design III", class = "center-block"),
+                                        p("Only non-responders to a particular first-stage treatment are re-randomized.
+                                          There are 3 embedded adaptive interventions: {A,C,D}, {A,C,E}, {B,F,G}.",
+                                          a("Click here for an example from the field.", `data-toggle` = "modal",
+                                            `data-target` = "#exampleCmodal", style = "color:#6b6b6b")),
+                                        includeHTML("www/html/exampleCmodal.html")
+                                 )
+    )
+    # br(),
+    # fluidRow(
+    #   column(3),
+    #   ,
+    #   column(3)
+    #   )
+                                 )
+                                 )
     
     output$premadeDesigns <- renderUI(premade())
     observeEvent(input$premade.startbutton, shinyjs::hide("premade.startbutton"))
@@ -535,12 +556,12 @@ shinyServer(
       formatResp   <- as.numeric(input$respA)
       
       HTML(paste("<h4 style='color:blue';> N=", paste(finalSampleSize)," </h4>
-         <p> We wish to find the sample size for a trial with a binary outcome 
-               where the probability of response to first-stage intervention is ",
+                 <p> We wish to find the sample size for a trial with a binary outcome 
+                 where the probability of response to first-stage intervention is ",
                  formatResp, sentenceCompilerA(), ". Given a ", formatAltHyp, 
                  " test with ", formatAlpha, " type-I error, we require a sample
-               size of at least ", finalSampleSize, " to make this comparison
-               with ", formatPower, " power. </p>", sep = ""))
+                 size of at least ", finalSampleSize, " to make this comparison
+                 with ", formatPower, " power. </p>", sep = ""))
     })
     
     ## Power computation and output for binary outcome
@@ -570,8 +591,8 @@ shinyServer(
       formatResp    <- as.numeric(input$respA)
       
       HTML(paste("<h4 style='color:blue';> Power=", paste(formatPower), " </h4>
-         <p> For a trial of size N=", formatSize, " with a binary outcome where
-               the probability of response to first-stage intervention is ",
+                 <p> For a trial of size N=", formatSize, " with a binary outcome where
+                 the probability of response to first-stage intervention is ",
                  formatResp, sentenceCompilerA(),", we have at least ", 
                  formatPower, " power. </p>", sep = ""))
     })
@@ -604,9 +625,9 @@ shinyServer(
       formatResp <- as.numeric(input$respA)
       
       HTML(paste("<h4 style='color:blue';> N=", paste(finalSampleSize), " </h4>
-         <p> We wish to find the sample size for a trial with a continuous
-               outcome where the probability of response to first-stage 
-               intervention is ", formatResp, sentenceCompilerA(),
+                 <p> We wish to find the sample size for a trial with a continuous
+                 outcome where the probability of response to first-stage 
+                 intervention is ", formatResp, sentenceCompilerA(),
                  ". Given a ", formatAltHyp, " test with ", formatAlpha,
                  " type-I error, we require a sample size of at least ",
                  finalSampleSize, " to make this comparison with ", formatPower,
@@ -636,9 +657,9 @@ shinyServer(
       
       
       HTML(paste("<h4 style='color:blue';> Power=", paste(formatPower)," </h4>
-         <p> For a trial of size N=", formatSize, " with a continuous outcome
-               where the probability of response to first-stage intervention
-               is ", formatResp, sentenceCompilerA(), ", we have ",
+                 <p> For a trial of size N=", formatSize, " with a continuous outcome
+                 where the probability of response to first-stage intervention
+                 is ", formatResp, sentenceCompilerA(), ", we have ",
                  formatPower, " power. </p>", sep = ""))
     })
     
@@ -941,8 +962,8 @@ shinyServer(
       if (input$selectOutcomeB == 1 && input$cellOrConditionalB == TRUE) {
         validate(
           need(generateProbsB()[1] != generateProbsB()[2], "The provided cell-specific probabilities yield identical AI-specific probabilities of success.
-        Sample size is indeterminate for equal AI probabilities. Please adjust your inputs.")
-        )
+               Sample size is indeterminate for equal AI probabilities. Please adjust your inputs.")
+          )
         return(c(generateProbsB()[1], generateProbsB()[2]))
       }
       
@@ -952,8 +973,8 @@ shinyServer(
         validate(
           need(0 < prob2 && prob2 < 1, "Target difference must be less than 0.5 to be valid input"),
           need(input$targetDiffB > 0, "Target difference must be greater than 0. Sample size is indeterminate for equal AI probabilities.
-             Please adjust your inputs.")
-        )
+               Please adjust your inputs.")
+          )
         return(c(input$DTRsuccB1, input$DTRsuccB1 + input$diffDirectionB * input$targetDiffB))
       }
       
@@ -1031,7 +1052,7 @@ shinyServer(
       formatAltHyp    <- switch(input$selectAlternativeB, "one.sided" = "one-sided ", "two.sided" = "two-sided ")
       
       HTML(paste("<h4 style='color:blue';> N=",paste(finalSampleSize),"</h4>
-         <p> We wish to find the sample size for a trial with a binary outcome where the probability of response to first-stage interventions is ",formatResp, sentenceCompilerB(),
+                 <p> We wish to find the sample size for a trial with a binary outcome where the probability of response to first-stage interventions is ",formatResp, sentenceCompilerB(),
                  ". Given a ",formatAltHyp, " test with ", formatAlpha, " type-I error, we require a sample size of at least ",
                  finalSampleSize, " to make this comparison with ",formatPower," power. </p>",sep=""))
     })
@@ -1058,7 +1079,7 @@ shinyServer(
       )
       
       HTML(paste("<h4 style='color:blue';> Power=",paste(formatPower)," </h4>
-         <p> For a trial of size N=",formatSize," with a binary outcome where the probability of response to first-stage interventions is ",formatResp,
+                 <p> For a trial of size N=",formatSize," with a binary outcome where the probability of response to first-stage interventions is ",formatResp,
                  sentenceCompilerB(),", we have ",formatPower," power. ",sep=""))
     })
     
@@ -1082,7 +1103,7 @@ shinyServer(
       formatResp      <- as.numeric(input$respB)
       
       HTML(paste("<h4 style='color:blue';> N=",paste(finalSampleSize),"</h4>
-         <p> We wish to find the sample size for a trial with a continuous outcome where the probability of response to first-stage interventions is ", formatResp, sentenceCompilerB(),
+                 <p> We wish to find the sample size for a trial with a continuous outcome where the probability of response to first-stage interventions is ", formatResp, sentenceCompilerB(),
                  ". Given a ", formatAltHyp, " test with ", formatAlpha, " type-I error, we require a sample size of at least ",
                  finalSampleSize, " to make this comparison with ",formatPower," power. </p>",sep=""))
     })
@@ -1107,7 +1128,7 @@ shinyServer(
       formatResp<-as.numeric(input$respB)
       
       HTML(paste("<h4 style='color:blue';> Power=",paste(formatPower)," </h4>
-         <p> For a trial of size N=",formatSize," with a continuous outcome where the probability of response to first-stage interventions is ",formatResp,
+                 <p> For a trial of size N=",formatSize," with a continuous outcome where the probability of response to first-stage interventions is ",formatResp,
                  sentenceCompilerB(),", we have ",formatPower," power.</p>",sep=""))
     })
     
@@ -1479,7 +1500,7 @@ shinyServer(
       formatAltHyp    <- switch(input$selectAlternativeC, "one.sided" = "one-sided ", "two.sided" = "two-sided ")
       
       HTML(paste("<h4 style='color:blue';> N=",paste(finalSampleSize)," </h4>
-          <p> We wish to find the sample size for a trial with a binary outcome where the probability of response to first-stage interventions is ", formatResp, sentenceCompilerC(),
+                 <p> We wish to find the sample size for a trial with a binary outcome where the probability of response to first-stage interventions is ", formatResp, sentenceCompilerC(),
                  ". Given a ", formatAltHyp, " test with ", formatAlpha, " type-I error, we require a sample size of at least ",
                  finalSampleSize, " to make this comparison with at least ",formatPower," power. </p>",sep=""))
     })
@@ -1501,7 +1522,7 @@ shinyServer(
       formatSize    <-as.numeric(input$inputSampleSizeC)
       
       HTML(paste("<h4 style='color:blue';> Power=",paste(formatPower)," </h4>
-              <p> For a trial of size N=",formatSize," with a binary outcome where the probability of response to first-stage interventions is ",formatResp,
+                 <p> For a trial of size N=",formatSize," with a binary outcome where the probability of response to first-stage interventions is ",formatResp,
                  sentenceCompilerC(),", we have at least ",formatPower," power. </p>",sep=""))
     })
     
@@ -1525,7 +1546,7 @@ shinyServer(
       formatAltHyp    <- switch(input$selectAlternativeC, "one.sided" = "one-sided ", "two.sided" = "two-sided ")
       
       HTML(paste("<h4 style='color:blue';> N=",paste(finalSampleSize),"</h4>
-         <p> We wish to find the sample size for a trial with a continuous outcome where the probability of response to first-stage interventions is ", formatResp, sentenceCompilerC(),
+                 <p> We wish to find the sample size for a trial with a continuous outcome where the probability of response to first-stage interventions is ", formatResp, sentenceCompilerC(),
                  ". Given a ", formatAltHyp, " test with ", formatAlpha, " type-I error, we require a sample size of at least ",
                  finalSampleSize, " to make this comparison with at least ", formatPower," power. </p>",sep = ""))
     })
@@ -1544,11 +1565,11 @@ shinyServer(
       formatSize   <- as.numeric(input$inputSampleSizeC)
       
       HTML(paste("<h4 style='color:blue';> Power=",paste(formatPower)," </h4>
-              <p> For a trial of size N=",formatSize," with a continuous outcome where the probability of response to first-stage interventions is ",formatResp,
+                 <p> For a trial of size N=",formatSize," with a continuous outcome where the probability of response to first-stage interventions is ",formatResp,
                  sentenceCompilerC(),", we have at least ",formatPower," power. </p>",sep=""))
     })
     
-
+    
     ##### Modules #####
     
     ## Backend for outcome selection radioButtons
@@ -1575,27 +1596,42 @@ shinyServer(
     
     ##### Response Probability UI ####
     output$dyo.stage1.resprobUI <- renderUI({
-      if (input$dyo.stage1.resprob.eq == "No") {
-        lapply(1:input$dyo.stage1.ntxt,
-               function(i) { 
-                 numericInput(paste0("dyo.stage1.", LETTERS[i], ".resprob"),
-                              label = paste0("Probability of Response to ", LETTERS[i],
-                                             ". If you are unsure, leave as 0 for a conservative estimate."),
-                              min = 0, max = 1, value = NA, step = 0.01)
-               })
+      if (input$conservative) {
+        if (input$dyo.stage1.resprob.eq == "No") {
+          lapply(1:input$dyo.stage1.ntxt,
+                 function(i) { 
+                   disabled(numericInput(paste0("dyo.stage1.", LETTERS[i], ".resprob"),
+                                label = paste0("Probability of Response to ", LETTERS[i], "."),
+                                min = 0, max = 1, value = NA, step = 0.01))
+                 })
+        } else {
+          disabled(numericInput("dyo.stage1.allTxt.resprob",
+                       label = eval(text.responseProbLabel),
+                       min = 0, max = 1, value = NA, step = 0.01))
+        }
       } else {
-        numericInput("dyo.stage1.allTxt.resprob",
-                     label = eval(text.responseProbLabel),
-                     min = 0, max = 1, value = NA, step = 0.01)
+        if (input$dyo.stage1.resprob.eq == "No") {
+          lapply(1:input$dyo.stage1.ntxt,
+                 function(i) { 
+                   numericInput(paste0("dyo.stage1.", LETTERS[i], ".resprob"),
+                                label = paste0("Probability of Response to ", LETTERS[i], "."),
+                                min = 0, max = 1, value = NA, step = 0.01)
+                 })
+        } else {
+          numericInput("dyo.stage1.allTxt.resprob",
+                       label = eval(text.responseProbLabel),
+                       min = 0, max = 1, value = NA, step = 0.01)
+        }
       }
+      
     })
     
     ##### Re-Randomization Setup UI #####
     output$dyo.rerand.respUI <- renderUI({
       list(checkboxGroupInput("dyo.rerand.resp.whichtxt",
-                         label = "Select first-stage treatments for which responders are re-randomized.",
-                         choices = lapply(1:input$dyo.stage1.ntxt, function(i) LETTERS[i]),
-                         selected = LETTERS[1:input$dyo.stage1.ntxt], inline = TRUE))
+                              label = "Select first-stage treatments for which responders are re-randomized.",
+                              choices = lapply(1:input$dyo.stage1.ntxt, function(i) LETTERS[i]),
+                              selected = LETTERS[1:input$dyo.stage1.ntxt], inline = TRUE))
     })
     outputOptions(output, 'dyo.rerand.respUI', suspendWhenHidden = FALSE)
     
@@ -1606,7 +1642,7 @@ shinyServer(
                               selected = LETTERS[1:input$dyo.stage1.ntxt], inline = TRUE))
     })
     outputOptions(output, 'dyo.rerand.nrespUI', suspendWhenHidden = FALSE)
-
+    
     ##### Randomization Probabilities UI #####
     ### Create inputs for varying randomization probabilites 
     output$dyo.stage1.rprobUI <- renderUI({
@@ -1774,50 +1810,34 @@ shinyServer(
       else return(c(0, 0, 0, 0))
     })
     
+    ## Test proper DTR name parsing
+    output$refDTRname <- renderPrint(refDTR.substr())
+    output$compDTRname <- renderPrint(compDTR.substr())
+    
     ### Generate inputs for marginal success probabilities
     output$binaryRefInput <- renderUI({
-      validate(
-        need(input$dyoRefDTR != "", text.refDTRPlaceholder)
-      )
-      return(list(numericInput("refDTRProb",
-                               label = html.refDTRSuccess,
-                               value = NA, min = 0, max = 1, step = 0.01),
-                  bsTooltip(id = "refDTRProb", title = text.tooltip,
-                            placement = "right", trigger = "focus")))
+      if (isTruthy(primaryAim() == "dtrs")){
+        validate(
+          need(isTruthy(refDTR.substr()[1]), text.refDTRPlaceholder)
+        )
+        return(list(numericInput("refDTRProb",
+                                 label = html.refDTRSuccess,
+                                 value = NA, min = 0, max = 1, step = 0.01),
+                    bsTooltip(id = "refDTRProb", title = text.tooltip,
+                              placement = "right", trigger = "focus")))
+      }
     })
     
     output$binaryCompInput <- renderUI({
-      validate(
-        need(input$dyoCompDTR != "", text.compDTRPlaceholder)
-      )
-      # if (input$targetDiffCheckA == FALSE && input$targetOddsCheckA == FALSE) {
-      return(list(numericInput("compDTRProb", label = html.compDTRSuccess,
-                               value = NA, min = 0, max = 1, step = 0.01),
-                  bsTooltip(id = "compDTRProb", title = text.tooltip,
-                            placement = "right", trigger = "focus"))
-      )
-      # }
-      # # Target difference
-      # if (input$targetDiffCheckA == TRUE && input$targetOddsCheckA == FALSE) {
-      #   return(list(
-      #     numericInput("targetDiffA", label = text.targDiffLabel,
-      #                  value = NULL, min = 0.01, max = 0.99, step = 0.01),
-      #     bsTooltip(id = "targetDiffA", title = text.tooltip,
-      #               placement = "right", trigger = "focus"),
-      #     radioButtons("diffDirectionA", label = text.diffDirection,
-      #                  choices = list("Smaller" = -1, "Larger" = 1),
-      #                  selected = -1)
-      #   ))
-      # }
-      # # Target Odds Ratio
-      # if (input$targetOddsCheckA == TRUE) {
-      #   return(list(
-      #     numericInput("targetORA", label = text.targORInputLabel,
-      #                  value = NULL, min = 0, step = 0.01),
-      #     bsTooltip(id = "targetORA", title = text.tooltip,
-      #               placement = "right", trigger = "focus")
-      #   ))
-      # }
+      if (isTruthy(primaryAim() == "dtrs")){
+        validate(
+          need(isTruthy(compDTR.substr()[1]), text.compDTRPlaceholder)
+        )
+        return(list(numericInput("compDTRProb", label = html.compDTRSuccess,
+                                 value = NA, min = 0, max = 1, step = 0.01),
+                    bsTooltip(id = "compDTRProb", title = text.tooltip,
+                              placement = "right", trigger = "focus")))
+      }
     })
     
     ### If requested by user, provide inputs for "cell-specific" probabilities, 
@@ -1849,7 +1869,7 @@ shinyServer(
            bsTooltip(id = "refDTRProb.nonresponders",
                      title = "Input can range from 0-1 and must be in decimal form, up to two places.",
                      placement = "right", trigger = "focus")
-        )
+      )
     })
     
     output$binaryCompCellProbs <- renderUI({
@@ -1916,7 +1936,7 @@ shinyServer(
         }
       } else if (design1.outcome() == "Binary" && input$cellOrMarginal == FALSE) {
         pDTR1 <- input$refDTRProb
-        pDTR2 <- input$DTRsuccA2
+        pDTR2 <- input$compDTRProb
       }
       
       return(c(pDTR1,pDTR2))
@@ -2072,7 +2092,7 @@ shinyServer(
                  updateCollapse(session, "dyo.setup.collapse", 
                                 open = "dyo.resp.describe", 
                                 close = "dyo.stage1.describe"))
-    observeEvent(input$dyo.resprob.continue, 
+    observeEvent(input$dyo.resp.continue, 
                  updateCollapse(session, "dyo.setup.collapse", 
                                 open = "dyo.rerand.describe", 
                                 close = "dyo.resp.describe"))
@@ -2093,165 +2113,7 @@ shinyServer(
                  updateCollapse(session, "dyo.setup.collapse", 
                                 open = "dyo.resp.describe", 
                                 close = "dyo.rerand.describe"))
-
     
-    ##### Premade Design Autofill #####
-    ### Design I
-
-    observeEvent(input$pickTabA, {    
-        # Input updates: stage 1 treatments
-        updateSliderInput(session, "dyo.stage1.ntxt", value = 2)
-        updateRadioButtons(session, "dyo.stage1.eqrand", selected = "Yes")
-        shinyjs::disable("dyo.stage1.ntxt")
-        shinyjs::disable("dyo.stage1.eqrand")
-        
-        # Input updates: equal response
-        updateRadioButtons(session, "dyo.stage1.resprob.eq", selected = "Yes")
-        shinyjs::disable("dyo.stage1.resprob.eq")
-        
-        # Input updates: stage 2 treatments
-        updateRadioButtons(session, "dyo.rerand.resp", selected = "Yes")
-        updateSliderInput(session, "dyo.rerand.resp.ntxt", value = 2)
-        updateRadioButtons(session, "dyo.rerand.resp.eqrand", selected = "Yes")
-        updateRadioButtons(session, "dyo.rerand.nresp", selected = "Yes")
-        updateSliderInput(session, "dyo.rerand.nresp.ntxt", value = 2)
-        updateRadioButtons(session, "dyo.rerand.nresp.eqrand", selected = "Yes")
-        shinyjs::disable("dyo.rerand.resp")
-        shinyjs::disable("dyo.rerand.resp.ntxt")
-        shinyjs::disable("dyo.rerand.resp.eqrand")
-        shinyjs::disable("dyo.rerand.nresp")
-        shinyjs::disable("dyo.rerand.nresp.ntxt")
-        shinyjs::disable("dyo.rerand.nresp.eqrand")
-        
-        # Raise alerts about disabled inputs
-        shinyBS::createAlert(session,
-                             anchorId = "premade-design-disabled-stage1-describe",
-                             title = text.alert.premadeDisabled.title,
-                             content = "Because you've selected a premade design, you are unable to edit these parameters.")
-        shinyBS::createAlert(session,
-                             anchorId = "premade-design-disabled-resp-describe",
-                             title = "Part of this section has been disabled.",
-                             content = "Because you've selected a premade design, you are unable to edit these parameters.")
-        shinyBS::createAlert(session,
-                             anchorId = "premadeDesignInputsDisabled-stage2Alert",
-                             title = text.alert.premadeDisabled.title,
-                             content = "Because you've selected a premade design, you are unable to edit these parameters.")
-
-        # UI updates
-        updateCollapse(session, "dyo.setup.collapse",
-                       close = "dyo.stage1.describe")
-        shinyjs::hide("dyo.stage1.resprob.continue")
-        shinyjs::disable("dyo.stage1.describe")
-        updateTabsetPanel(session, "SMARTsize", selected = "Design and Size")
-    })
-    
-    ## Design II
-    observeEvent(input$pickTabB, {    
-      # Input updates: stage 1 treatments
-      updateSliderInput(session, "dyo.stage1.ntxt", value = 2)
-      updateRadioButtons(session, "dyo.stage1.eqrand", selected = "Yes")
-      shinyjs::disable("dyo.stage1.ntxt")
-      shinyjs::disable("dyo.stage1.eqrand")
-      
-      # Input updates: equal response
-      updateRadioButtons(session, "dyo.stage1.resprob.eq", selected = "Yes")
-      shinyjs::disable("dyo.stage1.resprob.eq")
-      
-      # Input updates: stage 2 treatments
-      updateRadioButtons(session, "dyo.rerand.resp", selected = "No")
-      updateRadioButtons(session, "dyo.rerand.resp.eqrand", selected = "Yes")
-      updateRadioButtons(session, "dyo.rerand.nresp", selected = "Yes")
-      updateSliderInput(session, "dyo.rerand.nresp.ntxt", value = 2)
-      updateRadioButtons(session, "dyo.rerand.nresp.eqrand", selected = "Yes")
-      shinyjs::disable("dyo.rerand.resp")
-      shinyjs::disable("dyo.rerand.resp.ntxt")
-      shinyjs::disable("dyo.rerand.resp.eqrand")
-      shinyjs::disable("dyo.rerand.nresp")
-      shinyjs::disable("dyo.rerand.nresp.ntxt")
-      shinyjs::disable("dyo.rerand.nresp.eqrand")
-      
-      # Raise alerts about disabled inputs
-      shinyBS::createAlert(session,
-                           anchorId = "premade-design-disabled-stage1-describe",
-                           title = text.alert.premadeDisabled.title,
-                           content = "Because you've selected a premade design, you are unable to edit these parameters.")
-      shinyBS::createAlert(session,
-                           anchorId = "premade-design-disabled-resp-describe",
-                           title = "Part of this section has been disabled.",
-                           content = "Because you've selected a premade design, you are unable to edit these parameters.")
-      shinyBS::createAlert(session,
-                           anchorId = "premadeDesignInputsDisabled-stage2Alert",
-                           title = text.alert.premadeDisabled.title,
-                           content = "Because you've selected a premade design, you are unable to edit these parameters.")
-
-      # UI updates
-      updateCollapse(session, "dyo.setup.collapse",
-                     close = "dyo.stage1.describe")
-      shinyjs::hide("dyo.stage1.resprob.continue")
-      shinyjs::disable("dyo.stage1.describe")
-      updateTabsetPanel(session, "SMARTsize", selected = "Design and Size")
-    })
-    
-    observeEvent(input$pickTabC, {    
-      # Input updates: stage 1 treatments
-      updateSliderInput(session, "dyo.stage1.ntxt", value = 2)
-      updateRadioButtons(session, "dyo.stage1.eqrand", selected = "Yes")
-      shinyjs::disable("dyo.stage1.ntxt")
-      shinyjs::disable("dyo.stage1.eqrand")
-      
-      # Input updates: equal response
-      updateRadioButtons(session, "dyo.stage1.resprob.eq", selected = "Yes")
-      shinyjs::disable("dyo.stage1.resprob.eq")
-      
-      # Input updates: stage 2 treatments
-      updateRadioButtons(session, "dyo.rerand.resp", selected = "No")
-      updateRadioButtons(session, "dyo.rerand.resp.eqrand", selected = "Yes")
-      updateRadioButtons(session, "dyo.rerand.nresp", selected = "Yes")
-      updateCheckboxGroupInput(session, "dyo.rerand.nresp.whichtxt", 
-                               selected = c("A"))
-      updateSliderInput(session, "dyo.rerand.nresp.ntxt", value = 2)
-      updateRadioButtons(session, "dyo.rerand.nresp.eqrand", selected = "Yes")
-      shinyjs::disable("dyo.rerand.resp")
-      shinyjs::disable("dyo.rerand.resp.ntxt")
-      shinyjs::disable("dyo.rerand.resp.eqrand")
-      shinyjs::disable("dyo.rerand.nresp")
-      shinyjs::disable("dyo.rerand.nresp.ntxt")
-      shinyjs::disable("dyo.rerand.nresp.eqrand")
-      
-      # Raise alerts about disabled inputs
-      shinyBS::createAlert(session,
-                           anchorId = "premade-design-disabled-stage1-describe",
-                           title = text.alert.premadeDisabled.title,
-                           content = "Because you've selected a premade design, you are unable to edit these parameters.")
-      shinyBS::createAlert(session,
-                           anchorId = "premade-design-disabled-resp-describe",
-                           title = "Part of this section has been disabled.",
-                           content = "Because you've selected a premade design, you are unable to edit these parameters.")
-      shinyBS::createAlert(session,
-                           anchorId = "premadeDesignInputsDisabled-stage2Alert",
-                           title = text.alert.premadeDisabled.title,
-                           content = "Because you've selected a premade design, you are unable to edit these parameters.")
-      
-      # UI updates
-      updateCollapse(session, "dyo.setup.collapse",
-                     close = "dyo.stage1.describe")
-      shinyjs::hide("dyo.stage1.resprob.continue")
-      shinyjs::disable("dyo.stage1.describe")
-      updateTabsetPanel(session, "SMARTsize", selected = "Design and Size")
-    })
-    
-    # If user decides to input cell-specific probabilities and hasn't provided 
-    # a response probability, open the appropriate panel.
-    
-    observeEvent(req(input$cellOrMarginal), {
-      if (input$dyo.stage1.resprob.eq == "Yes") {
-        if (!isTruthy(input$dyo.stage1.allTxt.resprob)) {
-          # updateCollapse(session, "dyo.setup.collapse", close = input$dyo.setup.collapse)
-          updateCollapse(session, "dyo.setup.collapse", open = "dyo.resp.describe")
-          
-        }
-      }
-    })
     
     ##### Sample Size Computation #####
     
@@ -2275,7 +2137,7 @@ shinyServer(
                paste0("Please provide the probability of randomization to treatment ", refDTR.substr()[2], ".")),
           need(isTruthy(input[[paste0("dyo.stage1.txt", which(LETTERS == compDTR.substr()[2]), ".rprob")]]),
                paste0("Please provide the probability of randomization to treatment ", compDTR.substr()[2], "."))
-          )
+        )
         pi1 <- input[[paste0("dyo.stage1.txt", which(LETTERS == refDTR.substr()[2]), ".rprob")]]
         pi0 <- input[[paste0("dyo.stage1.txt", which(LETTERS == compDTR.substr()[2]), ".rprob")]]
       }
@@ -2369,4 +2231,241 @@ shinyServer(
       return(list("A" = A, "B" = B))
     })
     
-  })
+    
+    ##### Results #####
+    
+    ### Write the sentence that appears under the final result
+    sentenceCompiler <- reactive({
+      if (dyo.outcome() == "Binary" && input$cellOrMarginal == FALSE) {
+        return(paste(text.sentenceOverallSuccess, input$dyoRefDTR,
+                     " and ", input$dyoCompDTR, ", are ", input$refDTRProb,
+                     " and ", input$compDTRProb, ", respectively", sep = ""))
+      }
+      if (dyo.outcome() == "Binary" && input$cellOrMarginal == TRUE) {
+        return(paste(text.sentenceOverallSuccess, input$dyoRefDTR, " and ",
+                     input$dyoCompDTR, ", are ", generateProbs()[1],
+                     " and ", generateProbs()[2], ", respectively", sep = ""))
+      }
+      if (dyo.outcome() == "Continuous") {
+        return(paste(text.sentenceEffectSize, input$firstDTRcompareA, " and ", 
+                     input$secondDTRcompareA, ", is ", input$effectSizeA, sep = ""))
+      }
+    })
+    
+    output$sentence <- renderText(sentenceCompiler())
+    
+    
+    output$binarySampleSize <- renderUI({
+      if (isTruthy(primaryAim() == "dtrs")){
+        validate(
+          need(isTruthy(refDTR.substr()[1]), text.refDTRPlaceholder),
+          need(isTruthy(compDTR.substr()[1]), text.compDTRPlaceholder)  %then%
+            validate(
+              need(isTruthy(input$refDTRProb),  paste0("The success probability is missing for AI ", refDTR.substr()[1],  ". Please provide an input.")),
+              need(isTruthy(input$compDTRProb), paste0("The success probability is missing for AI ", compDTR.substr()[1], ". Please provide an input."))
+            )
+        )
+      }
+      
+      validate(
+        need(isTruthy(dyo.resultOptions()$inputPower), "Please provide a target power."),
+        need(dyo.resultOptions()$inputPower > 0, text.power0),
+        need(dyo.resultOptions()$inputPower < 1, text.power100)
+      )
+      
+      p1 <- ifelse(input$cellOrMarginal, generateProbs()[1], input$refDTRProb)
+      p2 <- ifelse(input$cellOrMarginal, generateProbs()[2], input$compDTRProb)
+      
+      A <- ABcomp(input[[paste0("dyo.stage1.txt", which(LETTERS == refDTR.substr()[2]))]],  # get randomization probability to first-stage txt
+                  input[[paste0("dyo.stage1.", which(LETTERS == refDTR.substr()[2]), ".resprob")]],  # get response rate
+                  ifelse(refDTR.substr()[2] %in% input$dyo.rerand.resp.whichtxt,  
+                         input[[paste0("dyo.rerand.resp.txt", which(LETTERS == refDTR.substr()[3]))]], 
+                         1),
+                  ifelse(refDTR.substr()[2] %in% input$dyo.rerand.nresp.whichtxt,  
+                         input[[paste0("dyo.rerand.nresp.txt", which(LETTERS == refDTR.substr()[4]))]], 
+                         1))
+      
+      B <- ABcomp(input[[paste0("dyo.stage1.txt", which(LETTERS == compDTR.substr()[2]))]],  # get randomization probability to first-stage txt
+                  input[[paste0("dyo.stage1.", which(LETTERS == compDTR.substr()[2]), ".resprob")]],  # get response rate
+                  ifelse(refDTR.substr()[2] %in% input$dyo.rerand.resp.whichtxt,  
+                         input[[paste0("dyo.rerand.resp.txt", which(LETTERS == compDTR.substr()[3]))]], 
+                         1),
+                  ifelse(refDTR.substr()[2] %in% input$dyo.rerand.nresp.whichtxt,  
+                         input[[paste0("dyo.rerand.nresp.txt", which(LETTERS == compDTR.substr()[4]))]], 
+                         1))
+      
+      finalSampleSize <- with(dyo.resultOptions(), sampleSize(alpha, inputPower, p1, p2, A, B, primaryAim()))
+      formatPower     <- paste(dyo.resultOptions()$inputPower * 100, "%", sep = "")
+      formatAlpha     <- paste(input$alphaC      * 100, "%", sep = "")
+      formatResp      <- paste(input$respC       * 100, "%", sep = "")
+      formatAltHyp    <- switch(input$selectAlternativeC, "one.sided" = "one-sided ", "two.sided" = "two-sided ")
+      
+      HTML(paste("<h4 style='color:blue';> N=",paste(finalSampleSize)," </h4>
+                 <p> We wish to find the sample size for a trial with a binary outcome where the probability of response to first-stage interventions is ", formatResp, sentenceCompiler(),
+                 ". Given a ", formatAltHyp, " test with ", formatAlpha, " type-I error, we require a sample size of at least ",
+                 finalSampleSize, " to make this comparison with at least ",formatPower," power. </p>",sep=""))
+    })
+    
+    
+    ##### Miscellaneous Event Handlers #####
+    
+    # If user decides to input cell-specific probabilities and hasn't provided 
+    # a response probability, open the appropriate panel.
+    observeEvent(req(input$cellOrMarginal), {
+      if (input$dyo.stage1.resprob.eq == "Yes") {
+        if (!isTruthy(input$dyo.stage1.allTxt.resprob)) {
+          # updateCollapse(session, "dyo.setup.collapse", close = input$dyo.setup.collapse)
+          updateCollapse(session, "dyo.setup.collapse", open = "dyo.resp.describe")
+        }
+      }
+    })
+    
+    ##### Premade Design Autofill #####
+    ### Design I
+    
+    observeEvent(input$pickTabA, {    
+      # Input updates: stage 1 treatments
+      updateSliderInput(session, "dyo.stage1.ntxt", value = 2)
+      updateRadioButtons(session, "dyo.stage1.eqrand", selected = "Yes")
+      shinyjs::disable("dyo.stage1.ntxt")
+      shinyjs::disable("dyo.stage1.eqrand")
+      
+      # Input updates: equal response
+      updateRadioButtons(session, "dyo.stage1.resprob.eq", selected = "Yes")
+      shinyjs::disable("dyo.stage1.resprob.eq")
+      
+      # Input updates: stage 2 treatments
+      updateRadioButtons(session, "dyo.rerand.resp", selected = "Yes")
+      updateSliderInput(session, "dyo.rerand.resp.ntxt", value = 2)
+      updateRadioButtons(session, "dyo.rerand.resp.eqrand", selected = "Yes")
+      updateRadioButtons(session, "dyo.rerand.nresp", selected = "Yes")
+      updateSliderInput(session, "dyo.rerand.nresp.ntxt", value = 2)
+      updateRadioButtons(session, "dyo.rerand.nresp.eqrand", selected = "Yes")
+      shinyjs::disable("dyo.rerand.resp")
+      shinyjs::disable("dyo.rerand.resp.ntxt")
+      shinyjs::disable("dyo.rerand.resp.eqrand")
+      shinyjs::disable("dyo.rerand.nresp")
+      shinyjs::disable("dyo.rerand.nresp.ntxt")
+      shinyjs::disable("dyo.rerand.nresp.eqrand")
+      
+      # Raise alerts about disabled inputs
+      shinyBS::createAlert(session,
+                           anchorId = "premade-design-disabled-stage1-describe",
+                           title = text.alert.premadeDisabled.title,
+                           content = "Because you've selected a premade design, you are unable to edit these parameters.")
+      shinyBS::createAlert(session,
+                           anchorId = "premade-design-disabled-resp-describe",
+                           title = "Part of this section has been disabled.",
+                           content = "Because you've selected a premade design, you are unable to edit these parameters.")
+      shinyBS::createAlert(session,
+                           anchorId = "premadeDesignInputsDisabled-stage2Alert",
+                           title = text.alert.premadeDisabled.title,
+                           content = "Because you've selected a premade design, you are unable to edit these parameters.")
+      
+      # UI updates
+      updateCollapse(session, "dyo.setup.collapse",
+                     close = "dyo.stage1.describe")
+      shinyjs::hide("dyo.stage1.resprob.continue")
+      shinyjs::disable("dyo.stage1.describe")
+      updateTabsetPanel(session, "SMARTsize", selected = "Design and Size")
+      shinyjs::show("unlock-dyo") # unhide button to unlock UI
+    })
+    
+    ## Design II
+    observeEvent(input$pickTabB, {    
+      # Input updates: stage 1 treatments
+      updateSliderInput(session, "dyo.stage1.ntxt", value = 2)
+      updateRadioButtons(session, "dyo.stage1.eqrand", selected = "Yes")
+      shinyjs::disable("dyo.stage1.ntxt")
+      shinyjs::disable("dyo.stage1.eqrand")
+      
+      # Input updates: equal response
+      updateRadioButtons(session, "dyo.stage1.resprob.eq", selected = "Yes")
+      shinyjs::disable("dyo.stage1.resprob.eq")
+      
+      # Input updates: stage 2 treatments
+      updateRadioButtons(session, "dyo.rerand.resp", selected = "No")
+      updateRadioButtons(session, "dyo.rerand.resp.eqrand", selected = "Yes")
+      updateRadioButtons(session, "dyo.rerand.nresp", selected = "Yes")
+      updateSliderInput(session, "dyo.rerand.nresp.ntxt", value = 2)
+      updateRadioButtons(session, "dyo.rerand.nresp.eqrand", selected = "Yes")
+      shinyjs::disable("dyo.rerand.resp")
+      shinyjs::disable("dyo.rerand.resp.ntxt")
+      shinyjs::disable("dyo.rerand.resp.eqrand")
+      shinyjs::disable("dyo.rerand.nresp")
+      shinyjs::disable("dyo.rerand.nresp.ntxt")
+      shinyjs::disable("dyo.rerand.nresp.eqrand")
+      
+      # Raise alerts about disabled inputs
+      shinyBS::createAlert(session,
+                           anchorId = "premade-design-disabled-stage1-describe",
+                           title = text.alert.premadeDisabled.title,
+                           content = "Because you've selected a premade design, you are unable to edit these parameters.")
+      shinyBS::createAlert(session,
+                           anchorId = "premade-design-disabled-resp-describe",
+                           title = "Part of this section has been disabled.",
+                           content = "Because you've selected a premade design, you are unable to edit these parameters.")
+      shinyBS::createAlert(session,
+                           anchorId = "premadeDesignInputsDisabled-stage2Alert",
+                           title = text.alert.premadeDisabled.title,
+                           content = "Because you've selected a premade design, you are unable to edit these parameters.")
+      
+      # UI updates
+      updateCollapse(session, "dyo.setup.collapse",
+                     close = "dyo.stage1.describe")
+      shinyjs::hide("dyo.stage1.resprob.continue")
+      shinyjs::disable("dyo.stage1.describe")
+      updateTabsetPanel(session, "SMARTsize", selected = "Design and Size")
+      shinyjs::show("unlock-dyo") # unhide button to unlock UI
+    })
+    
+    observeEvent(input$pickTabC, {    
+      # Input updates: stage 1 treatments
+      updateSliderInput(session, "dyo.stage1.ntxt", value = 2)
+      updateRadioButtons(session, "dyo.stage1.eqrand", selected = "Yes")
+      shinyjs::disable("dyo.stage1.ntxt")
+      shinyjs::disable("dyo.stage1.eqrand")
+      
+      # Input updates: equal response
+      updateRadioButtons(session, "dyo.stage1.resprob.eq", selected = "Yes")
+      shinyjs::disable("dyo.stage1.resprob.eq")
+      
+      # Input updates: stage 2 treatments
+      updateRadioButtons(session, "dyo.rerand.resp", selected = "No")
+      updateRadioButtons(session, "dyo.rerand.resp.eqrand", selected = "Yes")
+      updateRadioButtons(session, "dyo.rerand.nresp", selected = "Yes")
+      updateCheckboxGroupInput(session, "dyo.rerand.nresp.whichtxt", 
+                               selected = c("A"))
+      updateSliderInput(session, "dyo.rerand.nresp.ntxt", value = 2)
+      updateRadioButtons(session, "dyo.rerand.nresp.eqrand", selected = "Yes")
+      shinyjs::disable("dyo.rerand.resp")
+      shinyjs::disable("dyo.rerand.resp.ntxt")
+      shinyjs::disable("dyo.rerand.resp.eqrand")
+      shinyjs::disable("dyo.rerand.nresp")
+      shinyjs::disable("dyo.rerand.nresp.ntxt")
+      shinyjs::disable("dyo.rerand.nresp.eqrand")
+      
+      # Raise alerts about disabled inputs
+      shinyBS::createAlert(session,
+                           anchorId = "premade-design-disabled-stage1-describe",
+                           title = text.alert.premadeDisabled.title,
+                           content = "Because you've selected a premade design, you are unable to edit these parameters.")
+      shinyBS::createAlert(session,
+                           anchorId = "premade-design-disabled-resp-describe",
+                           title = "Part of this section has been disabled.",
+                           content = "Because you've selected a premade design, you are unable to edit these parameters.")
+      shinyBS::createAlert(session,
+                           anchorId = "premadeDesignInputsDisabled-stage2Alert",
+                           title = text.alert.premadeDisabled.title,
+                           content = "Because you've selected a premade design, you are unable to edit these parameters.")
+      
+      # UI updates
+      updateCollapse(session, "dyo.setup.collapse",
+                     close = "dyo.stage1.describe")
+      shinyjs::hide("dyo.stage1.resprob.continue")
+      shinyjs::disable("dyo.stage1.describe")
+      updateTabsetPanel(session, "SMARTsize", selected = "Design and Size")
+      shinyjs::show("unlock-dyo") # unhide button to unlock UI
+    })
+    
+  }) # END shinyServer
