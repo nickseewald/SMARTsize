@@ -605,7 +605,8 @@ shinyUI(
                                          column(6, radioButtons("dyo.stage1.resprob.eq",
                                                                 "Are the response rates the same for all first-stage treatments?",
                                                                 choices = c("Yes", "No"), selected = "Yes")),
-                                         column(6, uiOutput("dyo.stage1.resprobUI"))
+                                         column(6, uiOutput("dyo.stage1.resprobUI"),
+                                                checkboxInput("conservative", HTML("Compute <strong>conservative</strong> estimates of sample size.")))
                                        ),
                                        fluidRow(backButton("dyo.resp.back"),
                                                 continueButton("dyo.resp.continue")),

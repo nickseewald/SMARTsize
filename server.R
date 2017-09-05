@@ -2320,6 +2320,24 @@ shinyServer(
       }
     })
     
+    # If a user checks the conservative sample size box, disable response probability box
+    observeEvent(input$conservative, {
+      shinyjs::toggleState("dyo.stage1.resprob.eq", condition = !input$conservative)
+      updateRadioButtons(session, "dyo.stage1.resprob.eq", selected = "Yes")
+    })
+    observe({
+      if (input$conservative) {
+        shinyBS::createAlert(session, anchorId = "premade-design-disabled-resp-describe",
+                             alertId = "alert-conservative",
+                             title = "This section has been disabled.",
+                             content = paste("Conservative estimates of sample size do not depend on response rates.",
+                                             "If you have estimates of response rate(s), uncheck the box."))
+        if (input$dyo.stage1.resprob.eq == "Yes")
+          shinyjs::disable("dyo.stage1.allTxt.resprob")
+      } else {
+        shinyBS::closeAlert(session, "alert-conservative")
+      }
+    })
     ##### Premade Design Autofill #####
     ### Design I
     
