@@ -26,10 +26,9 @@ text.tooltip <- "Input can range from 0-1 and must be in decimal form, up to two
 text.responseProbLabel <-
   quote(HTML("<p>Please provide the
              <strong>probability of response</strong> to the first-stage
-             intervention. If you are unsure, leave as 0 for a conservative
-             estimate.</p>"))
+             intervention.</p>"))
 text.noResponse <-
-  "Please provide a response probability. If unknown, enter 0 for a conservative estimate of power or sample size."
+  "Please provide a response probability. If unknown, you can ask for a conservative estimate."
 text.invalidResponse <-
   "The provided response probability is not a valid probability. Please enter a value between 0 and 1."
 
