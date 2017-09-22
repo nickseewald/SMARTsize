@@ -19,28 +19,6 @@
 ### DEPARTMENT OF BIOSTATISTICS
 
 options(encoding = 'UTF-8')
-# This file is part of SMARTsize.
-# 
-# SMARTsize is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-# 
-# SMARTsize is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Affero General Public License for more details.
-# 
-# You should have received a copy of the GNU Affero General Public License
-# along with SMARTsize.  If not, see <http://www.gnu.org/licenses/>.
-
-##### SERVER.R FOR SMART SAMPLE SIZE CALCULATOR #####
-### NICK SEEWALD, 2014
-### UNIVERSITY OF MICHIGAN
-### DEPARTMENT OF BIOSTATISTICS
-
-options(encoding = 'UTF-8')
-
 
 
 ### Start server operation
@@ -2381,6 +2359,8 @@ shinyServer(
     # If user decides to input cell-specific probabilities and hasn't provided 
     # a response probability, open the appropriate panel.
     observeEvent(req(input$cellOrMarginal), {
+      updateCheckboxInput(session, "targetOddsRatio", value = FALSE)
+      updateCheckboxInput(session, "targetDifference", value = FALSE)
       if (input$dyo.stage1.resprob.eq == "Yes") {
         if (!isTruthy(input$dyo.stage1.allTxt.resprob)) {
           # updateCollapse(session, "dyo.setup.collapse", close = input$dyo.setup.collapse)
@@ -2407,6 +2387,19 @@ shinyServer(
         shinyBS::closeAlert(session, "alert-conservative")
       }
     })
+    
+    # If the user checks the targetDifference box, uncheck the other options
+    observeEvent(req(input$targetDifference), {
+        updateCheckboxInput(session, "cellOrMarginal",  value = FALSE)
+        updateCheckboxInput(session, "targetOddsRatio", value = FALSE)
+    })
+    
+    observeEvent(req(input$targetOddsRatio), {
+      updateCheckboxInput(session, "cellOrMarginal",  value = FALSE)
+      updateCheckboxInput(session, "targetDifference", value = FALSE)
+    })
+    
+    
     ##### Premade Design Autofill #####
     ### Design I
     

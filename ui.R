@@ -27,9 +27,6 @@
 # along with SMARTsize.  If not, see <http://www.gnu.org/licenses/>.
 
 ### UI.R FOR SMART SAMPLE SIZE CALCULATOR ###
-### NICK SEEWALD, 2014
-### UNIVERSITY OF MICHIGAN
-### DEPARTMENT OF BIOSTATISTICS
 
 options(encoding = 'UTF-8')
 
@@ -682,7 +679,9 @@ shinyUI(
                                                br(),
                                                conditionalPanel(condition = "output.dyooutcome == 'Binary'",
                                                                 eval(text.altInputHelp),
-                                                                checkboxInput("cellOrMarginal", label = text.cellSpecLabel, value = FALSE)
+                                                                checkboxInput("cellOrMarginal",   label = text.cellSpecLabel, value = FALSE),
+                                                                checkboxInput("targetDifference", label = text.targDiffLabel, value = FALSE),
+                                                                checkboxInput("targetOddsRatio",  label = text.targORLabel,   value = FALSE)
                                                )
                               ))
                      ),
