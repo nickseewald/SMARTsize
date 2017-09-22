@@ -663,7 +663,7 @@ shinyUI(
                      ##### Diagram and Probability Inputs #####
                      h3("Diagram and Outcome Information"),
                      fluidRow(
-                       column(7, DiagrammeROutput("dyo.diagram", height = "75%")),
+                       column(7, DiagrammeROutput("dyo.diagram", height = "550px")),
                        column(5, 
                               conditionalPanel(condition = "output.dyooutcome == 'Binary'",
                                                uiOutput("binaryRefInput"),
@@ -692,8 +692,6 @@ shinyUI(
                      ##### Results #####
                      h3("Results"),
                      uiOutput('binarySampleSize'),
-                     textOutput('refDTRname'),
-                     textOutput('compDTRname'),
                      
                      # fluidRow(actionButton("zoom", "Zoom", icon = icon("zoom-in", lib = "glyphicon"))),
                      # verbatimTextOutput("graphstring"),

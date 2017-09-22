@@ -1587,9 +1587,6 @@ shinyServer(
       validate(need(input$dyo.rerand.resp == "Yes" | input$dyo.rerand.nresp == "Yes", text.mustRerandomize))
       c("responders", "nonresponders")[c(input$dyo.rerand.resp == "Yes", input$dyo.rerand.nresp == "Yes")]
     })
-    # output$dyoprimaryAimRerand <- renderText(dyo.primaryAim.rerand())
-    # outputOptions(output, "dyoprimaryAimRerand", suspendWhenHidden = FALSE)
-    
     primaryAim <- callModule(primaryAim, "dyo.primaryAim", rerand = dyo.primaryAim.rerand)
     output$dyoprimaryAim <- renderText(primaryAim())
     outputOptions(output, 'dyoprimaryAim', suspendWhenHidden = FALSE)
@@ -2232,6 +2229,65 @@ shinyServer(
     })
     
     
+    ##### Input Processing #####
+    ### Validate and compile inputs into reactive functions which can be called in sampleSize() function
+    
+    respProb <- reactive({
+      if (input$conservative) {
+        return(rep(0, input$dyo.stage1.ntxt))
+      } else {
+        if (input$dyo.stage1.resprob.eq == "Yes") {
+          validate(
+            need(isTruthy(input$dyo.stage1.allTxt.resprob), text.noResponse) %then%
+              need(0 <= input$dyo.stage1.allTxt.resprob & input$dyo.stage1.allTxt.resprob <= 1, text.invalidResponse)
+          )
+          return(rep(input$dyo.stage1.allTxt.resprob, input$dyo.stage1.ntxt))
+        } else {
+          return(sapply(1:input$dyo.stage1.ntxt, function(i) {
+            input[[paste0("dyo.stage1.", LETTERS[i], ".resprob")]]
+          }))
+        }
+      }
+    })
+    
+    pi2R <- reactive({
+      if (input$dyo.rerand.resp == "Yes") {
+        l <- sapply(1:input$dyo.rerand.resp.ntxt, function(i) {
+          if (LETTERS[i] %in% input$dyo.rerand.resp.whichtxt) {
+            if (input$dyo.rerand.resp.eqrand == "Yes") {
+              1 / input$dyo.rerand.resp.ntxt
+            } else {
+              input[[paste0("dyo.rerand.resp.txt", LETTERS[i])]]
+            }
+          } else {
+            1
+          }
+        })
+      } else {
+        l <- sapply(1:input$dyo.rerand.resp.ntxt, function(i) 1)
+      }
+      l
+    })
+    
+    pi2NR <- reactive({
+      if (input$dyo.rerand.nresp == "Yes") {
+        l <- sapply(1:input$dyo.rerand.nresp.ntxt, function(i) {
+          if (LETTERS[i] %in% input$dyo.rerand.nresp.whichtxt) {
+            if (input$dyo.rerand.nresp.eqrand == "Yes") {
+              1 / input$dyo.rerand.nresp.ntxt
+            } else {
+              input[[paste0("dyo.rerand.nresp.txt", LETTERS[i])]]
+            }
+          } else {
+            1
+          }
+        })
+      } else {
+        l <- sapply(1:input$dyo.rerand.nresp.ntxt, function(i) 1)
+      }
+      l
+    })
+    
     ##### Results #####
     
     ### Write the sentence that appears under the final result
@@ -2268,43 +2324,56 @@ shinyServer(
       }
       
       validate(
-        need(isTruthy(dyo.resultOptions()$inputPower), "Please provide a target power."),
-        need(dyo.resultOptions()$inputPower > 0, text.power0),
+        need(isTruthy(dyo.resultOptions()$inputPower), "Please provide a target power.") %then%
+        need(dyo.resultOptions()$inputPower > 0, text.power0) %then%
         need(dyo.resultOptions()$inputPower < 1, text.power100)
       )
       
-      p1 <- ifelse(input$cellOrMarginal, generateProbs()[1], input$refDTRProb)
+      ## Compile success probabilities
+      p1 <- generateProbs()[1]
       p2 <- ifelse(input$cellOrMarginal, generateProbs()[2], input$compDTRProb)
       
-      A <- ABcomp(input[[paste0("dyo.stage1.txt", which(LETTERS == refDTR.substr()[2]))]],  # get randomization probability to first-stage txt
-                  input[[paste0("dyo.stage1.", which(LETTERS == refDTR.substr()[2]), ".resprob")]],  # get response rate
-                  ifelse(refDTR.substr()[2] %in% input$dyo.rerand.resp.whichtxt,  
-                         input[[paste0("dyo.rerand.resp.txt", which(LETTERS == refDTR.substr()[3]))]], 
-                         1),
-                  ifelse(refDTR.substr()[2] %in% input$dyo.rerand.nresp.whichtxt,  
-                         input[[paste0("dyo.rerand.nresp.txt", which(LETTERS == refDTR.substr()[4]))]], 
-                         1))
+      ## Compile randomization probabilities
+      pi.stage1A   <- ifelse(input$dyo.stage1.eqrand == "Yes",
+                             1 / input$dyo.stage1.ntxt,
+                             input[[paste0("dyo.stage1.txt", which(LETTERS == refDTR.substr()[2]))]])
+      pi.stage2RA  <- ifelse(substr(refDTR.substr()[3], 3, 3) == "", 1,  pi2R()[as.numeric(substr(refDTR.substr()[3], 3, 3))])
+      pi.stage2NRA <- ifelse(substr(refDTR.substr()[4], 4, 4) == "", 1, pi2NR()[as.numeric(substr(refDTR.substr()[4], 4, 4))])
       
-      B <- ABcomp(input[[paste0("dyo.stage1.txt", which(LETTERS == compDTR.substr()[2]))]],  # get randomization probability to first-stage txt
-                  input[[paste0("dyo.stage1.", which(LETTERS == compDTR.substr()[2]), ".resprob")]],  # get response rate
-                  ifelse(refDTR.substr()[2] %in% input$dyo.rerand.resp.whichtxt,  
-                         input[[paste0("dyo.rerand.resp.txt", which(LETTERS == compDTR.substr()[3]))]], 
-                         1),
-                  ifelse(refDTR.substr()[2] %in% input$dyo.rerand.nresp.whichtxt,  
-                         input[[paste0("dyo.rerand.nresp.txt", which(LETTERS == compDTR.substr()[4]))]], 
-                         1))
+      pi.stage1B   <- ifelse(input$dyo.stage1.eqrand == "Yes",
+                             1 / input$dyo.stage1.ntxt,
+                             input[[paste0("dyo.stage1.txt", which(LETTERS == compDTR.substr()[2]))]])
+      pi.stage2RB  <- ifelse(substr(compDTR.substr()[3], 3, 3) == "", 1,  pi2R()[as.numeric(substr(compDTR.substr()[3], 3, 3))])
+      pi.stage2NRB <- ifelse(substr(compDTR.substr()[4], 4, 4) == "", 1, pi2NR()[as.numeric(substr(compDTR.substr()[4], 4, 4))])
       
-      finalSampleSize <- with(dyo.resultOptions(), sampleSize(alpha, inputPower, p1, p2, A, B, primaryAim()))
+      ## Compute and round sample size
+      finalSampleSize <-                 
+        ceiling(sampleSize(alpha = dyo.resultOptions()$alpha, power = as.numeric(dyo.resultOptions()$inputPower), 
+                   p1 = generateProbs()[1], p2 = generateProbs()[2],
+                   respA = respProb()[which(LETTERS == refDTR.substr()[2])],
+                   pi.stage1A = pi.stage1A,
+                   pi.stage2RA = pi.stage2RA,
+                   pi.stage2NRA = pi.stage2NRA,
+                   respB = respProb()[which(LETTERS == compDTR.substr()[2])],
+                   pi.stage1B = pi.stage1B,
+                   pi.stage2RB = pi.stage2RB,
+                   pi.stage2NRB = pi.stage2NRB,
+                   aim = primaryAim(), conservative = input$conservative))
+      
+      ## Format inputs for use in result sentence
       formatPower     <- paste(dyo.resultOptions()$inputPower * 100, "%", sep = "")
-      formatAlpha     <- paste(input$alphaC      * 100, "%", sep = "")
-      formatResp      <- paste(input$respC       * 100, "%", sep = "")
+      formatAlpha     <- paste(dyo.resultOptions()$alpha      * 100, "%", sep = "")
+      formatResp      <- paste(input$resp       * 100, "%", sep = "")
       formatAltHyp    <- switch(input$selectAlternativeC, "one.sided" = "one-sided ", "two.sided" = "two-sided ")
       
-      HTML(paste("<h4 style='color:blue';> N=",paste(finalSampleSize)," </h4>
+      ## Result sentence
+      HTML(paste("<h4 style='color:blue';> N=", finalSampleSize, " </h4>
                  <p> We wish to find the sample size for a trial with a binary outcome where the probability of response to first-stage interventions is ", formatResp, sentenceCompiler(),
                  ". Given a ", formatAltHyp, " test with ", formatAlpha, " type-I error, we require a sample size of at least ",
                  finalSampleSize, " to make this comparison with at least ",formatPower," power. </p>",sep=""))
     })
+    
+    
     
     
     ##### Miscellaneous Event Handlers #####
