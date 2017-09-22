@@ -61,14 +61,36 @@ continueButton <- function(inputId) {
 
 ### Compute A and B for sample size formula
 ABcomp <- function(pi.stage1, resp, pi.stage2R, pi.stage2NR) {
+  validate(
+    need(isTruthy(resp), text.noResponse)
+  )
   resp/(pi.stage1 * pi.stage2R) + (1 - resp) / (pi.stage1 * pi.stage2NR)
 }
 
 ### Compute sample size
-sampleSize <- function(alpha, power, p1, p2, A, B) {
-  logOR <- log((p1 * (1 - p2)) / (p2 * (1 - p1)))
-  zsum  <- qnorm(power) + qnorm(1 - (alpha / 2))
-  (zsum / logOR)^2 * ((A / (p1 * (1 - p1))) + (B / (p2 * (1 - p2))))
+sampleSize <- function(alpha, power, p1, p2,
+                       respA, pi.stage1A, pi.stage2RA, pi.stage2NRA,
+                       respB, pi.stage1B, pi.stage2RB, pi.stage2NRB,
+                       aim, conservative) {
+  if (aim == "dtrs") {
+    logOR <- log((p1 * (1 - p2)) / (p2 * (1 - p1)))
+    zsum  <- qnorm(power) + qnorm(1 - (alpha / 2))
+    if (conservative) {
+      A0 <- ABcomp(pi.stage1A, 0, pi.stage2RA, pi.stage2NRA)
+      B0 <- ABcomp(pi.stage1B, 0, pi.stage2RB, pi.stage2NRB)
+      A1 <- ABcomp(pi.stage1A, 1, pi.stage2RA, pi.stage2NRA)
+      B1 <- ABcomp(pi.stage1B, 1, pi.stage2RB, pi.stage2NRB)
+      
+      max(c((zsum / logOR)^2 * ((A0 / (p1 * (1 - p1))) + (B0 / (p2 * (1 - p2)))),
+                   (zsum / logOR)^2 * ((A1 / (p1 * (1 - p1))) + (B1 / (p2 * (1 - p2))))))
+    } else {
+      A <- ABcomp(pi.stage1A, respA, pi.stage2RA, pi.stage2NRA)
+      B <- ABcomp(pi.stage1B, respB, pi.stage2RB, pi.stage2NRB)
+      return((zsum / logOR)^2 * ((A / (p1 * (1 - p1))) + (B / (p2 * (1 - p2)))))
+    }
+  } else {
+    NULL
+  }
 }
 
 
