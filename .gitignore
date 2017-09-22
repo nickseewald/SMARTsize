@@ -1,4 +1,11 @@
-*.dcf
+SMARTsize.dcf
+SMARTsizeBeta.cdf
+*.tex
+*.aux
+*.log
+*.out
+*.synctex.gz
+
 
 #################
 ## Eclipse
@@ -216,3 +223,4 @@ pip-log.txt
 #Mr Developer
 .mr.developer.cfg
 *.Rhistory
+*.dcf

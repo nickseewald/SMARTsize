@@ -1,9 +1,24 @@
 img { height: auto; max-width: 100%; border: 1; bottom: 30}
 element.style {width: 33.33%;}
 input[type="number"]{ width: 80px}
-modal-backdrop{ position: fixed; height: 100%; top: 0; right: 0; bottom: 0; left: 0; z-index: -1; background-color: #000; opacity: 80%;}
-modal.content{ overflow: auto;}
+modal-backdrop {
+   position: fixed;
+   height: 100%;
+   top: 0;
+   right: 0;
+   bottom: 0;
+   left: 0;
+   z-index: -1;
+   background-color: #000;
+   opacity: 80%;
+ }
+
+modal.content{
+  overflow: auto;
+}
+
 @media (min-width: 992px) { .modal-lg{ width: 900px; }}
+
 body {font-family: 'Roboto', sans-serif;}
 h1 {font-family: 'Roboto Condensed', sans-serif;}
 h2 {font-family: 'Roboto Condensed', sans-serif;}
@@ -28,6 +43,37 @@ h6 {font-family: 'Roboto Condensed', sans-serif;}
 	color: #ababab;
 	font-size: 7pt;
 }
+
+.Rversion{
+    font-size: inherit;
+    color: inherit;
+}
+
 .shiny-input-container > label{
     font-weight: 200;
+}
+
+.start-button {
+    font-size: 20px;
+    font-family: 'Roboto', sans-serif;
+    border-radius: 24px;
+}
+
+.img-zoom {
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.img-zoom:hover {
+  opacity: 0.7;
+}
+
+.btn-pull-right {
+  float: right !important;
+  margin-right: .35em;
+}
+
+.btn-pull-left {
+  float: left !important;
+  margin-left: .35em;
 }

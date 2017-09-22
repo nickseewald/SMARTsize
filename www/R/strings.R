@@ -24,12 +24,11 @@ html.compDTRSuccess <-
 text.tooltip <- "Input can range from 0-1 and must be in decimal form, up to two places."
 
 text.responseProbLabel <-
-  quote(HTML("<p>Concerning the tailoring variable, please provide the
+  quote(HTML("<p>Please provide the
              <strong>probability of response</strong> to the first-stage
-             intervention. If you are unsure, leave as 0 for a conservative
-             estimate.</p>"))
+             intervention.</p>"))
 text.noResponse <-
-  "Please provide a response probability. If unknown, enter 0 for a conservative estimate of power or sample size."
+  "Please provide a response probability. If unknown, you can ask for a conservative estimate."
 text.invalidResponse <-
   "The provided response probability is not a valid probability. Please enter a value between 0 and 1."
 
@@ -97,3 +96,11 @@ text.lowEffectSizeA <- paste("Given the provided effect size, fewer than 8 ",
                              "SMART. You can test for a smaller effect size, ",
                              "or increase the desired power.")
 
+text.mustRerandomize <- "Either responders or non-responders must be re-randomized. Change the study design so that at least one group is re-randomized."
+text.rerandMismatchResp <- paste("You have indicated that some or all responders to first-stage treatments are re-randomized, but have not selected", 
+                                 "any first-stage treatments for which the responders are re-randomized. Please correct this to continue.")
+text.rerandMismatchNresp <- paste("You have indicated that some or all non-responders to first-stage treatments are re-randomized, but have not selected", 
+                                 "any first-stage treatments for which the non-responders are re-randomized. Please correct this to continue.")
+
+
+text.alert.premadeDisabled.title <- "This section has been disabled."
