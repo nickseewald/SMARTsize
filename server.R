@@ -43,7 +43,8 @@ shinyServer(
                                         p("Both responders and non-responders to first-stage treatment are re-randomized.
                                           There are 8 embedded adaptive interventions: {A,C,E}, {A,C,F}, {A,D,E}, {A,D,F},
                                           {B,G,I}, {B,G,J}, {B,H,I}, {B,H,J}.", 
-                                          a("Click here for an example from the field.", `data-toggle` = "modal",
+                                          a("Click here for a
+                                            n example from the field.", `data-toggle` = "modal",
                                             `data-target` = "#exampleAmodal", style = "color:#6b6b6b")),
                                         includeHTML("www/html/exampleAmodal.html")
                                  ),
@@ -96,6 +97,11 @@ shinyServer(
     ##### DESIGN I #####
     
     ##### Design I Header #####
+    
+    createAlert(session, "design1warning", title = "Use with Caution!",
+                content = paste("This page will soon be deprecated in favor of the design-your-own-SMART method.",
+                                "Results given by this page may not be correct."),
+                dismiss = FALSE, style = "warning")
     
     ### Render the design image which highlights selected DTRs
     ### Takes the names of selected DTRs, generates a filepath, and renders the image in the UI
@@ -647,6 +653,11 @@ shinyServer(
     
     ##### Design 2 Header #####
     
+    createAlert(session, "design2warning", title = "Use with Caution!",
+                content = paste("This page will soon be deprecated in favor of the design-your-own-SMART method.",
+                                "Results given by this page may not be correct."),
+                dismiss = FALSE, style = "warning")
+    
     ### Render the design image which highlights selected DTRs
     ### Takes the names of selected DTRs, generates a filepath, and renders the image in the UI
     ### Note that this requires a specific naming convention for image assets
@@ -1113,6 +1124,11 @@ shinyServer(
     ##### DESIGN C #####
     
     ##### C HEADER #####
+    
+    createAlert(session, "design3warning", title = "Use with Caution!",
+                content = paste("This page will soon be deprecated in favor of the design-your-own-SMART method.",
+                                "Results given by this page may not be correct."),
+                dismiss = FALSE, style = "warning")
     
     ### Render the design image which highlights selected DTRs
     ### Takes the names of selected DTRs, generates a filepath, and renders the image in the UI
@@ -2090,7 +2106,7 @@ shinyServer(
                                 close = "dyo.rerand.describe"))
     
     
-    ##### Sample Size Computation #####
+    ##### Compute A and B #####
     
     ## Gather inputs needed to compute A and B, then pass them to ABcomp (global.R) to compute A and B
     AB <- reactive({
@@ -2369,6 +2385,18 @@ shinyServer(
       }
     })
     
+    # If the user checks the targetDifference box, uncheck the other options
+    observeEvent(req(input$targetDifference), {
+      updateCheckboxInput(session, "cellOrMarginal",  value = FALSE)
+      updateCheckboxInput(session, "targetOddsRatio", value = FALSE)
+    })
+    
+    # If the user checks the targetOddsRatio box, uncheck the other options
+    observeEvent(req(input$targetOddsRatio), {
+      updateCheckboxInput(session, "cellOrMarginal",  value = FALSE)
+      updateCheckboxInput(session, "targetDifference", value = FALSE)
+    })
+    
     # If a user checks the conservative sample size box, disable response probability box
     observeEvent(input$conservative, {
       shinyjs::toggleState("dyo.stage1.resprob.eq", condition = !input$conservative)
@@ -2386,17 +2414,6 @@ shinyServer(
       } else {
         shinyBS::closeAlert(session, "alert-conservative")
       }
-    })
-    
-    # If the user checks the targetDifference box, uncheck the other options
-    observeEvent(req(input$targetDifference), {
-        updateCheckboxInput(session, "cellOrMarginal",  value = FALSE)
-        updateCheckboxInput(session, "targetOddsRatio", value = FALSE)
-    })
-    
-    observeEvent(req(input$targetOddsRatio), {
-      updateCheckboxInput(session, "cellOrMarginal",  value = FALSE)
-      updateCheckboxInput(session, "targetDifference", value = FALSE)
     })
     
     
@@ -2431,14 +2448,17 @@ shinyServer(
       # Raise alerts about disabled inputs
       shinyBS::createAlert(session,
                            anchorId = "premade-design-disabled-stage1-describe",
+                           alertId = "premade-design-stage1-alert",
                            title = text.alert.premadeDisabled.title,
                            content = "Because you've selected a premade design, you are unable to edit these parameters.")
       shinyBS::createAlert(session,
                            anchorId = "premade-design-disabled-resp-describe",
+                           alertId = "premade-design-resp-alert",
                            title = "Part of this section has been disabled.",
                            content = "Because you've selected a premade design, you are unable to edit these parameters.")
       shinyBS::createAlert(session,
                            anchorId = "premadeDesignInputsDisabled-stage2Alert",
+                           alertId = "premade-design-stage2-alert",
                            title = text.alert.premadeDisabled.title,
                            content = "Because you've selected a premade design, you are unable to edit these parameters.")
       
@@ -2448,7 +2468,7 @@ shinyServer(
       shinyjs::hide("dyo.stage1.resprob.continue")
       shinyjs::disable("dyo.stage1.describe")
       updateTabsetPanel(session, "SMARTsize", selected = "Design and Size")
-      shinyjs::show("unlock-dyo") # unhide button to unlock UI
+      shinyjs::show("unlockDYO") # unhide button to unlock UI
     })
     
     ## Design II
@@ -2479,14 +2499,17 @@ shinyServer(
       # Raise alerts about disabled inputs
       shinyBS::createAlert(session,
                            anchorId = "premade-design-disabled-stage1-describe",
+                           alertId = "premade-design-stage1-alert",
                            title = text.alert.premadeDisabled.title,
                            content = "Because you've selected a premade design, you are unable to edit these parameters.")
       shinyBS::createAlert(session,
                            anchorId = "premade-design-disabled-resp-describe",
+                           alertId = "premade-design-resp-alert",
                            title = "Part of this section has been disabled.",
                            content = "Because you've selected a premade design, you are unable to edit these parameters.")
       shinyBS::createAlert(session,
                            anchorId = "premadeDesignInputsDisabled-stage2Alert",
+                           alertId = "premade-design-stage2-alert",
                            title = text.alert.premadeDisabled.title,
                            content = "Because you've selected a premade design, you are unable to edit these parameters.")
       
@@ -2496,7 +2519,7 @@ shinyServer(
       shinyjs::hide("dyo.stage1.resprob.continue")
       shinyjs::disable("dyo.stage1.describe")
       updateTabsetPanel(session, "SMARTsize", selected = "Design and Size")
-      shinyjs::show("unlock-dyo") # unhide button to unlock UI
+      shinyjs::show("unlockDYO") # unhide button to unlock UI
     })
     
     observeEvent(input$pickTabC, {    
@@ -2528,14 +2551,17 @@ shinyServer(
       # Raise alerts about disabled inputs
       shinyBS::createAlert(session,
                            anchorId = "premade-design-disabled-stage1-describe",
+                           alertId = "premade-design-stage1-alert",
                            title = text.alert.premadeDisabled.title,
                            content = "Because you've selected a premade design, you are unable to edit these parameters.")
       shinyBS::createAlert(session,
                            anchorId = "premade-design-disabled-resp-describe",
+                           alertId = "premade-design-resp-alert",
                            title = "Part of this section has been disabled.",
                            content = "Because you've selected a premade design, you are unable to edit these parameters.")
       shinyBS::createAlert(session,
                            anchorId = "premadeDesignInputsDisabled-stage2Alert",
+                           alertId = "premade-design-stage2-alert",
                            title = text.alert.premadeDisabled.title,
                            content = "Because you've selected a premade design, you are unable to edit these parameters.")
       
@@ -2545,7 +2571,30 @@ shinyServer(
       shinyjs::hide("dyo.stage1.resprob.continue")
       shinyjs::disable("dyo.stage1.describe")
       updateTabsetPanel(session, "SMARTsize", selected = "Design and Size")
-      shinyjs::show("unlock-dyo") # unhide button to unlock UI
+      shinyjs::show("unlockDYO") # unhide button to unlock UI
+    })
+    
+    ## Unlock disabled sections
+    observeEvent(input$unlockDYO, {
+      # Input updates: stage 1 treatments
+      shinyjs::enable("dyo.stage1.ntxt")
+      shinyjs::enable("dyo.stage1.eqrand")
+      
+      # Input updates: equal response
+      shinyjs::enable("dyo.stage1.resprob.eq")
+      
+      # Input updates: stage 2 treatments
+      shinyjs::enable("dyo.rerand.resp")
+      shinyjs::enable("dyo.rerand.resp.ntxt")
+      shinyjs::enable("dyo.rerand.resp.eqrand")
+      shinyjs::enable("dyo.rerand.nresp")
+      shinyjs::enable("dyo.rerand.nresp.ntxt")
+      shinyjs::enable("dyo.rerand.nresp.eqrand")
+      
+      # Close alerts
+      closeAlert(session, "premade-design-stage1-alert")
+      closeAlert(session, "premade-design-resp-alert")
+      closeAlert(session, "premade-design-stage2-alert")
     })
     
   }) # END shinyServer

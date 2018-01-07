@@ -129,6 +129,7 @@ shinyUI(
                                 ##### D1 Page Header #####
                                 
                                 h1("Design I"),
+                                bsAlert("design1warning"),
                                 tags$hr(),
                                 
                                 ##### D1 Outcome, Result, and Aim #####
@@ -272,7 +273,8 @@ shinyUI(
                                 
                                 ##### D2 Page Header #####
                                 
-                                h1(textOutput("tab")),
+                                h1("Design II"),
+                                bsAlert("design2warning"),
                                 tags$hr(),
                                 
                                 ##### D2 Outcome, Result, and Aim #####
@@ -420,6 +422,7 @@ shinyUI(
                      ##### C PAGE HEADER #####
                      
                      h1("Design III"),
+                     bsAlert("design3warning"),
                      tags$hr(),
                      
                      ##### C OUTCOME SELECTION #####
@@ -560,8 +563,9 @@ shinyUI(
           
           tabPanel("Design and Size",
                    sidebarPanel(p("Insert description, etc."),
-                                hidden(bsButton(inputId = "unlock-dyo",
-                                                label = "Unlock Disabled Sections", style = "link"))),
+                                hidden(bsButton(inputId = "unlockDYO",
+                                                label = "Unlock Disabled Sections", style = "link",
+                                                icon = icon("unlock-alt")))),
                    mainPanel(
                      
                      ##### DYO Page Header #####
