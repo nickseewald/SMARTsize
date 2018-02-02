@@ -5,6 +5,16 @@ Source code for SMARTsize, an online sample size calculator for SMARTs with end-
 The application is available online at [https://nseewald1.shinyapps.io/SMARTsize/](https://nseewald1.shinyapps.io/SMARTsize/). It can also be run locally.
 ### Local installation
 Paste the following code into an R console:
+```
+reqPackages <- c("devtools", "shiny", "shinyBS", "DiagrammeR", "shinyjs")
+installList <- !(reqPackages %in% installed.packages())
+if (any(installList)) {
+  install.packages(reqPackages[installList])
+}
+library(shiny)
+
+shiny::runGitHub("nseewald1/SMARTsize")
+```
 
 ## Brief file descriptions
 - **ui.R:** Defines the user interface for the application, including inputs/outputs, etc.
