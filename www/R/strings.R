@@ -28,7 +28,7 @@ text.responseProbLabel <-
              <strong>probability of response</strong> to the first-stage
              intervention.</p>"))
 text.noResponse <-
-  "Please provide a response probability. If unknown, you can ask for a conservative estimate."
+  "Please provide a response probability. If unknown, check the box for a conservative estimate."
 text.invalidResponse <-
   "The provided response probability is not a valid probability. Please enter a value between 0 and 1."
 
@@ -72,7 +72,10 @@ text.effectSize <- "Standardized Effect Size"
 text.noEffectSize <- "The standardized effect size is missing. Please enter a value between 0 and 10."
 text.invalidEffectSize <- "Sample size is indeterminate for an effect size of 0. Please enter a different target effect size."
 
-text.sentenceOverallSuccess <- " and the overall probabilities of success in the two AIs of interest, "
+text.sentenceOverallSuccess <- ", have overall success probabilities "
+
+text.sentenceAIinterest <- "The two AIs of interest, "
+
 text.sentenceDiff <- " and the difference in overall probabilities of success in the two AIs of interest, "
 text.sentenceOR <- " and the odds ratio of success for the two AIs of interest, "
 text.sentenceEffectSize <- " and the standardized effect size between the two AIs of interest, "
@@ -80,6 +83,7 @@ text.sentenceEffectSize <- " and the standardized effect size between the two AI
 text.sampleSizeOrPower <- "Are you interested in finding sample size or power?"
 text.oneOrTwoSidedTest <- "Do you want to perform a one- or two-sided test?"
 
+text.noPower  <- "Please provide a target power above, in Part 2 of the study description section."
 text.power0   <- "Sample size is indeterminate for 0% power. Please specify a power greater than zero."
 text.power100 <- "Sample size is indeterminate for 100% power or greater. Please specify a power less than 1."
 
@@ -100,7 +104,6 @@ text.mustRerandomize <- "Either responders or non-responders must be re-randomiz
 text.rerandMismatchResp <- paste("You have indicated that some or all responders to first-stage treatments are re-randomized, but have not selected", 
                                  "any first-stage treatments for which the responders are re-randomized. Please correct this to continue.")
 text.rerandMismatchNresp <- paste("You have indicated that some or all non-responders to first-stage treatments are re-randomized, but have not selected", 
-                                 "any first-stage treatments for which the non-responders are re-randomized. Please correct this to continue.")
-
+                                  "any first-stage treatments for which the responders are re-randomized. Please correct this to continue.")
 
 text.alert.premadeDisabled.title <- "This section has been disabled."

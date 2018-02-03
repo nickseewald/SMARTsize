@@ -1,0 +1,78 @@
+<h4>Instructions for Use:</h4>
+<p>Begin by describing your study. Navigate through the prompts at right (beginning with &quot;1. Describe the Study Outcome&quot;) using the Continue and Back buttons, or by clicking the numbered sections.</p>
+<p><strong>Note:</strong> Errors may occur if you do not progress through all the steps.</p>
+<hr>
+
+<div class="panel-group" id="sideCollapse" role="tablist" aria-multiselectable="true">
+	<div class="panel panel-default">
+		<div class="panel-heading" role="tab" id="headingOne">
+			<h4 class="collapse-title">
+				<a class="collapsed" role="button" data-toggle="collapse" data-parent="#sideCollapse" href="#inputCollapseDYO" aria-expanded="false" aria-controls="inputCollapseDYO" id="inputTitleA">
+					<span class="glyphicon glyphicon-collapse-down" style="font-size: 80%;"></span> Inputs Required
+				</a>
+			</h4>
+		</div>
+		<div id="inputCollapseDYO" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+			<div class="panel-body">
+				<ul>
+					<li>Indication of continuous or binary outcome.
+					<li>The probability of response to the first-stage treatment. We assume this probability is the same for both initial treatments. If you cannot provide an estimate of this parameter, please indicate 0 to provide conservative output.
+					<li>Indication of a one- or two-sided test.
+					<li>Specification of a type-I error rate (level of significance). The default value is 0.05, but may range between 0 and 1.
+					<li>If interest is in sample size, specify the power of the study. The default power is 0.80, but may range between 0 and 1. If interest is in power, specify the sample size of the study. This must be input as an integer greater than zero.
+					<li> For binary outcomes:
+					<ul>
+						<li>The default inputs are the probabilities of success for each of the selected AIs. These are the overall probabilities of success for those participants following each of the selected embedded AIs. For example, the probability of success for {A,C,E}.
+						<li>Alternatively, cell-specific probabilities may be specified. These refer to the probabilities of success for those consistent with a particular intervention pathway. For example, the probability of success for individuals who start with intervention A, respond, and recieve intervention C. This is denoted ArC.
+						<li>Alternatively, if cell-specific or AI-specific probabilities cannot be specified, a target difference in probabilities (must be between 0 and 1) or a target odds-ratio (must be positive and not equal to 1), may be selected and provided. With both of these selections, we assume one of the AIs has probability of success equal to 0.5 to yield conservative results.
+					</ul>
+					<li>For continuous outcomes:
+					<ul>
+						<li>Specify the standardized effect size between the selected AIs. We use Cohen's definition for standardized effect size such that for the two selected AIs it is the difference between the means of the two AIs divided by the square root of the pooled variance (square root of the average of the variances of the two groups). This may range between 0 and 10.
+					</ul>
+				</ul>						   
+				<h5>Input Formatting Rules:</h5>
+					<p>All inputs must be given in decimal form (no fractions, please) and may include up to two decimal places. For example, ''0.07'' is valid input; ''7/100'' is not. Improperly-formatted input may result in unpredictable behavior or an error message. </p>
+			</div>
+		</div>
+	</div>
+	<div class="panel panel-default">
+		<div class="panel-heading" role="tab" id="headingTwo">
+			<h4 class="collapse-title">
+				<a class="collapsed" role="button" data-toggle="collapse" data-parent="#sideCollapse" href="#exCollapseDYO" aria-expanded="false" aria-controls="exCollapseDYO" id="exTitleDYO">
+					<span class="glyphicon glyphicon-collapse-down" style="font-size: 80%;"></span> Example
+				</a>
+			</h4>
+		</div>
+		<div id="exCollapseDYO" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTrue">
+			<div class="panel-body">
+				We wish to find the sample size for a SMART with a binary outcome where the probability of response to first stage interventions is 0.50. We estimate the overall probabilities of success in the two AIs of interest, {A,C,E} and {B,G,I},  are 0.65 and 0.80, respectively. Given a two-sided 5% type-I error, we require a sample size of 568 to make this comparison with 80% power.
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+$(document).ready(function(){
+  $("#inputCollapseA").on("hide.bs.collapse", function(){
+    $("#inputTitleA").html('<span class="glyphicon glyphicon-collapse-down" style="font-size: 80%;"></span> Inputs Required');
+  });
+  $("#inputCollapseA").on("show.bs.collapse", function(){
+    $("#inputTitleA").html('<span class="glyphicon glyphicon-collapse-up" style="font-size: 80%;"></span> Inputs Required');
+  });
+  $("#exCollapseA").on("hide.bs.collapse", function(){
+    $("#exTitleA").html('<span class="glyphicon glyphicon-collapse-down" style="font-size: 80%;"></span> Example');
+  });
+  $("#exCollapseA").on("show.bs.collapse", function(){
+    $("#exTitleA").html('<span class="glyphicon glyphicon-collapse-up" style="font-size: 80%;"></span> Example');
+  });
+});
+</script>
+
+<hr> 
+
+<div class="sidebar-footer"> 
+	<p> Kidwell et al (in preparation). </p>
+	<p class="contact"> Please direct correspondence to <a href="mailto:nseewald@umich.edu">nseewald@umich.edu</a></p>
+	<p class="version">  </p>
+</div>

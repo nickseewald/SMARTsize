@@ -562,9 +562,9 @@ shinyUI(
           ##### Design Your Own #####
           
           tabPanel("Design and Size",
-                   sidebarPanel(p("Insert description, etc."),
+                   sidebarPanel(includeHTML("www/html/sidebarDYO.html"),
                                 hidden(bsButton(inputId = "unlockDYO",
-                                                label = "Unlock Disabled Sections", style = "link",
+                                                label = "Unlock Disabled Sections", style = "warning",
                                                 icon = icon("unlock-alt")))),
                    mainPanel(
                      
@@ -609,6 +609,7 @@ shinyUI(
                                          column(6, uiOutput("dyo.stage1.resprobUI"),
                                                 checkboxInput("conservative", HTML("Compute <strong>conservative</strong> estimates of sample size.")))
                                        ),
+                                       verbatimTextOutput("rprobs"),
                                        fluidRow(backButton("dyo.resp.back"),
                                                 continueButton("dyo.resp.continue")),
                                        value = "dyo.resp.describe"),
@@ -685,7 +686,8 @@ shinyUI(
                                                                 eval(text.altInputHelp),
                                                                 checkboxInput("cellOrMarginal",   label = text.cellSpecLabel, value = FALSE),
                                                                 checkboxInput("targetDifference", label = text.targDiffLabel, value = FALSE),
-                                                                checkboxInput("targetOddsRatio",  label = text.targORLabel,   value = FALSE)
+                                                                checkboxInput("targetOddsRatio",  label = text.targORLabel,   value = FALSE),
+                                                                hidden(helpText())
                                                )
                               ))
                      ),

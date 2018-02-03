@@ -2237,12 +2237,22 @@ shinyServer(
           )
           return(rep(input$dyo.stage1.allTxt.resprob, input$dyo.stage1.ntxt))
         } else {
-          return(sapply(1:input$dyo.stage1.ntxt, function(i) {
+          for (i in 1:input$dyo.stage1.ntxt) {
+            validate(need(isTruthy(input[[paste0("dyo.stage1.", LETTERS[i], ".resprob")]]),
+                          paste0("Please provide the probability of response to treatment ", LETTERS[i], ".")) %then%
+                     need(input[[paste0("dyo.stage1.", LETTERS[i], ".resprob")]] >= 0 & input[[paste0("dyo.stage1.", LETTERS[i], ".resprob")]] <= 1,
+                          "hello")
+                     )
+          }
+          rprobs <- sapply(1:input$dyo.stage1.ntxt, function(i) {
             input[[paste0("dyo.stage1.", LETTERS[i], ".resprob")]]
-          }))
+          })
+          return(rprobs)
         }
       }
     })
+    
+    output$rprobs <- renderText(respProb())
     
     pi2R <- reactive({
       if (input$dyo.rerand.resp == "Yes") {
@@ -2287,13 +2297,13 @@ shinyServer(
     ### Write the sentence that appears under the final result
     sentenceCompiler <- reactive({
       if (dyo.outcome() == "Binary" && input$cellOrMarginal == FALSE) {
-        return(paste(text.sentenceOverallSuccess, input$dyoRefDTR,
-                     " and ", input$dyoCompDTR, ", are ", input$refDTRProb,
+        return(paste(text.sentenceAIinterest, input$dyoRefDTR,
+                     " and ", input$dyoCompDTR, text.sentenceOverallSuccess, input$refDTRProb,
                      " and ", input$compDTRProb, ", respectively", sep = ""))
       }
       if (dyo.outcome() == "Binary" && input$cellOrMarginal == TRUE) {
-        return(paste(text.sentenceOverallSuccess, input$dyoRefDTR, " and ",
-                     input$dyoCompDTR, ", are ", generateProbs()[1],
+        return(paste(text.sentenceAIinterest, input$dyoRefDTR, " and ",
+                     input$dyoCompDTR, text.sentenceOverallSuccess, generateProbs()[1],
                      " and ", generateProbs()[2], ", respectively", sep = ""))
       }
       if (dyo.outcome() == "Continuous") {
@@ -2302,10 +2312,49 @@ shinyServer(
       }
     })
     
+    sentenceCompiler.response <- reactive({
+      if (!input$conservative) {
+        if (input$dyo.stage1.resprob.eq == "Yes") {
+          formatResp <- input$dyo.stage1.allTxt.resprob
+        } else {
+          formatResp <- sapply(1:input$dyo.stage1.ntxt, function(i) {
+            input[[paste0("dyo.stage1.", LETTERS[i], ".resprob")]]
+          })
+        }
+      }
+      
+      paste0("in which ", 
+             ifelse(input$dyo.stage1.resprob.eq == "Yes", 
+                    paste0("the probability of response to ", 
+                           ifelse(input$dyo.stage1.ntxt == 2, "both ", "all "),
+                           "first-stage treatments is ", unique(respProb())),
+                    paste0(
+                      paste(
+                        "the probability of response to",
+                        sapply(1:(input$dyo.stage1.ntxt - 1), function(i) {
+                          paste("first-stage treatment", LETTERS[i], "is",
+                                respProb()[i])
+                        }),
+                        collapse = ", "
+                      ),
+                      ", and the probability of response to first-stage treatment ",
+                      LETTERS[input$dyo.stage1.ntxt],
+                      " is ",
+                      respProb()[input$dyo.stage1.ntxt],
+                      ". "
+                    )))
+    })
+    
     output$sentence <- renderText(sentenceCompiler())
     
     
     output$binarySampleSize <- renderUI({
+      validate(
+        need(isTruthy(dyo.resultOptions()$inputPower), text.noPower) %then%
+          need(dyo.resultOptions()$inputPower > 0, text.power0) %then%
+          need(dyo.resultOptions()$inputPower < 1, text.power100)
+      )
+      
       if (isTruthy(primaryAim() == "dtrs")){
         validate(
           need(isTruthy(refDTR.substr()[1]), text.refDTRPlaceholder),
@@ -2316,12 +2365,6 @@ shinyServer(
             )
         )
       }
-      
-      validate(
-        need(isTruthy(dyo.resultOptions()$inputPower), "Please provide a target power.") %then%
-        need(dyo.resultOptions()$inputPower > 0, text.power0) %then%
-        need(dyo.resultOptions()$inputPower < 1, text.power100)
-      )
       
       ## Compile success probabilities
       p1 <- generateProbs()[1]
@@ -2357,14 +2400,16 @@ shinyServer(
       ## Format inputs for use in result sentence
       formatPower     <- paste(dyo.resultOptions()$inputPower * 100, "%", sep = "")
       formatAlpha     <- paste(dyo.resultOptions()$alpha      * 100, "%", sep = "")
-      formatResp      <- paste(input$resp       * 100, "%", sep = "")
       formatAltHyp    <- switch(input$selectAlternativeC, "one.sided" = "one-sided ", "two.sided" = "two-sided ")
       
       ## Result sentence
-      HTML(paste("<h4 style='color:blue';> N=", finalSampleSize, " </h4>
-                 <p> We wish to find the sample size for a trial with a binary outcome where the probability of response to first-stage interventions is ", formatResp, sentenceCompiler(),
+      HTML(paste0("<h4 style='color:blue';> N=", finalSampleSize, "</h4>
+                 <p> We wish to find the sample size for a SMART with a binary outcome ",
+                 ifelse(input$conservative, "using a conservative approach. ", 
+                        sentenceCompiler.response()),
+                 sentenceCompiler(),
                  ". Given a ", formatAltHyp, " test with ", formatAlpha, " type-I error, we require a sample size of at least ",
-                 finalSampleSize, " to make this comparison with at least ",formatPower," power. </p>",sep=""))
+                 finalSampleSize, " to make this comparison with at least ",formatPower," power. </p>"))
     })
     
     
@@ -2401,6 +2446,8 @@ shinyServer(
     observeEvent(input$conservative, {
       shinyjs::toggleState("dyo.stage1.resprob.eq", condition = !input$conservative)
       updateRadioButtons(session, "dyo.stage1.resprob.eq", selected = "Yes")
+      shinyjs::toggleState("cellOrMarginal", condition = !input$conservative)
+      updateCheckboxInput(session, "cellOrMarginal", value = FALSE)
     })
     observe({
       if (input$conservative) {
