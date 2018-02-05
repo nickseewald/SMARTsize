@@ -1564,6 +1564,15 @@ shinyServer(
     })
     
     
+    ##### DYO Header #####
+    shinyBS::createAlert(session, anchorId = "dyo-functional",
+                         title = "Use with Caution!",
+                         content = paste("<p>This section is only fully functional for comparisons of",
+                                         "embedded AIs with a binary outcome. Attempts to use this page",
+                                         "for other primary aims may result in errors or unexpected behavior.</p>",
+                                         "<p><strong>Full functionality is coming soon.</strong></p>"),
+                         style = "warning", dismiss = FALSE)
+    
     ##### Modules #####
     
     ## Backend for outcome selection radioButtons
@@ -1932,6 +1941,9 @@ shinyServer(
       
       return(c(pDTR1,pDTR2))
     })
+    
+    
+    ##### Binary Stage 1 Probability Inputs #####
     
     
     ##### Diagram Creation #####
@@ -2456,10 +2468,15 @@ shinyServer(
                              title = "This section has been disabled.",
                              content = paste("Conservative estimates of sample size do not depend on response rates.",
                                              "If you have estimates of response rate(s), uncheck the box."))
+        shinyBS::createAlert(session, anchorId = "cellOrMarginalDisabled",
+                             alertId = "alert-conservative-cellOrMarginalDisabled",
+                             content = paste("Cell-specific probabilities cannot be provided when",
+                                             "you request a conservative sample size. If you would like to provide"))
         if (input$dyo.stage1.resprob.eq == "Yes")
           shinyjs::disable("dyo.stage1.allTxt.resprob")
       } else {
         shinyBS::closeAlert(session, "alert-conservative")
+        shinyBS::closeAlert(session, "alert-conservative-cellOrMarginalDisabled")
       }
     })
     

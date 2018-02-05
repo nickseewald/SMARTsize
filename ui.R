@@ -573,6 +573,8 @@ shinyUI(
                      h4("Follow the steps below to describe and size a custom SMART"),
                      tags$hr(),
                      
+                     bsAlert('dyo-functional'),
+                     
                      ##### DYO Collapse #####
                      h3("Describe Your Study"),
                      bsCollapse(
@@ -685,9 +687,9 @@ shinyUI(
                                                conditionalPanel(condition = "output.dyooutcome == 'Binary'",
                                                                 eval(text.altInputHelp),
                                                                 checkboxInput("cellOrMarginal",   label = text.cellSpecLabel, value = FALSE),
+                                                                bsAlert("cellOrMarginalDisabled"),
                                                                 checkboxInput("targetDifference", label = text.targDiffLabel, value = FALSE),
-                                                                checkboxInput("targetOddsRatio",  label = text.targORLabel,   value = FALSE),
-                                                                hidden(helpText())
+                                                                checkboxInput("targetOddsRatio",  label = text.targORLabel,   value = FALSE)
                                                )
                               ))
                      ),
