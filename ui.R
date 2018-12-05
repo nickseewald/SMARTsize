@@ -661,6 +661,8 @@ shinyUI(
                                       fluidRow(column(6, uiOutput("dyo.refdtrSelect")),
                                                column(6, uiOutput("dyo.compdtrSelect")))
                      ),
+                     conditionalPanel("output.dyoprimaryAim == 'stage1'",
+                                      uiOutput("dyo.stage1probs")),
                      
                      tags$hr(),
                      
@@ -669,28 +671,37 @@ shinyUI(
                      fluidRow(
                        column(7, DiagrammeROutput("dyo.diagram", height = "550px")),
                        column(5, 
-                              conditionalPanel(condition = "output.dyooutcome == 'Binary'",
-                                               uiOutput("binaryRefInput"),
-                                               conditionalPanel(condition = "input.cellOrMarginal",
-                                                                fluidRow(column(1),
-                                                                         column(11, uiOutput("binaryRefCellProbs"))
-                                                                )),
-                                               uiOutput("binaryCompInput"),
-                                               conditionalPanel(condition = "input.cellOrMarginal",
-                                                                fluidRow(column(1),
-                                                                         column(11, uiOutput("binaryCompCellProbs"))
-                                                                )
-                                               )
-                              ),
-                              conditionalPanel(condition = "input.dyoRefDTR != '' && input.dyoCompDTR != ''",
-                                               br(),
-                                               conditionalPanel(condition = "output.dyooutcome == 'Binary'",
-                                                                eval(text.altInputHelp),
-                                                                checkboxInput("cellOrMarginal",   label = text.cellSpecLabel, value = FALSE),
-                                                                bsAlert("cellOrMarginalDisabled"),
-                                                                checkboxInput("targetDifference", label = text.targDiffLabel, value = FALSE),
-                                                                checkboxInput("targetOddsRatio",  label = text.targORLabel,   value = FALSE)
-                                               )
+                              conditionalPanel(
+                                condition = "output.dyooutcome == 'Binary' && output.dyoprimaryAim == 'dtrs'",
+                                uiOutput("binaryRefInput"),
+                                conditionalPanel(condition = "input.cellOrMarginal",
+                                                 fluidRow(column(1),
+                                                          column(
+                                                            11, uiOutput("binaryRefCellProbs")
+                                                          ))),
+                                uiOutput("binaryCompInput"),
+                                conditionalPanel(condition = "input.cellOrMarginal",
+                                                 fluidRow(column(1),
+                                                          column(
+                                                            11, uiOutput("binaryCompCellProbs")
+                                                          )))
+                              ), 
+                              conditionalPanel(condition = "output.dyooutcome == 'Continuous'",
+                                               uiOutput('contDTRInput')),
+                              conditionalPanel(
+                                condition = "input.dyoprimaryAim == 'dtrs'",
+                                conditionalPanel(
+                                  condition = "input.dyoRefDTR != '' && input.dyoCompDTR != ''",
+                                  br(),
+                                  conditionalPanel(
+                                    condition = "output.dyooutcome == 'Binary'",
+                                    eval(text.altInputHelp),
+                                    checkboxInput("cellOrMarginal",   label = text.cellSpecLabel, value = FALSE),
+                                    bsAlert("cellOrMarginalDisabled"),
+                                    checkboxInput("targetDifference", label = text.targDiffLabel, value = FALSE),
+                                    checkboxInput("targetOddsRatio",  label = text.targORLabel,   value = FALSE)
+                                  )
+                                )
                               ))
                      ),
                      

@@ -1764,9 +1764,7 @@ shinyServer(
     })
     
     
-    
-    
-    ##### Binary DTR Probability Inputs #####
+    ##### DTR Selection Inputs #####
     
     ### Generate DTR Selection Inputs
     output$dyo.refdtrSelect <- renderUI({
@@ -1813,6 +1811,8 @@ shinyServer(
     ## Test proper DTR name parsing
     output$refDTRname <- renderPrint(refDTR.substr())
     output$compDTRname <- renderPrint(compDTR.substr())
+    
+    ##### Binary DTR Probability Inputs #####
     
     ### Generate inputs for marginal success probabilities
     output$binaryRefInput <- renderUI({
@@ -1944,7 +1944,21 @@ shinyServer(
     
     
     ##### Binary Stage 1 Probability Inputs #####
+    output$dyo.stage1probs <- renderUI(helpText("this is not currently functional"))
     
+    ##### Continuous DTR Effect Size #####
+    output$contDTRInput <- renderUI({
+      if (isTruthy(primaryAim() == "dtrs")) {
+        validate(
+          need(isTruthy(refDTR.substr()[1]), text.refDTRPlaceholder),
+          need(isTruthy(compDTR.substr()[1]), text.compDTRPlaceholder)
+        )
+      }
+      list(helpText("this is not currently functional"),
+           numericInput("dyo.contEffectSize", label = text.stdEffectLabel, value = NA,
+                        min = 0, max = 10, step = 0.01)
+      )
+    })
     
     ##### Diagram Creation #####
     
