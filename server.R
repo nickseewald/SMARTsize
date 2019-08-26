@@ -1649,20 +1649,20 @@ shinyServer(
       list(lapply(1:input$dyo.stage1.ntxt, 
                   function(i) {
                     numericInput(paste0("dyo.stage1.txt", i, ".rprob"),
-                                 label = paste0("Probability of allocation to Treatment ", i), 
+                                 label = paste0("Probability of allocation to Treatment ", LETTERS[i]), 
                                  min = 0, max = 1, value = NA, step = 0.01)
                   }),
-           helpText(paste("The probability of allocation to Treatment", isolate(input$dyo.stage1.ntxt),
+           helpText(paste("The probability of allocation to Treatment", LETTERS[isolate(input$dyo.stage1.ntxt)],
                           "will automatically update so that all allocation probabilities sum to 1.")))
     })
     output$dyo.rerand.resp.rprobUI <- renderUI({
       list(lapply(1:input$dyo.rerand.resp.ntxt, 
                   function(i) {
                     numericInput(paste0("dyo.rerand.resp.txt", i, ".rprob"),
-                                 label = paste0("Probability of allocation to Treatment ", i), 
+                                 label = paste0("Probability of allocation to Treatment ", LETTERS[i]), 
                                  min = 0, max = 1, value = NA, step = 0.01)
                   }),
-           helpText(paste("The probability of allocation to Treatment", isolate(input$dyo.rerand.resp.ntxt),
+           helpText(paste("The probability of allocation to Treatment", LETTERS[isolate(input$dyo.rerand.resp.ntxt)],
                           "will automatically update so that all allocation probabilities sum to 1."))
       )
     })
@@ -1720,6 +1720,33 @@ shinyServer(
              })
     })
     
+    
+    ##### Stage 1 Treatment Comparison Selectors #####
+    
+    stage1TxNames <- reactive({
+      LETTERS[1:input$dyo.stage1.ntxt]
+    })
+    
+    output$stage1Tx1Select <- renderUI({
+      selectizeInput("dyo.stage1.Tx1",
+                     label = "",
+                     choices = stage1TxNames(),
+                     options = list(
+                       placeholder = "Select a first-stage treatment.",
+                       onInitialize = I("function() { this.setValue(''); }")
+                     ))
+    })
+    
+    output$stage1Tx2Select <- renderUI({
+      selectizeInput("dyo.stage1.Tx2",
+                     label = "",
+                     choices = stage1TxNames()[stage1TxNames() != input$dyo.stage1.Tx1],
+                     options = list(
+                       placeholder = "Select a first-stage treatment.",
+                       onInitialize = I("function() { this.setValue(''); }")
+                     )
+      )})
+    
     ##### DTR Name Generation #####
     
     ## Goal: Create DTR "names" (i.e., ordered triples identifying embedded DTRs) by 
@@ -1763,6 +1790,48 @@ shinyServer(
       paste0("{", namepairs$s1, ", ", namepairs$r, ", ", namepairs$nr, "}")
     })
     
+    
+    ### Generate DTR Selection Inputs
+    output$dyo.refdtrSelect <- renderUI({
+      selectizeInput("dyoRefDTR",
+                     label = text.refDTRLabel,
+                     choices = dtr.names(),
+                     options = list(
+                       placeholder = text.refDTRPlaceholder,
+                       onInitialize = I('function() { this.setValue(0); }')
+                     )
+      )})
+    
+    output$dyo.compdtrSelect <- renderUI({
+      selectizeInput("dyoCompDTR",
+                     label = text.compDTRLabel,
+                     choices = dtr.names()[substr(dtr.names(), 2, 2) != substr(input$dyoRefDTR, 2, 2)],
+                     options = list(
+                       placeholder = text.compDTRPlaceholder,
+                       onInitialize = I("function() { this.setValue(''); }")
+                     )
+      )})
+    
+    ### Parse names of selected DTRs
+    refDTR.substr <- reactive({
+      if (length(input$dyoRefDTR) > 0) {
+        DTR    <- paste(input$dyoRefDTR)
+        DTR    <- substr(DTR, 2, nchar(DTR) - 1)
+        DTRvec <- unlist(strsplit(DTR, split = ", "))
+        return(c(input$dyoRefDTR, DTRvec))
+      }
+      else return(c(0, 0, 0, 0))
+    })
+    
+    compDTR.substr <- reactive({
+      if (length(input$dyoCompDTR) > 0) {
+        DTR    <- paste(input$dyoCompDTR)
+        DTR    <- substr(DTR, 2, nchar(DTR) - 1)
+        DTRvec <- unlist(strsplit(DTR, split = ", "))
+        return(c(input$dyoCompDTR, DTRvec))
+      }
+      else return(c(0, 0, 0, 0))
+    })
     
     ##### DTR Selection Inputs #####
     
@@ -1944,7 +2013,30 @@ shinyServer(
     
     
     ##### Binary Stage 1 Probability Inputs #####
-    output$dyo.stage1probs <- renderUI(helpText("this is not currently functional"))
+    output$binaryStage1Probs <- renderUI({
+      
+      if (input$dyo.stage1.ntxt > 2) {
+        validate(
+          need(isTruthy(input$dyo.stage1.Tx1), "Please select a first first-stage treatment to compare."),
+          need(isTruthy(input$dyo.stage1.Tx2), "Please select a second first-stage treatment to compare.")
+        )
+      }
+      
+      # get names of treatments to build inputs for
+      if (input$dyo.stage1.ntxt == 2) {
+        treatmentNames <- LETTERS[1:2]
+      } else if (input$dyo.stage1.ntxt > 2) {
+        treatmentNames <- c(input$dyo.stage1.Tx1, input$dyo.stage1.Tx2)
+      }
+      
+      lapply(1:length(treatmentNames), function(i) {
+        numericInput(inputId = paste0("stage1probInput", i),
+                     label = paste("Success probability for Treatment", 
+                                   treatmentNames[i]),
+                     value = NA)
+      })
+    })
+    
     
     ##### Continuous DTR Effect Size #####
     output$contDTRInput <- renderUI({
@@ -1955,7 +2047,8 @@ shinyServer(
         )
       }
       list(helpText("this is not currently functional"),
-           numericInput("dyo.contEffectSize", label = text.stdEffectLabel, value = NA,
+           numericInput("dyo.contEffectSize", label = text.stdEffectLabel,
+                        value = NA,
                         min = 0, max = 10, step = 0.01)
       )
     })
@@ -2001,9 +2094,56 @@ shinyServer(
           else
             cclass <- ""
         } else {
-          rclass <- ""
-          cclass <- ""
-        }
+          if (input$dyo.stage1.ntxt == 2) {
+            TxNames <- c("A", "B") 
+          } else {
+            TxNames <- c(input$dyo.stage1.Tx1, input$dyo.stage1.Tx2)
+          }
+          Tx1RNames <- 
+            paste0(TxNames[1],
+                   paste0("r",
+                          if (TxNames[1] %in% input$dyo.rerand.resp.whichtxt & 
+                              input$dyo.rerand.resp == "Yes")
+                            1:input$dyo.rerand.resp.ntxt
+                          else
+                            ""))
+          Tx1NRNames <-
+            paste0(TxNames[1],
+                   paste0("nr",
+                          if (TxNames[1] %in% input$dyo.rerand.nresp.whichtxt & 
+                              input$dyo.rerand.nresp == "Yes")
+                            1:input$dyo.rerand.nresp.ntxt
+                          else
+                            ""))
+          Tx2RNames <- 
+            paste0(TxNames[2],
+                   paste0("r",
+                          if (TxNames[2] %in% input$dyo.rerand.resp.whichtxt & 
+                              input$dyo.rerand.resp == "Yes")
+                            1:input$dyo.rerand.resp.ntxt
+                          else
+                            ""))
+          Tx2NRNames <-
+            paste0(TxNames[2],
+                   paste0("nr",
+                          if (TxNames[2] %in% input$dyo.rerand.nresp.whichtxt & 
+                              input$dyo.rerand.nresp == "Yes")
+                            1:input$dyo.rerand.nresp.ntxt
+                          else
+                            ""))
+          if (input[["dyo.primaryAim-primaryAim"]] == "stage1") {
+            rclass <- paste0("class ", TxNames[1], ",",
+                           paste(Tx1RNames, collapse = ","),
+                           ",", paste(Tx1NRNames, collapse = ","),
+                           " refdtr;\n")
+          cclass <- paste0("class ", TxNames[2], ",",
+                           paste(Tx2RNames, collapse = ","),
+                           ",", paste(Tx2NRNames, collapse = ","),
+                           " compdtr;\n")
+          } else if (input[["dyo.primaryAim-primaryAim"]] == "stage2resp") {
+            rclass <- paste0("class ", )
+          }
+        } 
       }
       paste(rclass, cclass, sep = "\n")
     })
@@ -2280,6 +2420,8 @@ shinyServer(
     
     output$rprobs <- renderText(respProb())
     
+    # if the responders are re-randomized, get randomization probabilities for
+    # each second-stage treatment for responders
     pi2R <- reactive({
       if (input$dyo.rerand.resp == "Yes") {
         l <- sapply(1:input$dyo.rerand.resp.ntxt, function(i) {
@@ -2299,11 +2441,13 @@ shinyServer(
       l
     })
     
+    # if the non-responders are re-randomized, get randomization probabilities
+    # for each second-stage treatment for non-responders
     pi2NR <- reactive({
       if (input$dyo.rerand.nresp == "Yes") {
         l <- sapply(1:input$dyo.rerand.nresp.ntxt, function(i) {
           if (LETTERS[i] %in% input$dyo.rerand.nresp.whichtxt) {
-            if (input$dyo.rerand.nresp.eqrand == "Yes") {
+            if (input$dyo.rerand.nresp.eqrand == "Yes") { #equally randomized?
               1 / input$dyo.rerand.nresp.ntxt
             } else {
               input[[paste0("dyo.rerand.nresp.txt", LETTERS[i])]]
@@ -2373,6 +2517,15 @@ shinyServer(
     
     output$sentence <- renderText(sentenceCompiler())
     
+    output$continuousSampleSize <- renderUI({
+      validate(
+        need(isTruthy(dyo.resultOptions()$inputPower), text.noPower) %then%
+          need(dyo.resultOptions()$inputPower > 0, text.power0) %then%
+          need(dyo.resultOptions()$inputPower < 1, text.power100)
+      )
+      
+      
+    })
     
     output$binarySampleSize <- renderUI({
       validate(
@@ -2390,6 +2543,8 @@ shinyServer(
               need(isTruthy(input$compDTRProb), paste0("The success probability is missing for AI ", compDTR.substr()[1], ". Please provide an input."))
             )
         )
+      } else if (isTruthy(primaryAim() == "stage1")) {
+        # need(isTruthy())
       }
       
       ## Compile success probabilities

@@ -5,6 +5,7 @@ rsconnect/shinyapps.io/nseewald1/SMARTsizeBeta.cdf
 *.log
 *.out
 *.synctex.gz
+*.Rproj
 
 
 #################
@@ -224,3 +225,4 @@ pip-log.txt
 .mr.developer.cfg
 *.Rhistory
 *.dcf
+.Rproj.user

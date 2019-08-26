@@ -654,6 +654,7 @@ shinyUI(
                        open = "dyo.outcome.describe", multiple = TRUE
                      ),
                      
+                     
                      ##### Aim Selection #####
                      primaryAimUI("dyo.primaryAim"),
                      conditionalPanel("output.dyoprimaryAim == 'dtrs'",
@@ -661,8 +662,12 @@ shinyUI(
                                       fluidRow(column(6, uiOutput("dyo.refdtrSelect")),
                                                column(6, uiOutput("dyo.compdtrSelect")))
                      ),
-                     conditionalPanel("output.dyoprimaryAim == 'stage1'",
-                                      uiOutput("dyo.stage1probs")),
+                     conditionalPanel("output.dyoprimaryAim == 'stage1' && input['dyo.stage1.ntxt'] > 2",
+                                      html.selectStage1Compare,
+                                      fluidRow(column(6, uiOutput("stage1Tx1Select")),
+                                               column(6, uiOutput("stage1Tx2Select"))),
+                                      fluidRow(column(6, checkboxInput("stage1omnibus", "Hi")))
+                                      ),
                      
                      tags$hr(),
                      
@@ -685,7 +690,12 @@ shinyUI(
                                                           column(
                                                             11, uiOutput("binaryCompCellProbs")
                                                           )))
-                              ), 
+                              ),
+                              conditionalPanel(
+                                condition = "output.dyooutcome == 'Binary' && output.dyoprimaryAim == 'stage1'",
+                                html.stage1ProbsGuide,
+                                uiOutput("binaryStage1Probs")
+                              ),
                               conditionalPanel(condition = "output.dyooutcome == 'Continuous'",
                                                uiOutput('contDTRInput')),
                               conditionalPanel(
@@ -709,7 +719,14 @@ shinyUI(
                      
                      ##### Results #####
                      h3("Results"),
-                     uiOutput('binarySampleSize'),
+                     conditionalPanel(
+                       condition = "output.dyooutcome == 'Continuous'",
+                       uiOutput('continuousSampleSize')
+                     ),
+                     conditionalPanel(
+                       condition = "output.dyooutcome == 'Binary'",
+                       uiOutput('binarySampleSize')
+                     ),
                      
                      # fluidRow(actionButton("zoom", "Zoom", icon = icon("zoom-in", lib = "glyphicon"))),
                      # verbatimTextOutput("graphstring"),

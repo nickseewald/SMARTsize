@@ -5,6 +5,14 @@
 html.outcomeType <-
   HTML("Is the <strong> outcome </strong> of interest binary or continuous?")
 
+html.selectStage1Compare <-
+  HTML("Which two <strong>first-stage treatments</strong> would you like
+       to compare?")
+
+html.stage1ProbsGuide <- 
+  HTML("Please provide the probabilities of success for individuals who receive
+       the given ")
+
 text.selectDTRcompare <- 
   quote(p("Which two", strong("adaptive interventions"), "would you like to
           compare? Choose two from the menus below. The image below will

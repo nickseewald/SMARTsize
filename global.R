@@ -1,3 +1,9 @@
+### GLOBAL.R FOR SMART SAMPLE SIZE CALCULATOR
+### NICK SEEWALD, 2014
+### UNIVERSITY OF MICHIGAN
+### DEPARTMENT OF BIOSTATISTICS
+#
+#
 # This file is part of SMARTsize.
 # 
 # SMARTsize is free software: you can redistribute it and/or modify
@@ -12,11 +18,6 @@
 # 
 # You should have received a copy of the GNU Affero General Public License
 # along with SMARTsize.  If not, see <http://www.gnu.org/licenses/>.
-
-##### GLOBAL.R FOR SMART SAMPLE SIZE CALCULATOR #####
-### NICK SEEWALD, 2014
-### UNIVERSITY OF MICHIGAN
-### DEPARTMENT OF BIOSTATISTICS
 
 library(shiny)
 # library(pwr)
