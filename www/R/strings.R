@@ -9,6 +9,14 @@ html.selectStage1Compare <-
   HTML("Which two <strong>first-stage treatments</strong> would you like
        to compare?")
 
+html.selectStage2RCompare <-
+  HTML("Which two <strong>second-stage treatments</strong> for 
+  <strong>responders</strong> would you like to compare?")
+
+html.selectStage2NRCompare <-
+  HTML("Which two <strong>second-stage treatments</strong> for 
+  <strong>non-responders</strong> would you like to compare?")
+
 html.stage1ProbsGuide <- 
   HTML("Please provide the probabilities of success for individuals who receive
        the given ")

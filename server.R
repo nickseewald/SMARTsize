@@ -1747,6 +1747,68 @@ shinyServer(
                      )
       )})
     
+    ##### Stage 2 Responder Treatment Comparison Selectors #####
+    
+    stage2RTxNames <- reactive({
+      validate(
+        need(isTruthy(input$dyo.rerand.resp.ntxt), 'oops')
+      )
+      paste0("r", 1:input$dyo.rerand.resp.ntxt)
+    })
+    
+    output$stage2RTx1Select <- renderUI({
+      selectizeInput("dyo.stage2R.Tx1",
+                     label = "",
+                     choices = stage2RTxNames(),
+                     options = list(
+                       placeholder = "Select a second-stage treatment.",
+                       onInitialize = I("function() { this.setValue(''); }")
+                     )
+                     )
+    })
+    
+    output$stage2RTx2Select <- renderUI({
+      selectizeInput("dyo.stage2R.Tx2",
+                     label = "",
+                     choices = stage2RTxNames()[stage2RTxNames() != input$dyo.stage2R.Tx1],
+                     options = list(
+                       placeholder = "Select a second-stage treatment.",
+                       onInitialize = I("function() { this.setValue(''); }")
+                     )
+      )
+    })
+    
+    ##### Stage 2 Non-Responder Treatment Comparison Selectors #####
+    
+    stage2NRTxNames <- reactive({
+      validate(
+        need(isTruthy(input$dyo.rerand.nresp.ntxt), 'oops')
+      )
+      paste0("nr", 1:input$dyo.rerand.nresp.ntxt)
+    })
+    
+    output$stage2NRTx1Select <- renderUI({
+      selectizeInput("dyo.stage2NR.Tx1",
+                     label = "",
+                     choices = stage2NRTxNames(),
+                     options = list(
+                       placeholder = "Select a second-stage treatment.",
+                       onInitialize = I("function() { this.setValue(''); }")
+                     )
+      )
+    })
+    
+    output$stage2NRTx2Select <- renderUI({
+      selectizeInput("dyo.stage2NR.Tx2",
+                     label = "",
+                     choices = stage2NRTxNames()[stage2NRTxNames() != input$dyo.stage2NR.Tx1],
+                     options = list(
+                       placeholder = "Select a second-stage treatment.",
+                       onInitialize = I("function() { this.setValue(''); }")
+                     )
+      )
+    })
+    
     ##### DTR Name Generation #####
     
     ## Goal: Create DTR "names" (i.e., ordered triples identifying embedded DTRs) by 
@@ -2037,6 +2099,59 @@ shinyServer(
       })
     })
     
+    ##### Binary Stage 2R Probability Inputs #####
+    output$binaryStage2RProbs <- renderUI({
+      
+      if (input$dyo.rerand.resp.ntxt > 2) {
+        validate(
+          need(isTruthy(input$dyo.stage2R.Tx1), 
+               "Please select a first second-stage treatment to compare."),
+          need(isTruthy(input$dyo.stage2R.Tx2),
+               "Please select a second second-stage treatment to compare.")
+        )
+      }
+      
+      # get names of treatments to build inputs for
+      if (input$dyo.rerand.resp.ntxt == 2) {
+        treatmentNames <- c("r1", "r2")
+      } else if (input$dyo.rerand.resp.ntxt > 2) {
+        treatmentNames <- c(input$dyo.stage2R.Tx1, input$dyo.stage2R.Tx2)
+      }
+      
+      lapply(1:length(treatmentNames), function(i) {
+        numericInput(inputId = paste0("stage2RprobInput", i),
+                     label = paste("Success probability for Treatment", 
+                                   treatmentNames[i]),
+                     value = NA)
+      })
+    })
+    
+    ##### Binary Stage 2NR Probability Inputs #####
+    output$binaryStage2NRProbs <- renderUI({
+      
+      if (input$dyo.rerand.nresp.ntxt > 2) {
+        validate(
+          need(isTruthy(input$dyo.stage2NR.Tx1), 
+               "Please select a first second-stage treatment to compare."),
+          need(isTruthy(input$dyo.stage2NR.Tx2),
+               "Please select a second second-stage treatment to compare.")
+        )
+      }
+      
+      # get names of treatments to build inputs for
+      if (input$dyo.rerand.nresp.ntxt == 2) {
+        treatmentNames <- c("nr1", "nr2")
+      } else if (input$dyo.rerand.nresp.ntxt > 2) {
+        treatmentNames <- c(input$dyo.stage2NR.Tx1, input$dyo.stage2NR.Tx2)
+      }
+      
+      lapply(1:length(treatmentNames), function(i) {
+        numericInput(inputId = paste0("stage2NRprobInput", i),
+                     label = paste("Success probability for Treatment", 
+                                   treatmentNames[i]),
+                     value = NA)
+      })
+    })
     
     ##### Continuous DTR Effect Size #####
     output$contDTRInput <- renderUI({
@@ -2094,56 +2209,102 @@ shinyServer(
           else
             cclass <- ""
         } else {
-          if (input$dyo.stage1.ntxt == 2) {
-            TxNames <- c("A", "B") 
-          } else {
-            TxNames <- c(input$dyo.stage1.Tx1, input$dyo.stage1.Tx2)
-          }
-          Tx1RNames <- 
-            paste0(TxNames[1],
-                   paste0("r",
-                          if (TxNames[1] %in% input$dyo.rerand.resp.whichtxt & 
-                              input$dyo.rerand.resp == "Yes")
-                            1:input$dyo.rerand.resp.ntxt
-                          else
-                            ""))
-          Tx1NRNames <-
-            paste0(TxNames[1],
-                   paste0("nr",
-                          if (TxNames[1] %in% input$dyo.rerand.nresp.whichtxt & 
-                              input$dyo.rerand.nresp == "Yes")
-                            1:input$dyo.rerand.nresp.ntxt
-                          else
-                            ""))
-          Tx2RNames <- 
-            paste0(TxNames[2],
-                   paste0("r",
-                          if (TxNames[2] %in% input$dyo.rerand.resp.whichtxt & 
-                              input$dyo.rerand.resp == "Yes")
-                            1:input$dyo.rerand.resp.ntxt
-                          else
-                            ""))
-          Tx2NRNames <-
-            paste0(TxNames[2],
-                   paste0("nr",
-                          if (TxNames[2] %in% input$dyo.rerand.nresp.whichtxt & 
-                              input$dyo.rerand.nresp == "Yes")
-                            1:input$dyo.rerand.nresp.ntxt
-                          else
-                            ""))
+          if (input$dyo.stage1.ntxt == 2)
+            TxNames <- c("A", "B")
+          
           if (input[["dyo.primaryAim-primaryAim"]] == "stage1") {
+            
+            if (input$dyo.stage1.ntxt > 2) 
+              TxNames <- c(input$dyo.stage1.Tx1, input$dyo.stage1.Tx2)
+            
+            Tx1RNames <- 
+              paste0(TxNames[1],
+                     paste0("r",
+                            if (TxNames[1] %in% input$dyo.rerand.resp.whichtxt & 
+                                input$dyo.rerand.resp == "Yes")
+                              1:input$dyo.rerand.resp.ntxt
+                            else
+                              ""))
+            Tx1NRNames <-
+              paste0(TxNames[1],
+                     paste0("nr",
+                            if (TxNames[1] %in% input$dyo.rerand.nresp.whichtxt & 
+                                input$dyo.rerand.nresp == "Yes")
+                              1:input$dyo.rerand.nresp.ntxt
+                            else
+                              ""))
+            Tx2RNames <- 
+              paste0(TxNames[2],
+                     paste0("r",
+                            if (TxNames[2] %in% input$dyo.rerand.resp.whichtxt & 
+                                input$dyo.rerand.resp == "Yes")
+                              1:input$dyo.rerand.resp.ntxt
+                            else
+                              ""))
+            Tx2NRNames <-
+              paste0(TxNames[2],
+                     paste0("nr",
+                            if (TxNames[2] %in% input$dyo.rerand.nresp.whichtxt & 
+                                input$dyo.rerand.nresp == "Yes")
+                              1:input$dyo.rerand.nresp.ntxt
+                            else
+                              ""))
+            
             rclass <- paste0("class ", TxNames[1], ",",
-                           paste(Tx1RNames, collapse = ","),
-                           ",", paste(Tx1NRNames, collapse = ","),
-                           " refdtr;\n")
-          cclass <- paste0("class ", TxNames[2], ",",
-                           paste(Tx2RNames, collapse = ","),
-                           ",", paste(Tx2NRNames, collapse = ","),
-                           " compdtr;\n")
+                             paste(Tx1RNames, collapse = ","),
+                             ",", paste(Tx1NRNames, collapse = ","),
+                             " refdtr;\n")
+            cclass <- paste0("class ", TxNames[2], ",",
+                             paste(Tx2RNames, collapse = ","),
+                             ",", paste(Tx2NRNames, collapse = ","),
+                             " compdtr;\n")
           } else if (input[["dyo.primaryAim-primaryAim"]] == "stage2resp") {
-            rclass <- paste0("class ", )
+            if (input$dyo.stage1.ntxt > 2) 
+              TxNames <- input$dyo.rerand.resp.whichtxt
+            if (input$dyo.rerand.resp.ntxt == 2) {
+              rclass <- 
+                paste0("class ", paste0(TxNames, "r1", collapse = ","), " refdtr;\n")
+              # Tx2RNames2 <- paste0(TxNames, "r2", collapse = ",")
+              cclass <- 
+                paste0("class ", paste0(TxNames, "r2", collapse = ","), " compdtr;\n")
+            } else if (input$dyo.rerand.resp.ntxt > 2) {
+              if (isTruthy(input$dyo.stage2R.Tx1))
+                rclass <-
+                  paste0("class ", 
+                         paste0(TxNames, input$dyo.stage2R.Tx1, collapse = ","),
+                         " refdtr;\n")
+              else rclass <- ""
+              if (isTruthy(input$dyo.stage2R.Tx2))
+                cclass <- 
+                  paste0("class ", 
+                         paste0(TxNames, input$dyo.stage2R.Tx2, collapse = ","),
+                         " compdtr;\n")
+              else cclass <- ""
+            }
+          } else if (input[["dyo.primaryAim-primaryAim"]] == "stage2nresp") {
+            if (input$dyo.stage1.ntxt > 2) 
+              TxNames <- input$dyo.rerand.nresp.whichtxt
+            if (input$dyo.rerand.resp.ntxt == 2) {
+              rclass <- 
+                paste0("class ", paste0(TxNames, "nr1", collapse = ","), " refdtr;\n")
+              cclass <- 
+                paste0("class ", paste0(TxNames, "nr2", collapse = ","), " compdtr;\n")
+            } else if (input$dyo.rerand.nresp.ntxt > 2) {
+              if (isTruthy(input$dyo.stage2NR.Tx1))
+                rclass <-
+                  paste0("class ", 
+                         paste0(TxNames, input$dyo.stage2NR.Tx1, collapse = ","),
+                         " refdtr;\n")
+              else rclass <- ""
+              if (isTruthy(input$dyo.stage2NR.Tx2))
+                cclass <- 
+                  paste0("class ", 
+                         paste0(TxNames, input$dyo.stage2NR.Tx2, collapse = ","),
+                         " compdtr;\n")
+              else cclass <- ""
+            }
           }
-        } 
+        }
       }
       paste(rclass, cclass, sep = "\n")
     })

@@ -657,18 +657,31 @@ shinyUI(
                      
                      ##### Aim Selection #####
                      primaryAimUI("dyo.primaryAim"),
-                     conditionalPanel("output.dyoprimaryAim == 'dtrs'",
-                                      eval(text.selectDTRcompare),
-                                      fluidRow(column(6, uiOutput("dyo.refdtrSelect")),
-                                               column(6, uiOutput("dyo.compdtrSelect")))
+                     conditionalPanel(
+                       condition = "output.dyoprimaryAim == 'dtrs'",
+                       eval(text.selectDTRcompare),
+                       fluidRow(column(6, uiOutput("dyo.refdtrSelect")),
+                                column(6, uiOutput("dyo.compdtrSelect")))
                      ),
-                     conditionalPanel("output.dyoprimaryAim == 'stage1' && input['dyo.stage1.ntxt'] > 2",
-                                      html.selectStage1Compare,
-                                      fluidRow(column(6, uiOutput("stage1Tx1Select")),
-                                               column(6, uiOutput("stage1Tx2Select"))),
-                                      fluidRow(column(6, checkboxInput("stage1omnibus", "Hi")))
-                                      ),
-                     
+                     conditionalPanel(
+                       condition = "output.dyoprimaryAim == 'stage1' && input['dyo.stage1.ntxt'] > 2",
+                       html.selectStage1Compare,
+                       fluidRow(column(6, uiOutput("stage1Tx1Select")),
+                                column(6, uiOutput("stage1Tx2Select"))),
+                       fluidRow(column(6, checkboxInput("stage1omnibus", "Hi")))
+                     ),
+                     conditionalPanel(
+                       condition = "output.dyoprimaryAim == 'stage2resp' && input['dyo.rerand.resp.ntxt'] > 2",
+                       html.selectStage2RCompare,
+                       fluidRow(column(6, uiOutput("stage2RTx1Select")),
+                                column(6, uiOutput("stage2RTx2Select")))
+                     ),
+                     conditionalPanel(
+                       condition = "output.dyoprimaryAim == 'stage2nresp' && input['dyo.rerand.nresp.ntxt'] > 2",
+                       html.selectStage2NRCompare,
+                       fluidRow(column(6, uiOutput("stage2NRTx1Select")),
+                                column(6, uiOutput("stage2NRTx2Select")))
+                     ),
                      tags$hr(),
                      
                      ##### Diagram and Probability Inputs #####
@@ -695,6 +708,16 @@ shinyUI(
                                 condition = "output.dyooutcome == 'Binary' && output.dyoprimaryAim == 'stage1'",
                                 html.stage1ProbsGuide,
                                 uiOutput("binaryStage1Probs")
+                              ),
+                              conditionalPanel(
+                                condition = "output.dyooutcome == 'Binary' && output.dyoprimaryAim == 'stage2resp'",
+                                html.stage1ProbsGuide,
+                                uiOutput("binaryStage2RProbs")
+                              ),
+                              conditionalPanel(
+                                condition = "output.dyooutcome == 'Binary' && output.dyoprimaryAim == 'stage2nresp'",
+                                html.stage1ProbsGuide,
+                                uiOutput("binaryStage2NRProbs")
                               ),
                               conditionalPanel(condition = "output.dyooutcome == 'Continuous'",
                                                uiOutput('contDTRInput')),
