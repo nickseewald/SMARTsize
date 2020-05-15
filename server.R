@@ -926,8 +926,30 @@ shinyServer(
     
     #### Collapse and Tabset Handlers ####
     
+    updateWizard <- function(tabID) {
+      updateTabsetPanel(session, "wizard", selected = tabID)
+    }
+    
     # Observer for button "dyo.stage1.continue" inside stage 1 design spec collapse panel
     # When button is pressed, update the collapse so that the "close" panel closes and the "open" panel opens
+    observeEvent(input$outcome.continue,
+                 updateWizard("wizard.result.describe"))
+    observeEvent(input$resultOptions.continue,
+                 updateWizard("wizard.stage1.describe"))
+    observeEvent(input$stage1.continue,
+                 updateWizard("wizard.resp.describe"))
+    observeEvent(input$resp.continue,
+                 updateWizard("wizard.stage2.describe"))
+    
+    observeEvent(input$resultOptions.back,
+                 updateWizard("wizard.outcome.describe"))
+    observeEvent(input$stage1.back,
+                 updateWizard("wizard.result.describe"))
+    observeEvent(input$resp.back,
+                 updateWizard("wizard.stage1.describe"))
+    observeEvent(input$stage2.back,
+                 updateWizard("wizard.resp.describe"))
+    
     observeEvent(input$dyo.outcome.continue,
                  updateCollapse(session, "dyo.setup.collapse",
                                 open = "dyo.resultOptions.describe",

@@ -26,6 +26,10 @@ library(DiagrammeR)
 # library(V8)
 # library(htmlwidgets)
 library(shinyjs)
+library(bsplus)
+library(shinyjqui)
+library(shinythemes)
+library(vov) #css animations
 
 ### Enable bookmarkable state via URL (shinyapps.io doesn't yet
 ### support server-side saves)
