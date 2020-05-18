@@ -28,6 +28,10 @@ shinyServer(
     
     session$allowReconnect(TRUE)
     
+    ## JQuery Interactivity
+    jqui_draggable("#sizeWizardDiv,#dyo.diagram")
+    jqui_resizable("#sizeWizardDiv")
+    
     premade <- eventReactive(input$premade.startbutton,
                              list(
                                p("The three designs below are commonly seen in the field. If your design
@@ -926,29 +930,27 @@ shinyServer(
     
     #### Collapse and Tabset Handlers ####
     
-    updateWizard <- function(tabID) {
-      updateTabsetPanel(session, "wizard", selected = tabID)
+    updateWizard <- function(tabID, wizardID) {
+      updateTabsetPanel(session, wizardID, selected = tabID)
     }
     
     # Observer for button "dyo.stage1.continue" inside stage 1 design spec collapse panel
     # When button is pressed, update the collapse so that the "close" panel closes and the "open" panel opens
     observeEvent(input$outcome.continue,
-                 updateWizard("wizard.result.describe"))
-    observeEvent(input$resultOptions.continue,
-                 updateWizard("wizard.stage1.describe"))
+                 updateWizard("wizard.stage1.describe", "designWizard"))
+    # observeEvent(input$resultOptions.continue,
+    #              updateWizard("wizard.stage1.describe"))
     observeEvent(input$stage1.continue,
-                 updateWizard("wizard.resp.describe"))
+                 updateWizard("wizard.resp.describe", "designWizard"))
     observeEvent(input$resp.continue,
-                 updateWizard("wizard.stage2.describe"))
+                 updateWizard("wizard.stage2.describe", "designWizard"))
     
-    observeEvent(input$resultOptions.back,
-                 updateWizard("wizard.outcome.describe"))
     observeEvent(input$stage1.back,
-                 updateWizard("wizard.result.describe"))
+                 updateWizard("wizard.outcome.describe", "designWizard"))
     observeEvent(input$resp.back,
-                 updateWizard("wizard.stage1.describe"))
+                 updateWizard("wizard.stage1.describe", "designWizard"))
     observeEvent(input$stage2.back,
-                 updateWizard("wizard.resp.describe"))
+                 updateWizard("wizard.resp.describe", "designWizard"))
     
     observeEvent(input$dyo.outcome.continue,
                  updateCollapse(session, "dyo.setup.collapse",

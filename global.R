@@ -29,7 +29,18 @@ library(shinyjs)
 library(bsplus)
 library(shinyjqui)
 library(shinythemes)
+library(shinyWidgets)
 library(vov) #css animations
+
+### Bootstrap Theming
+# library(bootstraplib)
+# # bs_theme_new(bootswatch = "flatly")
+# # bs_theme_accent_colors(primary = "#4484a2", info = "#1e3566",
+# #                        success = "#4aa269", warning = "#c79231",
+# #                        danger = "#f44336")
+# 
+# bs_theme_new(version = "4+3", bootswatch = NULL)
+# bs_theme_base_colors(bg = "salmon", fg = "white")
 
 ### Enable bookmarkable state via URL (shinyapps.io doesn't yet
 ### support server-side saves)

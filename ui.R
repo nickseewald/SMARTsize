@@ -31,12 +31,15 @@
 options(encoding = 'UTF-8')
 
 shinyUI(
+  
   # shinybootstrap2::withBootstrap2({
   tagList(useShinyjs(),
-          navbarPage("SMARTsize", id = "SMARTsize", 
+          navbarPage("SMARTsize", id = "SMARTsize",
                      collapsible = TRUE, 
+                     # inverse = TRUE,
+                     theme = "css/flatly.css",
                      position = "static-top",
-                     theme = shinytheme("flatly"),
+                     
                      header = tagList(
                        tags$link(rel = "stylesheet", type = "text/css",
                                  href = "https://fonts.googleapis.com/css?family=Roboto|Roboto+Condensed"),
@@ -46,7 +49,7 @@ shinyUI(
                                                  });")),
                        tags$script(HTML(paste("$(document).ready(function(){
                                                        $('.Rversion').text('", paste(R.Version()$major, R.Version()$minor, sep = "."),"');
-                                });", sep = ""))),
+                                });", sep = "")))
                        # tags$script(src = "C:/Users/Nick/node_modules/svg-pan-zoom/dist/svg-pan-zoom.min.js"),
                        # tags$script(src = "www/js/mermaidAPI.js"),
                        # tags$script(HTML("var config = {
@@ -54,27 +57,39 @@ shinyUI(
                        #                  flowchart:{}
                        #                  };
                        #                  mermaid.initialize(config);")),
-                       tags$script(type = "text/javascript", src = "js/svg-pan-zoom.min.js"),
-                       tags$script(src = "js/multisteps-form.js")
+                       # tags$script(type = "text/javascript", src = "js/svg-pan-zoom.min.js")
                      ),
+                     
+                     
                      
                      ##### Home Tab #####
                      tabPanel("Home",
+                              fluidRow(
+                                column(12, 
+                                       HTML("<div class='page-header'>
+                                     <h1>SMARTsize: A Sample Size Calculator for SMARTs with Binary or Continuous Outcomes</h1></div>"))
+                                ),
+                              fluidRow(
+                                column(4,
+                                       tags$div(class = "card card-sidebar", 
+                                                includeHTML("www/html/sidebarHome.html"))),
+                                column(8, 
+                              # ),
+                              
                               ### Home Sidebar Panel: Purpose, Notation, Assumptions, and Methods
-                              sidebarPanel(
-                                includeHTML("www/html/sidebarHome.html")
-                              ),
+                              # sidebarPanel(
+                              #   tags$div(class = "card sidebar", 
+                              #            includeHTML("www/html/sidebarHome.html"))
+                              # ),
                               
                               ### Main content of home page
-                              mainPanel(
-                                HTML("<div class='page-header'>
-                                     <h1>SMARTsize: A Sample Size Calculator for SMARTs with Binary or Continuous Outcomes</h1></div>"),
+                              # mainPanel(
                                 p("Get started by choosing whether you'd like to design a SMART from scratch, or
                                   select one of three common designs."),
                                 br(),
                                 fluidRow(
                                   column(12, bsButton("DYO.startbutton", 
-                                                      label = "Design Your Own SMART",
+                                                      label = "Get Started",
                                                       style = "primary", size = "large", type = "action",
                                                       class = "start-button center-block"))),
                                 br(),
@@ -99,13 +114,14 @@ shinyUI(
                                           ''Experimental design and primary data analysis methods for comparing adaptive interventions.''", em("Psychological methods,"), "17, 457.")
                                   ),
                                 
-                                includeHTML("www/html/references.html") # Collapse for additional selected readigs
+                                includeHTML("www/html/references.html") # Collapse for additional selected readings
                                   )
-                                ),
+                                )),
           
           ##### Design Your Own #####
           
           tabPanel("Design and Size",
+                   chooseSliderSkin("Flat", color = "#d84262"),
                    h1("Design Your Own SMART"),
                    h4("Follow the steps below to describe and size a custom SMART"),
                    tags$hr(),
@@ -117,19 +133,30 @@ shinyUI(
                      
                      ##### DYO Page Header #####
                    
+                   fluidRow(column(12, includeHTML("www/html/sidebarDYO.html"),
+                                     hidden(bsButton(inputId = "unlockDYO",
+                                                     label = "Unlock Disabled Sections", style = "warning",
+                                                     icon = icon("unlock-alt"))))),
                    fluidRow(
-                     column(4, 
-                            includeHTML("www/html/sidebarDYO.html"),
-                            hidden(bsButton(inputId = "unlockDYO",
-                                            label = "Unlock Disabled Sections", style = "warning",
-                                            icon = icon("unlock-alt")))),
-                     column(8, 
+                     column(5, 
+                            tags$div(id = "stickyPanel", 
+                                     jqui_resizable(DiagrammeROutput("dyo.diagram", height = "550px"))
+                            )
+                     ),
+                     column(7, 
                             # bsAlert('dyo-functional'),
                             
-                            # tags$style("#wizard { display:none; }"),
+                            ##### Design Wizard #####
                             tabsetPanel(id = "designWizard", type = "pills",
-                                        
-                                        tabPanel(title = "First Randomization", 
+                                        tabPanel(title = "Study Outcome",
+                                                 tags$div(class = "card",
+                                                          h2("Describe your Study Outcome"),
+                                                          tags$hr(),
+                                                          selectDTROutcomeUI("dyoOutcome"),
+                                                          fluidRow(continueButton("outcome.continue"))
+                                                 ),
+                                                 value = "wizard.outcome.describe"),
+                                        tabPanel(title = "Stage 1 Treatments", 
                                                  tags$div(class = "card", 
                                                           h2("Describe the First Randomization"),
                                                           tags$hr(),
@@ -163,7 +190,7 @@ shinyUI(
                                                                    continueButton("resp.continue"))
                                                  ),
                                                  value = "wizard.resp.describe"),
-                                        tabPanel(title = "Second Randomization",
+                                        tabPanel(title = "Stage 2 Treatments",
                                                  tags$div(class = "card", 
                                                           h2("Describe the Second Randomization"),
                                                           bsAlert("premadeDesignInputsDisabled-stage2Alert"),
@@ -201,109 +228,110 @@ shinyUI(
                                                           fluidRow(backButton("rerand.back"))
                                                  ),
                                                  value = "wizard.stage2.describe")
-                            ))),
+                            ),
+                            tags$div(id = "sizeWizardDiv",
+                                     tabsetPanel(id = "sizeWizard", type = "pills",
+                                                 tabPanel("Primary Aim",
+                                                          tags$div(class = "card",
+                                                                   h2("Describe your Primary Aim"),
+                                                                   tags$hr(),
+                                                                   ##### Aim Selection #####
+                                                                   primaryAimUI("dyo.primaryAim"),
+                                                                   conditionalPanel(
+                                                                     condition = "output.dyoprimaryAim == 'dtrs'",
+                                                                     eval(text.selectDTRcompare),
+                                                                     fluidRow(column(6, uiOutput("dyo.refdtrSelect")),
+                                                                              column(6, uiOutput("dyo.compdtrSelect")))
+                                                                   ),
+                                                                   conditionalPanel(
+                                                                     condition = "output.dyoprimaryAim == 'stage1' && input['dyo.stage1.ntxt'] > 2",
+                                                                     html.selectStage1Compare,
+                                                                     fluidRow(column(6, uiOutput("stage1Tx1Select")),
+                                                                              column(6, uiOutput("stage1Tx2Select"))),
+                                                                     fluidRow(column(6, checkboxInput("stage1omnibus", "Test")))
+                                                                   ),
+                                                                   conditionalPanel(
+                                                                     condition = "output.dyoprimaryAim == 'stage2resp' && input['dyo.rerand.resp.ntxt'] > 2",
+                                                                     html.selectStage2RCompare,
+                                                                     fluidRow(column(6, uiOutput("stage2RTx1Select")),
+                                                                              column(6, uiOutput("stage2RTx2Select")))
+                                                                   ),
+                                                                   conditionalPanel(
+                                                                     condition = "output.dyoprimaryAim == 'stage2nresp' && input['dyo.rerand.nresp.ntxt'] > 2",
+                                                                     html.selectStage2NRCompare,
+                                                                     fluidRow(column(6, uiOutput("stage2NRTx1Select")),
+                                                                              column(6, uiOutput("stage2NRTx2Select")))
+                                                                   ))),
+                                                 tabPanel("Hypothesis Test", 
+                                                          tags$div(class = "card",
+                                                                   h2("Describe your Hypothesis Test"),
+                                                                   tags$hr(),
+                                                                   resultOptionsUI("dyo.resultOptions"),
+                                                                   fluidRow(backButton("resultOptions.back"),
+                                                                            continueButton("resultOptions.continue"))
+                                                          ),
+                                                          value = "wizard.result.describe")
+                                     )),
+                            conditionalPanel(
+                              condition = "output.dyooutcome == 'Binary' && output.dyoprimaryAim == 'dtrs'",
+                              uiOutput("binaryRefInput"),
+                              conditionalPanel(condition = "input.cellOrMarginal",
+                                               fluidRow(column(1),
+                                                        column(
+                                                          11, uiOutput("binaryRefCellProbs")
+                                                        ))),
+                              uiOutput("binaryCompInput"),
+                              conditionalPanel(condition = "input.cellOrMarginal",
+                                               fluidRow(column(1),
+                                                        column(
+                                                          11, uiOutput("binaryCompCellProbs")
+                                                        )))
+                            ),
+                            conditionalPanel(
+                              condition = "output.dyooutcome == 'Binary' && output.dyoprimaryAim == 'stage1'",
+                              html.stage1ProbsGuide,
+                              uiOutput("binaryStage1Probs")
+                            ),
+                            conditionalPanel(
+                              condition = "output.dyooutcome == 'Binary' && output.dyoprimaryAim == 'stage2resp'",
+                              html.stage1ProbsGuide,
+                              uiOutput("binaryStage2RProbs")
+                            ),
+                            conditionalPanel(
+                              condition = "output.dyooutcome == 'Binary' && output.dyoprimaryAim == 'stage2nresp'",
+                              html.stage1ProbsGuide,
+                              uiOutput("binaryStage2NRProbs")
+                            ),
+                            conditionalPanel(condition = "output.dyooutcome == 'Continuous'",
+                                             uiOutput('contDTRInput')),
+                            conditionalPanel(
+                              condition = "input.dyoprimaryAim == 'dtrs'",
+                              conditionalPanel(
+                                condition = "input.dyoRefDTR != '' && input.dyoCompDTR != ''",
+                                br(),
+                                conditionalPanel(
+                                  condition = "output.dyooutcome == 'Binary'",
+                                  eval(text.altInputHelp),
+                                  checkboxInput("cellOrMarginal",   label = text.cellSpecLabel, value = FALSE),
+                                  bsAlert("cellOrMarginalDisabled"),
+                                  checkboxInput("targetDifference", label = text.targDiffLabel, value = FALSE),
+                                  checkboxInput("targetOddsRatio",  label = text.targORLabel,   value = FALSE)
+                                )
+                              )
+                            )
+                     )),
                    
                    
-                   ##### Aim Selection #####
-                   primaryAimUI("dyo.primaryAim"),
-                   conditionalPanel(
-                     condition = "output.dyoprimaryAim == 'dtrs'",
-                     eval(text.selectDTRcompare),
-                     fluidRow(column(6, uiOutput("dyo.refdtrSelect")),
-                              column(6, uiOutput("dyo.compdtrSelect")))
-                   ),
-                   conditionalPanel(
-                     condition = "output.dyoprimaryAim == 'stage1' && input['dyo.stage1.ntxt'] > 2",
-                     html.selectStage1Compare,
-                     fluidRow(column(6, uiOutput("stage1Tx1Select")),
-                                column(6, uiOutput("stage1Tx2Select"))),
-                       fluidRow(column(6, checkboxInput("stage1omnibus", "Test")))
-                     ),
-                     conditionalPanel(
-                       condition = "output.dyoprimaryAim == 'stage2resp' && input['dyo.rerand.resp.ntxt'] > 2",
-                       html.selectStage2RCompare,
-                       fluidRow(column(6, uiOutput("stage2RTx1Select")),
-                                column(6, uiOutput("stage2RTx2Select")))
-                     ),
-                     conditionalPanel(
-                       condition = "output.dyoprimaryAim == 'stage2nresp' && input['dyo.rerand.nresp.ntxt'] > 2",
-                       html.selectStage2NRCompare,
-                       fluidRow(column(6, uiOutput("stage2NRTx1Select")),
-                                column(6, uiOutput("stage2NRTx2Select")))
-                     ),
+                   
                      tags$hr(),
                      
                      ##### Diagram and Probability Inputs #####
                      h3("Diagram and Outcome Information"),
                      fluidRow(
-                       column(7, jqui_resizable(DiagrammeROutput("dyo.diagram", height = "550px"))),
-                       column(5,
-                              tabsetPanel(
-                                tabPanel(title = "Study Outcome",
-                                         tags$div(class = "card",
-                                                  h2("Describe your Study Outcome"),
-                                                  tags$hr(),
-                                                  selectDTROutcomeUI("dyoOutcome"),
-                                                  fluidRow(continueButton("outcome.continue"))
-                                         ),
-                                         value = "wizard.outcome.describe"),
-                                tabPanel("Hypothesis Test", 
-                                         tags$div(class = "card",
-                                                  h2("Describe your Hypothesis Test"),
-                                                  tags$hr(),
-                                                  resultOptionsUI("dyo.resultOptions"),
-                                                  fluidRow(backButton("resultOptions.back"),
-                                                           continueButton("resultOptions.continue"))
-                                         ),
-                                         value = "wizard.result.describe")
-                              ),
-                              conditionalPanel(
-                                condition = "output.dyooutcome == 'Binary' && output.dyoprimaryAim == 'dtrs'",
-                                uiOutput("binaryRefInput"),
-                                conditionalPanel(condition = "input.cellOrMarginal",
-                                                 fluidRow(column(1),
-                                                          column(
-                                                            11, uiOutput("binaryRefCellProbs")
-                                                          ))),
-                                uiOutput("binaryCompInput"),
-                                conditionalPanel(condition = "input.cellOrMarginal",
-                                                 fluidRow(column(1),
-                                                          column(
-                                                            11, uiOutput("binaryCompCellProbs")
-                                                          )))
-                              ),
-                              conditionalPanel(
-                                condition = "output.dyooutcome == 'Binary' && output.dyoprimaryAim == 'stage1'",
-                                html.stage1ProbsGuide,
-                                uiOutput("binaryStage1Probs")
-                              ),
-                              conditionalPanel(
-                                condition = "output.dyooutcome == 'Binary' && output.dyoprimaryAim == 'stage2resp'",
-                                html.stage1ProbsGuide,
-                                uiOutput("binaryStage2RProbs")
-                              ),
-                              conditionalPanel(
-                                condition = "output.dyooutcome == 'Binary' && output.dyoprimaryAim == 'stage2nresp'",
-                                html.stage1ProbsGuide,
-                                uiOutput("binaryStage2NRProbs")
-                              ),
-                              conditionalPanel(condition = "output.dyooutcome == 'Continuous'",
-                                               uiOutput('contDTRInput')),
-                              conditionalPanel(
-                                condition = "input.dyoprimaryAim == 'dtrs'",
-                                conditionalPanel(
-                                  condition = "input.dyoRefDTR != '' && input.dyoCompDTR != ''",
-                                  br(),
-                                  conditionalPanel(
-                                    condition = "output.dyooutcome == 'Binary'",
-                                    eval(text.altInputHelp),
-                                    checkboxInput("cellOrMarginal",   label = text.cellSpecLabel, value = FALSE),
-                                    bsAlert("cellOrMarginalDisabled"),
-                                    checkboxInput("targetDifference", label = text.targDiffLabel, value = FALSE),
-                                    checkboxInput("targetOddsRatio",  label = text.targORLabel,   value = FALSE)
-                                  )
-                                )
-                              ))
+                       # column(5, 
+                       #        ),
+                       column(width = 8, offset = 2,
+                              )
                      ),
                      
                      tags$hr(),
